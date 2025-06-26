@@ -81,10 +81,9 @@ function PixelCanvas() {
   const drawPixelAt = (screenX: number, screenY: number) => {
     const worldPos = calculateMouseLocation(screenX, screenY);
     const sourceCtx = sourceCanvasRef.current?.getContext('2d');
-    if (sourceCtx) {
+    if (sourceCtx && worldPos.x >= 0 && worldPos.y >= 0) {
       sourceCtx.fillStyle = color;
       console.log(`Pixel 위치: { x: ${worldPos.x}, y: ${worldPos.y} }`);
-
       sourceCtx.fillRect(worldPos.x, worldPos.y, 1, 1);
       draw();
     }
@@ -101,25 +100,47 @@ function PixelCanvas() {
       };
     }
     // 마우스 왼쪽 버튼(e.button === 1): 그리기 시작
+    // if (e.button === 0) {
+    //   isDrawingRef.current = true;
+    //   drawPixelAt(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+    // }
+
     if (e.button === 0) {
-      isDrawingRef.current = true;
-      drawPixelAt(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+      const canvas = canvasRef.current;
+      const sourceCtx = sourceCanvasRef.current?.getContext('2d');
+      if (!canvas || !sourceCtx) return;
+
+      // 1. 클릭한 위치의 월드 좌표를 계산
+      const worldPos = calculateMouseLocation(
+        e.nativeEvent.offsetX,
+        e.nativeEvent.offsetY
+      );
+
+      if (
+        worldPos.x < 0 ||
+        worldPos.x >= SOURCE_WIDTH ||
+        worldPos.y < 0 ||
+        worldPos.y >= SOURCE_HEIGHT
+      ) {
+        return;
+      }
+
+      sourceCtx.fillStyle = color;
+      sourceCtx.fillRect(worldPos.x, worldPos.y, 1, 1);
+      console.log(`Pixel 위치: { x: ${worldPos.x}, y: ${worldPos.y} }`);
+
+      const centerX = canvas.clientWidth / 2;
+      const centerY = canvas.clientHeight / 2;
+      const scale = scaleRef.current;
+
+      // 픽셀의 중심점(worldPos.x + 0.5)이 화면 중앙에 오도록 설정
+      viewPosRef.current.x = centerX - (worldPos.x + 0.5) * scale;
+      viewPosRef.current.y = centerY - (worldPos.y + 0.5) * scale;
+
+      // 4. 변경된 내용으로 캔버스를 다시 그림
+      draw();
     }
   };
-
-  // const handleMouseClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-  //   if (e.button === 0) {
-  //     isDrawingRef.current = true;
-  //     drawPixelAt(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
-  //   }
-  //   if (e.button === 1) {
-  //     isPanningRef.current = true;
-  //     startPosRef.current = {
-  //       x: e.nativeEvent.offsetX - viewPosRef.current.x,
-  //       y: e.nativeEvent.offsetY - viewPosRef.current.y,
-  //     };
-  //   }
-  // };
 
   // 마우스 드래그 이벤트 처리 함수
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
