@@ -1,0 +1,35 @@
+import { useCallback } from 'react';
+import { useSocket } from '../hooks/useSocket';
+
+interface SocketIntegrationProps {
+  sourceCanvasRef: React.RefObject<HTMLCanvasElement>;
+  draw: () => void;
+}
+
+export const usePixelSocket = ({ sourceCanvasRef, draw }: SocketIntegrationProps) => {
+  // 다른 사용자 픽셀 수신
+  const handlePixelReceived = useCallback((pixel: { x: number; y: number; color: string }) => {
+    const sourceCtx = sourceCanvasRef.current?.getContext('2d');
+    if (sourceCtx) {
+      sourceCtx.fillStyle = pixel.color;
+      sourceCtx.fillRect(pixel.x, pixel.y, 1, 1);
+      draw();
+    }
+  }, [sourceCanvasRef, draw]);
+
+  // 초기 캔버스 데이터 수신
+  const handleCanvasReceived = useCallback((pixels: Array<{ x: number; y: number; color: string }>) => {
+    const sourceCtx = sourceCanvasRef.current?.getContext('2d');
+    if (sourceCtx) {
+      pixels.forEach(pixel => {
+        sourceCtx.fillStyle = pixel.color;
+        sourceCtx.fillRect(pixel.x, pixel.y, 1, 1);
+      });
+      draw();
+    }
+  }, [sourceCanvasRef, draw]);
+
+  const { sendPixel } = useSocket(handlePixelReceived, handleCanvasReceived);
+
+  return { sendPixel };
+};
