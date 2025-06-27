@@ -178,6 +178,7 @@ function PixelCanvas() {
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const { offsetX, offsetY } = e.nativeEvent;
     const worldPos = calculateMouseLocation(offsetX, offsetY);
+    setHoverPos(worldPos);
 
     if (isDrawingRef.current) {
       drawPixelAt(offsetX, offsetY);
@@ -200,6 +201,7 @@ function PixelCanvas() {
   const handleMouseLeave = () => {
     handleMouseUp();
     clearOverlay();
+    setHoverPos(null);
   };
 
   useEffect(() => {
@@ -322,9 +324,7 @@ function PixelCanvas() {
         }}
         className='fixed left-1/2 top-16 z-50 -translate-x-1/2 transform rounded bg-black bg-opacity-75 px-3 py-1 text-white'
       >
-        {hoverPos
-          ? `Cursor at: (${hoverPos.x}, ${hoverPos.y})`
-          : 'Cursor outside'}
+        {hoverPos ? `(${hoverPos.x}, ${hoverPos.y})` : 'Canvas outside'}
       </div>
       {/* 팔레트 위치 */}
       <div
