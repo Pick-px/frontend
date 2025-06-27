@@ -178,7 +178,16 @@ function PixelCanvas() {
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const { offsetX, offsetY } = e.nativeEvent;
     const worldPos = calculateMouseLocation(offsetX, offsetY);
-    setHoverPos(worldPos);
+    if (
+      worldPos.x < 0 ||
+      worldPos.x >= SOURCE_WIDTH ||
+      worldPos.y < 0 ||
+      worldPos.y >= SOURCE_HEIGHT
+    ) {
+      setHoverPos(null);
+    } else {
+      setHoverPos(worldPos);
+    }
 
     if (isDrawingRef.current) {
       drawPixelAt(offsetX, offsetY);
@@ -321,6 +330,7 @@ function PixelCanvas() {
           backgroundColor: 'rgba(0,0,0,0.8)',
           borderRadius: '8px',
           pointerEvents: 'none',
+          color: 'white',
         }}
         className='fixed left-1/2 top-16 z-50 -translate-x-1/2 transform rounded bg-black bg-opacity-75 px-3 py-1 text-white'
       >
