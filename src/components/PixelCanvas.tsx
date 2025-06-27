@@ -1,243 +1,253 @@
-import React, { useRef, useEffect, useState } from 'react';
+//
+import React, { useRef, useEffect, useCallback } from 'react';
 
+// --- 상수 정의 ---
 const INITIAL_POSITION = { x: 0, y: 0 };
 const MIN_SCALE = 0.1;
-const MAX_SCALE = 50;
+const MAX_SCALE = 30;
 const SOURCE_WIDTH = 512;
 const SOURCE_HEIGHT = 512;
+const INITIAL_BACKGROUND_COLOR = '#000000'; // 아트보드 배경색
+const VIEWPORT_BACKGROUND_COLOR = '#2d3748'; // 캔버스 바깥 공간 색
 
-function PixelCanvas() {
-  const [color, setColor] = useState<string>('#ffffff');
+// --- 타입 정의 ---
+// props를 외부에서 받아 컴포넌트 간 결합도 낮추기
+type HoverPos = { x: number; y: number } | null;
+type PixelCanvasProps = {
+  color: string;
+  setHoverPos: React.Dispatch<React.SetStateAction<HoverPos>>;
+};
 
-  // --- Ref 이름을 역할에 맞게 명확히 분리 ---
-  const renderCanvasRef = useRef<HTMLCanvasElement>(null); // 아래층: 최종 결과물을 보여주는 캔버스
-  const interactionCanvasRef = useRef<HTMLCanvasElement>(null); // 위층: 마우스 이벤트와 미리보기를 담당
-  const sourceCanvasRef = useRef<HTMLCanvasElement | null>(null); // 메모리: 실제 픽셀 데이터 원본
+function PixelCanvas({ color, setHoverPos }: PixelCanvasProps) {
+  // --- Ref 정의 ---
+  const rootRef = useRef<HTMLDivElement>(null);
+  const renderCanvasRef = useRef<HTMLCanvasElement>(null); // 색상 칠하는 아래층 Canvas
+  const interactionCanvasRef = useRef<HTMLCanvasElement>(null); // 마우스 이벤트 받는 위층 Canvas
+  const sourceCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // --- 상태 Ref ---
   const scaleRef = useRef<number>(1);
   const viewPosRef = useRef<{ x: number; y: number }>(INITIAL_POSITION);
   const startPosRef = useRef<{ x: number; y: number }>(INITIAL_POSITION);
   const isPanningRef = useRef<boolean>(false);
   const isDrawingRef = useRef<boolean>(false);
 
-  // --- 렌더링 함수 ---
-  const draw = () => {
-    const canvas = renderCanvasRef.current; // 이제 이름이 명확한 renderCanvas를 사용
+  // --- 렌더링 함수 --- => useCallback 사용으로 매번 새로운 인스턴스 생성 방지
+  // 최종 화면 렌더링, clearRect로 캔버스 비우고 drawImage로 다시 그림
+  const draw = useCallback(() => {
+    const canvas = renderCanvasRef.current;
     const sourceCanvas = sourceCanvasRef.current;
     if (!canvas || !sourceCanvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    canvas.width = canvas.clientWidth;
-    canvas.height = canvas.clientHeight;
+    ctx.save();
 
-    ctx.setTransform(
-      scaleRef.current,
-      0,
-      0,
-      scaleRef.current,
-      viewPosRef.current.x,
-      viewPosRef.current.y
-    );
+    // 캔버스 전체를 바깥 공간 색으로 칠합니다.
+    ctx.fillStyle = VIEWPORT_BACKGROUND_COLOR;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    // 변환 적용 (Pan, Zoom)
+    ctx.translate(viewPosRef.current.x, viewPosRef.current.y);
+    ctx.scale(scaleRef.current, scaleRef.current);
+
+    // 512x512 아트보드의 배경색을 칠합니다.
+    ctx.fillStyle = INITIAL_BACKGROUND_COLOR;
+    ctx.fillRect(0, 0, SOURCE_WIDTH, SOURCE_HEIGHT);
+
+    // 아트보드 위에 픽셀 데이터를 그립니다.
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(sourceCanvas, 0, 0);
-  };
 
-  const updateOverlay = (screenX: number, screenY: number) => {
-    const overlayCanvas = interactionCanvasRef.current;
-    if (!overlayCanvas) return;
-    const overlayCtx = overlayCanvas.getContext('2d');
-    if (!overlayCtx) return;
+    ctx.restore();
+  }, []);
 
-    overlayCanvas.width = overlayCanvas.clientWidth;
-    overlayCanvas.height = overlayCanvas.clientHeight;
-
-    overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-
-    const worldPos = calculateMouseLocation(screenX, screenY);
-
-    if (
-      worldPos.x >= 0 &&
-      worldPos.x < SOURCE_WIDTH &&
-      worldPos.y >= 0 &&
-      worldPos.y < SOURCE_HEIGHT
-    ) {
-      overlayCtx.setTransform(
-        scaleRef.current,
-        0,
-        0,
-        scaleRef.current,
-        viewPosRef.current.x,
-        viewPosRef.current.y
+  // cursor pointer 위치 updatae
+  const updateOverlay = useCallback(
+    (screenX: number, screenY: number) => {
+      const worldX = Math.floor(
+        (screenX - viewPosRef.current.x) / scaleRef.current
+      );
+      const worldY = Math.floor(
+        (screenY - viewPosRef.current.y) / scaleRef.current
       );
 
-      overlayCtx.strokeStyle = 'rgba(0, 255, 0, 0.9)'; // 녹색으로 변경하여 구별
-      overlayCtx.lineWidth = 2 / scaleRef.current;
-      overlayCtx.strokeRect(worldPos.x, worldPos.y, 1, 1);
-    }
-  };
+      const overlayCanvas = interactionCanvasRef.current;
+      if (!overlayCanvas) return;
+      const overlayCtx = overlayCanvas.getContext('2d');
+      if (!overlayCtx) return;
 
-  const clearOverlay = () => {
+      overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+      // 좌표가 pixel Canvas 안에 있는지 확인하는 flag
+      const isInBounds =
+        worldX >= 0 &&
+        worldX < SOURCE_WIDTH &&
+        worldY >= 0 &&
+        worldY < SOURCE_HEIGHT;
+
+      if (isInBounds) {
+        setHoverPos({ x: worldX, y: worldY });
+
+        overlayCtx.save();
+        overlayCtx.translate(viewPosRef.current.x, viewPosRef.current.y);
+        overlayCtx.scale(scaleRef.current, scaleRef.current);
+        overlayCtx.strokeStyle = 'rgba(0, 255, 0, 0.9)';
+        overlayCtx.lineWidth = 2 / scaleRef.current;
+        overlayCtx.strokeRect(worldX, worldY, 1, 1);
+        overlayCtx.restore();
+      } else {
+        setHoverPos(null);
+      }
+    },
+    [setHoverPos]
+  );
+
+  // cursor pointer 지우는 함수
+  const clearOverlay = useCallback(() => {
+    setHoverPos(null);
     const overlayCanvas = interactionCanvasRef.current;
     if (!overlayCanvas) return;
     const overlayCtx = overlayCanvas.getContext('2d');
     overlayCtx?.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-  };
+  }, [setHoverPos]);
 
-  const resetAndCenter = () => {
-    const canvas = renderCanvasRef.current; // 크기 기준은 어떤 캔버스든 상관 없음
-    if (!canvas) return;
-    const visibleWidth = canvas.clientWidth;
-    const visibleHeight = canvas.clientHeight;
-    viewPosRef.current.x = (visibleWidth - SOURCE_WIDTH) / 2;
-    viewPosRef.current.y = (visibleHeight - SOURCE_HEIGHT) / 2;
+  // resize시 Canvas 가운데로 위치하는 함수
+  const resetAndCenter = useCallback(() => {
+    const canvas = renderCanvasRef.current;
+    if (!canvas || canvas.clientWidth === 0) return;
+
     scaleRef.current = 1;
+    viewPosRef.current.x = (canvas.clientWidth - SOURCE_WIDTH) / 2;
+    viewPosRef.current.y = (canvas.clientHeight - SOURCE_HEIGHT) / 2;
+
     draw();
-    clearOverlay(); // 리셋 시 오버레이도 클리어
-  };
+    clearOverlay();
+  }, [draw, clearOverlay]);
 
-  const calculateMouseLocation = (screenX: number, screenY: number) => {
-    const worldX = (screenX - viewPosRef.current.x) / scaleRef.current;
-    const worldY = (screenY - viewPosRef.current.y) / scaleRef.current;
-    return { x: Math.floor(worldX), y: Math.floor(worldY) };
-  };
-
-  const drawPixelAt = (screenX: number, screenY: number) => {
-    const worldPos = calculateMouseLocation(screenX, screenY);
-    const sourceCtx = sourceCanvasRef.current?.getContext('2d');
-    if (sourceCtx) {
-      if (
-        worldPos.x >= 0 &&
-        worldPos.x < SOURCE_WIDTH &&
-        worldPos.y >= 0 &&
-        worldPos.y < SOURCE_HEIGHT
-      ) {
-        sourceCtx.fillStyle = color;
-        sourceCtx.fillRect(worldPos.x, worldPos.y, 1, 1);
-        draw();
-      }
-    }
-  };
-
-  // --- 이벤트 핸들러 ---
-  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    // 오른쪽 버튼(e.button === 2): 시점 이동(패닝) 시작
-    if (e.button === 2) {
-      isPanningRef.current = true;
-      startPosRef.current = {
-        x: e.nativeEvent.offsetX - viewPosRef.current.x,
-        y: e.nativeEvent.offsetY - viewPosRef.current.y,
-      };
-      return;
-    }
-
-    // ★★★ 수정된 부분: 왼쪽 클릭 시 그리기 및 중앙 정렬 로직 활성화 ★★★
-    if (e.button === 0) {
-      const canvas = renderCanvasRef.current;
+  // fillRect로 1*1 픽셀 찍기
+  // 마우스 좌표를 인자로 받음
+  // 사용자가 그릴때 호춣 => 원본 데이터 변경
+  const drawPixelAt = useCallback(
+    (screenX: number, screenY: number) => {
       const sourceCtx = sourceCanvasRef.current?.getContext('2d');
-      if (!canvas || !sourceCtx) return;
+      if (!sourceCtx) return;
 
-      // 1. 클릭한 위치의 월드 좌표를 계산
-      const worldPos = calculateMouseLocation(
-        e.nativeEvent.offsetX,
-        e.nativeEvent.offsetY
+      const worldX = Math.floor(
+        (screenX - viewPosRef.current.x) / scaleRef.current
+      );
+      const worldY = Math.floor(
+        (screenY - viewPosRef.current.y) / scaleRef.current
       );
 
-      // 2. 경계 확인: 아트보드 바깥에서는 동작 안함
       if (
-        worldPos.x < 0 ||
-        worldPos.x >= SOURCE_WIDTH ||
-        worldPos.y < 0 ||
-        worldPos.y >= SOURCE_HEIGHT
+        worldX >= 0 &&
+        worldX < SOURCE_WIDTH &&
+        worldY >= 0 &&
+        worldY < SOURCE_HEIGHT
       ) {
+        sourceCtx.fillStyle = color;
+        sourceCtx.fillRect(worldX, worldY, 1, 1);
+        draw(); // 변경 내용 그리기 요청
+      }
+    },
+    [color, draw]
+  );
+
+  // ====== 마우스 이벤트 관련 함수 ========
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent<HTMLCanvasElement>) => {
+      if (e.button === 2) {
+        isPanningRef.current = true;
+        startPosRef.current = {
+          x: e.nativeEvent.offsetX - viewPosRef.current.x,
+          y: e.nativeEvent.offsetY - viewPosRef.current.y,
+        };
         return;
       }
+      if (e.button === 0) {
+        isDrawingRef.current = true;
+        drawPixelAt(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+      }
+    },
+    [drawPixelAt]
+  );
 
-      // 3. 해당 위치에 픽셀을 그림 (sourceCanvas에만)
-      // sourceCtx.fillStyle = color;
-      // sourceCtx.fillRect(worldPos.x, worldPos.y, 1, 1);
-      console.log(`Pixel 위치: { x: ${worldPos.x}, y: ${worldPos.y} }`);
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLCanvasElement>) => {
+      const { offsetX, offsetY } = e.nativeEvent;
 
-      // 4. 방금 찍은 픽셀이 화면 중앙에 오도록 viewPos를 새로 계산
-      const centerX = canvas.clientWidth / 2;
-      const centerY = canvas.clientHeight / 2;
-      const scale = scaleRef.current;
+      if (isPanningRef.current) {
+        viewPosRef.current = {
+          x: offsetX - startPosRef.current.x,
+          y: offsetY - startPosRef.current.y,
+        };
+        draw();
+      }
+      if (isDrawingRef.current) {
+        drawPixelAt(offsetX, offsetY);
+      }
+      updateOverlay(offsetX, offsetY);
+    },
+    [draw, drawPixelAt, updateOverlay]
+  );
 
-      // 픽셀의 중심점(worldPos.x + 0.5)이 화면 중앙에 오도록 설정
-      viewPosRef.current.x = centerX - (worldPos.x + 0.5) * scale;
-      viewPosRef.current.y = centerY - (worldPos.y + 0.5) * scale;
-
-      // 5. 변경된 내용으로 캔버스를 다시 그림
-      // draw();
-      // drawPixelAt(centerX, centerY);
-    }
-  };
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const { offsetX, offsetY } = e.nativeEvent;
-    const worldPos = calculateMouseLocation(offsetX, offsetY);
-    if (
-      worldPos.x < 0 ||
-      worldPos.x >= SOURCE_WIDTH ||
-      worldPos.y < 0 ||
-      worldPos.y >= SOURCE_HEIGHT
-    ) {
-      setHoverPos(null);
-    } else {
-      setHoverPos(worldPos);
-    }
-
-    if (isDrawingRef.current) {
-      drawPixelAt(offsetX, offsetY);
-    }
-    if (isPanningRef.current) {
-      viewPosRef.current = {
-        x: offsetX - startPosRef.current.x,
-        y: offsetY - startPosRef.current.y,
-      };
-      draw();
-    }
-    updateOverlay(offsetX, offsetY);
-  };
-
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     isDrawingRef.current = false;
     isPanningRef.current = false;
-  };
+  }, []);
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = useCallback(() => {
     handleMouseUp();
     clearOverlay();
-    setHoverPos(null);
-  };
+  }, [handleMouseUp, clearOverlay]);
+
+  // ===== useEffect =======
 
   useEffect(() => {
-    const viewCanvas = renderCanvasRef.current;
-    const interactionCanvas = interactionCanvasRef.current;
-    if (!viewCanvas || !interactionCanvas) return;
-
-    const syncCanvasSizes = () => {
-      const parent = viewCanvas.parentElement;
-      if (!parent) return;
-      const width = parent.clientWidth;
-      const height = parent.clientHeight;
-      viewCanvas.width = width;
-      viewCanvas.height = height;
-      interactionCanvas.width = width;
-      interactionCanvas.height = height;
-    };
-
-    const sourceCanvas = document.createElement('canvas');
-    sourceCanvas.width = SOURCE_WIDTH;
-    sourceCanvas.height = SOURCE_HEIGHT;
-    const sourceCtx = sourceCanvas.getContext('2d');
+    const source = document.createElement('canvas');
+    source.width = SOURCE_WIDTH;
+    source.height = SOURCE_HEIGHT;
+    const sourceCtx = source.getContext('2d');
     if (sourceCtx) {
-      sourceCtx.fillStyle = '#000000';
-      sourceCtx.fillRect(0, 0, sourceCanvas.width, sourceCanvas.height);
+      sourceCtx.fillStyle = INITIAL_BACKGROUND_COLOR;
+      sourceCtx.fillRect(0, 0, SOURCE_WIDTH, SOURCE_HEIGHT);
     }
-    sourceCanvasRef.current = sourceCanvas;
+    sourceCanvasRef.current = source;
+
+    const rootElement = rootRef.current;
+    if (!rootElement) return;
+
+    const observer = new ResizeObserver((entries) => {
+      const { width, height } = entries[0].contentRect;
+      if (width === 0 || height === 0) return;
+
+      [renderCanvasRef.current, interactionCanvasRef.current].forEach(
+        (canvas) => {
+          if (canvas) {
+            const dpr = window.devicePixelRatio || 1;
+            // 실제 픽셀 개수인 버퍼 사이즈 설정
+            canvas.width = Math.round(width * dpr);
+            canvas.height = Math.round(height * dpr);
+            // CSS를 통한 표시 사이즈 설정
+            canvas.style.width = `${width}px`;
+            canvas.style.height = `${height}px`;
+
+            const ctx = canvas.getContext('2d');
+            ctx?.scale(dpr, dpr);
+          }
+        }
+      );
+
+      resetAndCenter();
+    });
+
+    observer.observe(rootElement);
+    return () => observer.disconnect();
+  }, [resetAndCenter]);
+
+  useEffect(() => {
+    const interactionCanvas = interactionCanvasRef.current;
+    if (!interactionCanvas) return;
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
@@ -247,6 +257,7 @@ function PixelCanvas() {
       const delta = -e.deltaY;
       const newScale =
         delta > 0 ? scaleRef.current * 1.2 : scaleRef.current / 1.2;
+
       if (newScale >= MIN_SCALE && newScale <= MAX_SCALE) {
         scaleRef.current = newScale;
         viewPosRef.current.x = offsetX - xs * scaleRef.current;
@@ -256,148 +267,27 @@ function PixelCanvas() {
       }
     };
 
-    const handleResize = () => {
-      syncCanvasSizes();
-      resetAndCenter();
-    };
-
-    syncCanvasSizes();
-    resetAndCenter();
-
     interactionCanvas.addEventListener('wheel', handleWheel, {
       passive: false,
     });
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      interactionCanvas.removeEventListener('wheel', handleWheel);
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
-
-  const colors = [
-    '#000000',
-    '#ffffff',
-    '#ff0000',
-    '#00ff00',
-    '#0000ff',
-    '#ffff00',
-    '#ff00ff',
-    '#00ffff',
-    '#ffa500',
-    '#800080',
-  ];
-
-  const [hoverPos, setHoverPos] = useState<{ x: number; y: number } | null>(
-    null
-  );
+    return () => interactionCanvas.removeEventListener('wheel', handleWheel);
+  }, [draw, updateOverlay]);
 
   return (
-    <div>
-      <div
-        style={{
-          position: 'fixed',
-          top: '10px',
-          left: '10px',
-          zIndex: 9999,
-          pointerEvents: 'auto',
-        }}
-      >
-        <input
-          type='color'
-          value={color}
-          onChange={(e) => setColor(e.target.value)}
-          style={{
-            width: '40px',
-            height: '40px',
-            padding: '0',
-            border: '2px solid white',
-            borderRadius: '4px',
-          }}
-        />
-      </div>
-      {/* 좌표위치 */}
-      <div
-        style={{
-          position: 'fixed',
-          top: '50px',
-          right: '20px',
-          zIndex: 9999,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '8px',
-          padding: '10px',
-          backgroundColor: 'rgba(0,0,0,0.8)',
-          borderRadius: '8px',
-          pointerEvents: 'none',
-          color: 'white',
-        }}
-        className='fixed left-1/2 top-16 z-50 -translate-x-1/2 transform rounded bg-black bg-opacity-75 px-3 py-1 text-white'
-      >
-        {hoverPos ? `(${hoverPos.x}, ${hoverPos.y})` : 'Canvas outside'}
-      </div>
-      {/* 팔레트 위치 */}
-      <div
-        style={{
-          position: 'fixed',
-          top: '100px',
-          right: '20px',
-          zIndex: 9999,
-          pointerEvents: 'auto',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '8px',
-          padding: '10px',
-          backgroundColor: 'rgba(0,0,0,0.8)',
-          borderRadius: '8px',
-        }}
-      >
-        {colors.map((c, index) => (
-          <button
-            key={index}
-            onClick={() => setColor(c)}
-            style={{
-              width: '40px',
-              height: '40px',
-              backgroundColor: c,
-              border: color === c ? '3px solid white' : '1px solid #666',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
-          />
-        ))}
-      </div>
-
-      <div className='flex w-full flex-col items-center'>
-        <div className='relative h-[80vh] w-[90vw] overflow-visible border border-white bg-slate-900'>
-          <canvas
-            ref={renderCanvasRef}
-            style={{
-              width: '90vw',
-              height: '80vh',
-              position: 'absolute',
-              top: '0px',
-              left: '0px',
-            }}
-            className='pointer-events-none'
-          />
-          <canvas
-            ref={interactionCanvasRef}
-            style={{
-              width: '90vw',
-              height: '80vh',
-              position: 'absolute',
-              top: '0px',
-              left: '0px',
-            }}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseLeave}
-            onContextMenu={(e) => e.preventDefault()}
-          />
-        </div>
-      </div>
+    <div ref={rootRef} className='relative h-full w-full'>
+      <canvas
+        ref={renderCanvasRef}
+        className='pointer-events-none absolute top-0 left-0'
+      />
+      <canvas
+        ref={interactionCanvasRef}
+        className='absolute top-0 left-0'
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
+        onContextMenu={(e) => e.preventDefault()}
+      />
     </div>
   );
 }
