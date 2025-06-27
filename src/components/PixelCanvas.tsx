@@ -153,6 +153,40 @@ function PixelCanvas({ color, setHoverPos }: PixelCanvasProps) {
     [color, draw]
   );
 
+  const centerOnPixel = useCallback(
+    (screenX: number, screenY: number) => {
+      const canvas = renderCanvasRef.current;
+      if (!canvas) return;
+
+      const worldX = Math.floor(
+        (screenX - viewPosRef.current.x) / scaleRef.current
+      );
+      const worldY = Math.floor(
+        (screenY - viewPosRef.current.y) / scaleRef.current
+      );
+
+      if (
+        worldX < 0 ||
+        worldX >= SOURCE_WIDTH ||
+        worldY < 0 ||
+        worldY >= SOURCE_HEIGHT
+      ) {
+        return;
+      }
+
+      const viewportCenterX = canvas.clientWidth / 2;
+      const viewportCenterY = canvas.clientHeight / 2;
+
+      viewPosRef.current.x =
+        viewportCenterX - (worldX + 0.5) * scaleRef.current;
+      viewPosRef.current.y =
+        viewportCenterY - (worldY + 0.5) * scaleRef.current;
+
+      draw();
+      updateOverlay(screenX, screenY);
+    },
+    [draw, updateOverlay]
+  );
   // ====== 마우스 이벤트 관련 함수 ========
   const handleMouseDown = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -165,11 +199,13 @@ function PixelCanvas({ color, setHoverPos }: PixelCanvasProps) {
         return;
       }
       if (e.button === 0) {
-        isDrawingRef.current = true;
-        drawPixelAt(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+        // isDrawingRef.current = true;
+        centerOnPixel(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+
+        // drawPixelAt(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
       }
     },
-    [drawPixelAt]
+    [drawPixelAt, centerOnPixel]
   );
 
   const handleMouseMove = useCallback(
