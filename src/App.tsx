@@ -13,11 +13,11 @@ function App() {
   const colors = ['#ffffff', '#000000', '#ff0000', '#00ff00', '#0000ff']; // 예시 색상
   return (
     <main className='flex h-screen w-screen items-center justify-center bg-[#2d3748]'>
-      <PixelCanvas color={color} setHoverPos={setHoverPos} />
-      <CanvasUI
+      <PixelCanvas
         color={color}
         setColor={setColor}
         hoverPos={hoverPos}
+        setHoverPos={setHoverPos}
         colors={colors}
       />
     </main>
