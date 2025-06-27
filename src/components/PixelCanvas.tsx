@@ -101,7 +101,7 @@ function PixelCanvas() {
   const calculateMouseLocation = (screenX: number, screenY: number) => {
     const worldX = (screenX - viewPosRef.current.x) / scaleRef.current;
     const worldY = (screenY - viewPosRef.current.y) / scaleRef.current;
-    return { x: Math.round(worldX), y: Math.round(worldY) };
+    return { x: Math.floor(worldX), y: Math.floor(worldY) };
   };
 
   const drawPixelAt = (screenX: number, screenY: number) => {
@@ -177,6 +177,8 @@ function PixelCanvas() {
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const { offsetX, offsetY } = e.nativeEvent;
+    const worldPos = calculateMouseLocation(offsetX, offsetY);
+
     if (isDrawingRef.current) {
       drawPixelAt(offsetX, offsetY);
     }
@@ -262,55 +264,129 @@ function PixelCanvas() {
     };
   }, []);
 
+  const colors = [
+    '#000000',
+    '#ffffff',
+    '#ff0000',
+    '#00ff00',
+    '#0000ff',
+    '#ffff00',
+    '#ff00ff',
+    '#00ffff',
+    '#ffa500',
+    '#800080',
+  ];
+
+  const [hoverPos, setHoverPos] = useState<{ x: number; y: number } | null>(
+    null
+  );
+
   return (
-    <div className='flex w-full flex-col items-center'>
-      <div className='mb-4 flex items-center gap-6 text-white'>
-        <label htmlFor='color-picker' className='text-sm font-medium'>
-          Color:
-        </label>
+    <div>
+      <div
+        style={{
+          position: 'fixed',
+          top: '10px',
+          left: '10px',
+          zIndex: 9999,
+          pointerEvents: 'auto',
+        }}
+      >
         <input
-          id='color-picker'
           type='color'
-          className='h-8 w-8 cursor-pointer border-none bg-transparent p-0'
           value={color}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setColor(e.target.value)
-          }
+          onChange={(e) => setColor(e.target.value)}
+          style={{
+            width: '40px',
+            height: '40px',
+            padding: '0',
+            border: '2px solid white',
+            borderRadius: '4px',
+          }}
         />
-        <span className='text-xs text-slate-400'>
-          (Left Click Drag: Draw | Right Click Drag: Pan | Wheel: Zoom)
-        </span>
+      </div>
+      {/* 좌표위치 */}
+      <div
+        style={{
+          position: 'fixed',
+          top: '50px',
+          right: '20px',
+          zIndex: 9999,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          padding: '10px',
+          backgroundColor: 'rgba(0,0,0,0.8)',
+          borderRadius: '8px',
+          pointerEvents: 'none',
+        }}
+        className='fixed left-1/2 top-16 z-50 -translate-x-1/2 transform rounded bg-black bg-opacity-75 px-3 py-1 text-white'
+      >
+        {hoverPos
+          ? `Cursor at: (${hoverPos.x}, ${hoverPos.y})`
+          : 'Cursor outside'}
+      </div>
+      {/* 팔레트 위치 */}
+      <div
+        style={{
+          position: 'fixed',
+          top: '100px',
+          right: '20px',
+          zIndex: 9999,
+          pointerEvents: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          padding: '10px',
+          backgroundColor: 'rgba(0,0,0,0.8)',
+          borderRadius: '8px',
+        }}
+      >
+        {colors.map((c, index) => (
+          <button
+            key={index}
+            onClick={() => setColor(c)}
+            style={{
+              width: '40px',
+              height: '40px',
+              backgroundColor: c,
+              border: color === c ? '3px solid white' : '1px solid #666',
+              borderRadius: '4px',
+              cursor: 'pointer',
+            }}
+          />
+        ))}
       </div>
 
-      <div className='relative h-[80vh] w-[90vw] border border-white bg-slate-900'>
-        {/* 아래층: 뷰 캔버스 (이벤트를 받지 않음) */}
-        <canvas
-          ref={renderCanvasRef}
-          style={{
-            width: '90vw',
-            height: '80vh',
-            position: 'absolute',
-            top: '0px',
-            left: '0px',
-          }}
-          className='pointer-events-none'
-        />
-        {/* 위층: 상호작용 캔버스 (모든 이벤트를 받음) */}
-        <canvas
-          ref={interactionCanvasRef}
-          style={{
-            width: '90vw',
-            height: '80vh',
-            position: 'absolute',
-            top: '0px',
-            left: '0px',
-          }}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseLeave}
-          onContextMenu={(e) => e.preventDefault()}
-        />
+      <div className='flex w-full flex-col items-center'>
+        <div className='relative h-[80vh] w-[90vw] overflow-visible border border-white bg-slate-900'>
+          <canvas
+            ref={renderCanvasRef}
+            style={{
+              width: '90vw',
+              height: '80vh',
+              position: 'absolute',
+              top: '0px',
+              left: '0px',
+            }}
+            className='pointer-events-none'
+          />
+          <canvas
+            ref={interactionCanvasRef}
+            style={{
+              width: '90vw',
+              height: '80vh',
+              position: 'absolute',
+              top: '0px',
+              left: '0px',
+            }}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseLeave}
+            onContextMenu={(e) => e.preventDefault()}
+          />
+        </div>
       </div>
     </div>
   );
