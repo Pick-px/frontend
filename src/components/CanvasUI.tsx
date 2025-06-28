@@ -9,6 +9,8 @@ type CanvasUIProps = {
   colors: string[];
   onSelectColor: (color: string) => void;
   onConfirm: () => void;
+  cooldown: boolean;
+  timeLeft: number;
 };
 
 export default function CanvasUI({
@@ -18,6 +20,8 @@ export default function CanvasUI({
   colors,
   onConfirm,
   onSelectColor,
+  cooldown,
+  timeLeft,
 }: CanvasUIProps) {
   const [isPressed, setIsPressed] = useState(false);
 
@@ -58,19 +62,27 @@ export default function CanvasUI({
 
         {/*확정 버튼 */}
         <button
-          onMouseDown={() => setIsPressed(true)}
+          disabled={cooldown}
+          onMouseDown={() => !cooldown && setIsPressed(true)}
           onMouseUp={() => {
             setIsPressed(false);
-            onConfirm();
+            if (!cooldown) onConfirm();
           }}
           onMouseLeave={() => setIsPressed(false)}
           className={`mt-[8px] h-[40px] w-full cursor-pointer rounded-[4px] bg-white font-medium text-black transition-transform duration-100 ${
             isPressed ? 'scale-95' : 'scale-100'
-          }`}
+          } ${cooldown ? 'cursor-not-allowed opacity-50' : ''} }`}
         >
-          확정
+          {cooldown ? `쿨다운` : '확정'}
         </button>
       </div>
+
+      {/* 쿨타임 창 : 쿨타임 중에만 표시*/}
+      {cooldown && (
+        <div className='pointer-events-none fixed bottom-[20px] left-1/2 z-[9999] -translate-x-1/2 transform rounded-[8px] bg-red-600 p-[10px] font-bold text-white'>
+          ⏳ {timeLeft}s
+        </div>
+      )}
     </>
   );
 }
