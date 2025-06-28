@@ -1,5 +1,5 @@
 //
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { usePixelSocket } from './SocketIntegration';
 import CanvasUI from './CanvasUI';
 
@@ -54,6 +54,10 @@ function PixelCanvas({
     y: number;
     color: string;
   } | null>(null);
+
+  // 쿨다운 관련 상태
+  const [cooldown, setCooldown] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(0);
 
   // --- 렌더링 함수 ---
   const draw = useCallback(() => {
@@ -243,10 +247,36 @@ function PixelCanvas({
     [draw, updateOverlay]
   );
 
+  //===== 쿨타임 핸들러 : 시작함수
+  const startCooldown = useCallback((seconds: number) => {
+    setCooldown(true);
+    setTimeLeft(seconds);
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setCooldown(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, []);
+
+  //===== 쿨타임 핸들러 : 메인
+  const handleCooltime = useCallback(() => {
+    // 20초 쿨타임 시작
+    startCooldown(20);
+  });
+
   //===== 확정 버튼 클릭 핸들러
   const handleConfirm = useCallback(() => {
     const pos = fixedPosRef.current;
     if (!pos) return;
+
+    // 쿨타임 함수 호출
+    handleCooltime();
 
     // 1) previewPixelRef에 임시 픽셀 정보 저장
     previewPixelRef.current = { x: pos.x, y: pos.y, color };
@@ -429,6 +459,8 @@ function PixelCanvas({
         colors={colors}
         onConfirm={handleConfirm}
         onSelectColor={handleSelectColor}
+        cooldown={cooldown}
+        timeLeft={timeLeft}
       />
     </div>
   );
