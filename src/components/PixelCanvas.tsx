@@ -268,7 +268,7 @@ function PixelCanvas({
   const handleCooltime = useCallback(() => {
     // 20초 쿨타임 시작
     startCooldown(20);
-  });
+  }, []);
 
   //===== 확정 버튼 클릭 핸들러
   const handleConfirm = useCallback(() => {
