@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useModalStore } from '../store/modalStore';
 
 type HoverPos = { x: number; y: number } | null;
 
@@ -25,6 +26,8 @@ export default function CanvasUI({
 }: CanvasUIProps) {
   const [isPressed, setIsPressed] = useState(false);
 
+  const openLoginModal = useModalStore((state) => state.openLoginModal);
+
   return (
     <>
       {/* 컬러 피커 */}
@@ -36,7 +39,14 @@ export default function CanvasUI({
           className='h-[40px] w-[40px] cursor-pointer rounded-[4px] border-2 border-solid border-white p-0'
         />
       </div>
-
+      <div className='pointer-events-auto fixed top-[60px] left-[10px] z-50'>
+        <button
+          onClick={openLoginModal} // ✨ 4. 스토어에서 가져온 함수를 직접 사용!
+          className='rounded-md bg-blue-500 px-4 py-2 text-sm font-bold text-white'
+        >
+          로그인
+        </button>
+      </div>
       {/* 좌표 표시창 */}
       <div className='pointer-events-none fixed top-[50px] right-[20px] z-[9999] rounded-[8px] bg-[rgba(0,0,0,0.8)] p-[10px] text-white'>
         {hoverPos ? `(${hoverPos.x}, ${hoverPos.y})` : 'Canvas outside'}

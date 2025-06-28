@@ -1,8 +1,11 @@
 // App.tsx
 
 import PixelCanvas from './components/PixelCanvas';
-import CanvasUI from './components/CanvasUI'; // UI 컴포넌트 import
+
 import { useState } from 'react'; // UI 상태 관리를 위해 import
+import { useModalStore } from './store/modalStore';
+import LoginModalContent from './components/modal/LoginModalContent';
+import Modal from './components/modal/Modal';
 
 type HoverPos = { x: number; y: number } | null;
 
@@ -11,6 +14,8 @@ function App() {
   const [color, setColor] = useState('#ffffff');
   const [hoverPos, setHoverPos] = useState<HoverPos>(null);
   const colors = ['#ffffff', '#000000', '#ff0000', '#00ff00', '#0000ff']; // 예시 색상
+  const { isLoginModalOpen, closeLoginModal } = useModalStore();
+
   return (
     <main className='flex h-screen w-screen items-center justify-center bg-[#2d3748]'>
       <PixelCanvas
@@ -19,7 +24,11 @@ function App() {
         hoverPos={hoverPos}
         setHoverPos={setHoverPos}
         colors={colors}
+        // canvas_id={''}
       />
+      <Modal isOpen={isLoginModalOpen} onClose={closeLoginModal}>
+        <LoginModalContent onClose={closeLoginModal} />
+      </Modal>
     </main>
   );
 }
