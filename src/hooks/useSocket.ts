@@ -9,16 +9,17 @@ interface PixelData {
 
 export const useSocket = (
   onPixelReceived: (pixel: PixelData) => void,
-  onCanvasReceived: (canvasData: string) => void
+  onCanvasReceived: (canvasData: PixelData[]) => void,
+  canvas_id: string
 ) => {
   const isConnected = useRef(false);
 
   useEffect(() => {
     if (!isConnected.current) {
-      socketService.connect();
+      socketService.connect(canvas_id);
       socketService.onPixelUpdate(onPixelReceived);
       socketService.onCanvasData(onCanvasReceived);
-      socketService.requestCanvasData();
+      socketService.requestCanvasData(canvas_id);
       isConnected.current = true;
     }
 
@@ -26,10 +27,10 @@ export const useSocket = (
       socketService.disconnect();
       isConnected.current = false;
     };
-  }, [onPixelReceived, onCanvasReceived]);
+  }, [onPixelReceived, onCanvasReceived, canvas_id]);
 
   const sendPixel = (pixel: PixelData) => {
-    socketService.drawPixel(pixel);
+    socketService.drawPixel({ ...pixel, canvas_id });
   };
 
   return { sendPixel };
