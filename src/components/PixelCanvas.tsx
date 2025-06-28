@@ -1,5 +1,6 @@
 //
 import React, { useRef, useEffect, useCallback } from 'react';
+import { usePixelSocket } from './SocketIntegration';
 import CanvasUI from './CanvasUI';
 
 // --- 상수 정의 ---
@@ -20,6 +21,7 @@ type PixelCanvasProps = {
   hoverPos: HoverPos;
   setHoverPos: React.Dispatch<React.SetStateAction<HoverPos>>;
   colors: string[];
+  canvas_id: string; //[*]
 };
 
 function PixelCanvas({
@@ -28,13 +30,14 @@ function PixelCanvas({
   hoverPos,
   setHoverPos,
   colors,
+  canvas_id, //[*]
 }: PixelCanvasProps) {
   // --- Ref 정의 ---
   const rootRef = useRef<HTMLDivElement>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null); // 반투명 오버레이용 캔버스
   const renderCanvasRef = useRef<HTMLCanvasElement>(null); // 색상 칠하는 아래층 Canvas
   const interactionCanvasRef = useRef<HTMLCanvasElement>(null); // 이벤트 레이어
-  const sourceCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const sourceCanvasRef = useRef<HTMLCanvasElement>(null!);
 
   const scaleRef = useRef<number>(1);
   const viewPosRef = useRef<{ x: number; y: number }>(INITIAL_POSITION);
@@ -86,7 +89,7 @@ function PixelCanvas({
       pctx.imageSmoothingEnabled = false;
       pctx.drawImage(src, 0, 0);
 
-      // fixedPosRef에 색이 있으면(투명 - ’transparent’) 채우기
+      // fixedPosRef에 색이 있으면(투명 - 'transparent') 채우기
       if (fixedPosRef.current && fixedPosRef.current.color !== 'transparent') {
         const { x, y, color: fx } = fixedPosRef.current;
         pctx.fillStyle = fx;
@@ -109,6 +112,9 @@ function PixelCanvas({
       pctx.restore();
     }
   }, []);
+
+  // 소켓 연결 및 픽셀 전송
+  const { sendPixel } = usePixelSocket({ sourceCanvasRef, draw, canvas_id });
 
   // cursor pointer 위치 updatae
   const updateOverlay = useCallback(
@@ -248,13 +254,16 @@ function PixelCanvas({
     // 2) 즉시 그리기
     draw();
 
-    // 3) 4초 뒤에 previewPixelRef 비우고 다시 그리기
+    // 3) 서버로 픽셀 전송
+    sendPixel({ x: pos.x, y: pos.y, color });
+
+    // 4) 4초 뒤에 previewPixelRef 비우고 다시 그리기
     setTimeout(() => {
       previewPixelRef.current = null;
       pos.color = 'transparent';
       draw();
     }, 4000);
-  }, [color, draw]);
+  }, [color, draw, sendPixel]);
 
   // 팔레트 변경 시 미리보기 픽셀 업데이트 - fixed pixel 색만 바꿔주고 draw()
   const handleSelectColor = useCallback(

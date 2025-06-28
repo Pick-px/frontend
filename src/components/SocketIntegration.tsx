@@ -4,9 +4,10 @@ import { useSocket } from '../hooks/useSocket';
 interface SocketIntegrationProps {
   sourceCanvasRef: React.RefObject<HTMLCanvasElement>;
   draw: () => void;
+  canvas_id: string; //[*]
 }
 
-export const usePixelSocket = ({ sourceCanvasRef, draw }: SocketIntegrationProps) => {
+export const usePixelSocket = ({ sourceCanvasRef, draw, canvas_id }: SocketIntegrationProps) => { //[*]
   // 다른 사용자 픽셀 수신
   const handlePixelReceived = useCallback((pixel: { x: number; y: number; color: string }) => {
     const sourceCtx = sourceCanvasRef.current?.getContext('2d');
@@ -29,7 +30,7 @@ export const usePixelSocket = ({ sourceCanvasRef, draw }: SocketIntegrationProps
     }
   }, [sourceCanvasRef, draw]);
 
-  const { sendPixel } = useSocket(handlePixelReceived, handleCanvasReceived);
+  const { sendPixel } = useSocket(handlePixelReceived, handleCanvasReceived, canvas_id); //[*]
 
   return { sendPixel };
 };
