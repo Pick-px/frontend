@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useModalStore } from '../store/modalStore';
 
 type HoverPos = { x: number; y: number } | null;
@@ -26,7 +26,33 @@ export default function CanvasUI({
 }: CanvasUIProps) {
   const [isPressed, setIsPressed] = useState(false);
 
-  const openLoginModal = useModalStore((state) => state.openLoginModal);
+  const {
+    openLoginModal,
+    openCanvasModal,
+    openAlbumModal,
+    openMyPageModal,
+    openGroupModal,
+  } = useModalStore();
+
+  // 드롭다움 열림, 닫힘 상태
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isMenuOpen) return;
+
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false); // 메뉴를 닫습니다.
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isMenuOpen]);
 
   return (
     <>
@@ -39,13 +65,160 @@ export default function CanvasUI({
           className='h-[40px] w-[40px] cursor-pointer rounded-[4px] border-2 border-solid border-white p-0'
         />
       </div>
-      <div className='pointer-events-auto fixed top-[60px] left-[10px] z-50'>
+      <div
+        ref={menuRef}
+        className='pointer-events-auto fixed top-[60px] left-[10px] z-50'
+      >
+        {/* 항상 보이는 메뉴 토글 버튼 (햄버거 아이콘) */}
         <button
-          onClick={openLoginModal} // ✨ 4. 스토어에서 가져온 함수를 직접 사용!
-          className='rounded-md bg-blue-500 px-4 py-2 text-sm font-bold text-white'
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
         >
-          로그인
+          <svg
+            className='h-6 w-6'
+            fill='none'
+            viewBox='0 0 24 24'
+            stroke='currentColor'
+          >
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeWidth={2}
+              d='M4 6h16M4 12h16M4 18h16'
+            />
+          </svg>
         </button>
+
+        {/* isMenuOpen이 true일 때만 드롭다운 메뉴가 보입니다. */}
+        {isMenuOpen && (
+          <div className='absolute top-full mt-2 flex w-auto flex-col gap-2'>
+            {/* 로그인 버튼 */}
+            <div className='group relative'>
+              <button
+                onClick={openLoginModal}
+                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
+              >
+                <svg
+                  className='h-6 w-6'
+                  xmlns='http://www.w3.org/2000/svg'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  strokeWidth={1.5}
+                  stroke='currentColor'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    d='M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9'
+                  />
+                </svg>
+              </button>
+              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs text-white transition-all group-hover:scale-100'>
+                로그인
+              </span>
+            </div>
+            {/* 캔버스 버튼 */}
+            <div className='group relative'>
+              <button
+                onClick={openCanvasModal}
+                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
+              >
+                <svg
+                  className='h-6 w-6'
+                  xmlns='http://www.w3.org/2000/svg'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  strokeWidth={1.5}
+                  stroke='currentColor'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    d='M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125'
+                  />
+                </svg>
+              </button>
+              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs text-white transition-all group-hover:scale-100'>
+                캔버스
+              </span>
+            </div>
+            {/* 앨범 버튼 */}
+            <div className='group relative'>
+              <button
+                onClick={openAlbumModal}
+                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
+              >
+                <svg
+                  className='h-6 w-6'
+                  xmlns='http://www.w3.org/2000/svg'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  strokeWidth={1.5}
+                  stroke='currentColor'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    d='M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z'
+                  />
+                </svg>
+              </button>
+              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs text-white transition-all group-hover:scale-100'>
+                앨범
+              </span>
+            </div>
+            {/* 마이페이지 버튼 */}
+            <div className='group relative'>
+              <button
+                onClick={openMyPageModal}
+                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
+              >
+                <svg
+                  className='h-6 w-6'
+                  xmlns='http://www.w3.org/2000/svg'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  strokeWidth={1.5}
+                  stroke='currentColor'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    d='M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z'
+                  />
+                </svg>
+              </button>
+              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs text-white transition-all group-hover:scale-100'>
+                마이페이지
+              </span>
+            </div>
+            {/* 그룹 버튼 */}
+            <div className='group relative'>
+              <button
+                onClick={openGroupModal}
+                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
+              >
+                <svg
+                  className='h-6 w-6'
+                  xmlns='http://www.w3.org/2000/svg'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  strokeWidth={1.5}
+                  stroke='currentColor'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    d='M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m-7.5-2.962a3.75 3.75 0 015.962 0L12 15.75M12 15.75l-2.47-4.772a3.75 3.75 0 015.962 0L12 15.75zM21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+                  />
+                </svg>
+              </button>
+              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs text-white transition-all group-hover:scale-100'>
+                그룹
+              </span>
+            </div>
+          </div>
+        )}
       </div>
       {/* 좌표 표시창 */}
       <div className='pointer-events-none fixed top-[50px] right-[20px] z-[9999] rounded-[8px] bg-[rgba(0,0,0,0.8)] p-[10px] text-white'>
