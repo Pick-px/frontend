@@ -10,6 +10,7 @@ import LoginModalContent from './components/modal/LoginModalContent';
 import Modal from './components/modal/Modal';
 import { useAuthStore } from './store/authStrore';
 import apiClient from './services/apiClient';
+import Chat from './components/chat/ChatUI';
 
 type HoverPos = { x: number; y: number } | null;
 
@@ -60,6 +61,7 @@ function App() {
       <Modal isOpen={isLoginModalOpen} onClose={closeLoginModal}>
         <LoginModalContent onClose={closeLoginModal} />
       </Modal>
+      <Chat />
     </main>
   );
 }
