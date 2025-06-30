@@ -26,17 +26,32 @@ export default function AuthCallbackPage() {
     const processLogin = async (prov: Provider, authCode: string) => {
       try {
         // authService에 code와 provider(state)를 모두 전달
-        const { accessToken, user } = await authService.handleOAuthCallback(
+        // const { accessToken, user } = await authService.handleOAuthCallback(
+        //   authCode,
+        //   prov
+        // );
+
+        // if (accessToken && user) {
+        //   setAuth(accessToken, user);
+        //   console.log(user);
+        //   navigate('/canvas'); // 성공! 메인 페이지로 이동
+        // }
+        const authResult = await authService.handleOAuthCallback(
           authCode,
           prov
         );
 
-        console.log(accessToken);
-        console.log(user);
+        console.log(authResult);
 
-        if (accessToken && user) {
-          setAuth(accessToken, user);
-          navigate('/'); // 성공! 메인 페이지로 이동
+        if (authResult?.accessToken && authResult?.user) {
+          // ✨ 1. 객체를 JSON 문자열로 변환합니다.
+          const authResultString = JSON.stringify(authResult);
+
+          // ✨ 2. 'authResult'라는 키(key)로 sessionStorage에 저장합니다.
+          sessionStorage.setItem('authResult', authResultString);
+
+          // 3. 성공했으니 메인 페이지로 이동
+          navigate('/');
         } else {
           throw new Error('Authentication failed');
         }

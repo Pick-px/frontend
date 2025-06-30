@@ -17,8 +17,8 @@ type AuthResult = {
   accessToken: string;
   user: {
     userId: string;
-    // nickname?: string;
-    // email?: string;
+    nickname?: string;
+    email?: string;
   };
 };
 
