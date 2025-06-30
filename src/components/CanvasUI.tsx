@@ -61,7 +61,11 @@ export default function CanvasUI({
         <input
           type='color'
           value={color}
-          onChange={(e) => setColor(e.target.value)}
+          onChange={(e) => {
+            const newColor = e.target.value;
+            setColor(newColor);
+            onSelectColor(newColor);
+          }}
           className='h-[40px] w-[40px] cursor-pointer rounded-[4px] border-2 border-solid border-white p-0'
         />
       </div>
