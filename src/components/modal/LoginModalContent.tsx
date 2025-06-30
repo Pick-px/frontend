@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import OAuthButton from './OAuthButton';
+import { authService } from '../../services/authService';
 
 type LoginModalContentProps = {
   onClose?: () => void;
@@ -16,9 +17,8 @@ export default function LoginModalContent({ onClose }: LoginModalContentProps) {
     onClose?.();
   };
 
-  const handleOAuthLogin = (provider: string) => {
-    console.log(`${provider} 로그인 시작`);
-    // 각 provider에 맞는 로그인 로직 호출
+  const handleOAuthLogin = (provider: 'google' | 'naver' | 'kakao') => {
+    authService.redirectToProvider(provider);
   };
 
   return (
@@ -52,15 +52,15 @@ export default function LoginModalContent({ onClose }: LoginModalContentProps) {
         </button>
         <OAuthButton
           provider='google'
-          onClick={() => handleOAuthLogin('Google')}
+          onClick={() => handleOAuthLogin('google')}
         />
         <OAuthButton
           provider='naver'
-          onClick={() => handleOAuthLogin('Naver')}
+          onClick={() => handleOAuthLogin('naver')}
         />
         <OAuthButton
           provider='kakao'
-          onClick={() => handleOAuthLogin('Kakao')}
+          onClick={() => handleOAuthLogin('kakao')}
         />
       </div>
     </>
