@@ -6,7 +6,7 @@ import axios from 'axios';
 import { useAuthStore } from '../store/authStrore';
 
 const apiClient = axios.create({
-  baseURL: 'OUR_DOMAIN',
+  baseURL: 'http://localhost:5173',
   withCredentials: true, // 쿠키 주고 받기위함
 });
 
