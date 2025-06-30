@@ -37,7 +37,7 @@ function PixelCanvas({
   const previewCanvasRef = useRef<HTMLCanvasElement>(null); // 반투명 오버레이용 캔버스
   const renderCanvasRef = useRef<HTMLCanvasElement>(null); // 색상 칠하는 아래층 Canvas
   const interactionCanvasRef = useRef<HTMLCanvasElement>(null); // 이벤트 레이어
-  const sourceCanvasRef = useRef<HTMLCanvasElement>(null!);
+  const sourceCanvasRef = useRef<HTMLCanvasElement | null>(null!);
 
   const scaleRef = useRef<number>(1);
   const viewPosRef = useRef<{ x: number; y: number }>(INITIAL_POSITION);
@@ -238,15 +238,12 @@ function PixelCanvas({
   const handleCooltime = useCallback(() => {
     // 20초 쿨타임 시작
     startCooldown(20);
-  }, []);
+  }, [startCooldown]);
 
   //===== 확정 버튼 클릭 핸들러
   const handleConfirm = useCallback(() => {
     const pos = fixedPosRef.current;
     if (!pos) return;
-
-    // 쿨타임 함수 호출
-    handleCooltime();
 
     // 쿨타임 함수 호출
     handleCooltime();
@@ -266,7 +263,7 @@ function PixelCanvas({
       pos.color = 'transparent';
       draw();
     }, 4000);
-  }, [color, draw, sendPixel]);
+  }, [color, draw, sendPixel, handleCooltime]);
 
   // 팔레트 변경 시 미리보기 픽셀 업데이트 - fixed pixel 색만 바꿔주고 draw()
   const handleSelectColor = useCallback(
