@@ -24,7 +24,7 @@ function App() {
         hoverPos={hoverPos}
         setHoverPos={setHoverPos}
         colors={colors}
-        // canvas_id={''}
+        canvas_id={''}
       />
       <Modal isOpen={isLoginModalOpen} onClose={closeLoginModal}>
         <LoginModalContent onClose={closeLoginModal} />
