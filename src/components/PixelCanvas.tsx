@@ -43,7 +43,6 @@ function PixelCanvas({
   const viewPosRef = useRef<{ x: number; y: number }>(INITIAL_POSITION);
   const startPosRef = useRef<{ x: number; y: number }>(INITIAL_POSITION);
   const isPanningRef = useRef<boolean>(false);
-  const isDrawingRef = useRef<boolean>(false);
   //테두리 고정 픽셀
   const fixedPosRef = useRef<{ x: number; y: number; color: string } | null>(
     null
@@ -183,35 +182,6 @@ function PixelCanvas({
     clearOverlay();
   }, [draw, clearOverlay]);
 
-  // fillRect로 1*1 픽셀 찍기
-  // 마우스 좌표를 인자로 받음
-  // 사용자가 그릴때 호춣 => 원본 데이터 변경
-  const drawPixelAt = useCallback(
-    (screenX: number, screenY: number) => {
-      const sourceCtx = sourceCanvasRef.current?.getContext('2d');
-      if (!sourceCtx) return;
-
-      const worldX = Math.floor(
-        (screenX - viewPosRef.current.x) / scaleRef.current
-      );
-      const worldY = Math.floor(
-        (screenY - viewPosRef.current.y) / scaleRef.current
-      );
-
-      if (
-        worldX >= 0 &&
-        worldX < SOURCE_WIDTH &&
-        worldY >= 0 &&
-        worldY < SOURCE_HEIGHT
-      ) {
-        sourceCtx.fillStyle = color;
-        sourceCtx.fillRect(worldX, worldY, 1, 1);
-        draw(); // 변경 내용 그리기 요청
-      }
-    },
-    [color, draw]
-  );
-
   const centerOnPixel = useCallback(
     (screenX: number, screenY: number) => {
       const canvas = renderCanvasRef.current;
@@ -278,6 +248,9 @@ function PixelCanvas({
     // 쿨타임 함수 호출
     handleCooltime();
 
+    // 쿨타임 함수 호출
+    handleCooltime();
+
     // 1) previewPixelRef에 임시 픽셀 정보 저장
     previewPixelRef.current = { x: pos.x, y: pos.y, color };
 
@@ -326,7 +299,7 @@ function PixelCanvas({
         centerOnPixel(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
       }
     },
-    [drawPixelAt, centerOnPixel]
+    [centerOnPixel]
   );
 
   const handleMouseMove = useCallback(
@@ -340,16 +313,12 @@ function PixelCanvas({
         };
         draw();
       }
-      if (isDrawingRef.current) {
-        drawPixelAt(offsetX, offsetY);
-      }
       updateOverlay(offsetX, offsetY);
     },
-    [draw, drawPixelAt, updateOverlay]
+    [draw, updateOverlay]
   );
 
   const handleMouseUp = useCallback(() => {
-    isDrawingRef.current = false;
     isPanningRef.current = false;
   }, []);
 
