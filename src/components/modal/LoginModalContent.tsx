@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import OAuthButton from './OAuthButton';
 
 type LoginModalContentProps = {
   onClose?: () => void;
@@ -9,11 +10,15 @@ export default function LoginModalContent({ onClose }: LoginModalContentProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = () => {
+  const handleLogin = ({}) => {
     // 실제 로그인 로직을
     console.log(`로그인 시도: ${username} / ${password}`);
-    // 로그인이 성공하면 부모로부터 받은 onClose 함수를 호출하여 모달을 닫을 수 있습니다.
     onClose?.();
+  };
+
+  const handleOAuthLogin = (provider: string) => {
+    console.log(`${provider} 로그인 시작`);
+    // 각 provider에 맞는 로그인 로직 호출
   };
 
   return (
@@ -37,12 +42,26 @@ export default function LoginModalContent({ onClose }: LoginModalContentProps) {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
+      </div>
+      <div className='mt-4 flex flex-col items-center gap-3'>
         <button
           onClick={handleLogin}
-          className='rounded bg-blue-500 py-2 text-white'
+          className='h-10 w-[180px] rounded bg-blue-500 py-2 text-white transition-transform active:scale-95'
         >
           로그인하기
         </button>
+        <OAuthButton
+          provider='google'
+          onClick={() => handleOAuthLogin('Google')}
+        />
+        <OAuthButton
+          provider='naver'
+          onClick={() => handleOAuthLogin('Naver')}
+        />
+        <OAuthButton
+          provider='kakao'
+          onClick={() => handleOAuthLogin('Kakao')}
+        />
       </div>
     </>
   );
