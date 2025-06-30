@@ -59,6 +59,10 @@ function PixelCanvas({
   const [cooldown, setCooldown] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
 
+  // 쿨다운 관련 상태
+  const [cooldown, setCooldown] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(0);
+
   // --- 렌더링 함수 ---
   const draw = useCallback(() => {
     const src = sourceCanvasRef.current;
@@ -278,6 +282,9 @@ function PixelCanvas({
     // 쿨타임 함수 호출
     handleCooltime();
 
+    // 쿨타임 함수 호출
+    handleCooltime();
+
     // 1) previewPixelRef에 임시 픽셀 정보 저장
     previewPixelRef.current = { x: pos.x, y: pos.y, color };
 
@@ -459,6 +466,8 @@ function PixelCanvas({
         colors={colors}
         onConfirm={handleConfirm}
         onSelectColor={handleSelectColor}
+        cooldown={cooldown}
+        timeLeft={timeLeft}
         cooldown={cooldown}
         timeLeft={timeLeft}
       />
