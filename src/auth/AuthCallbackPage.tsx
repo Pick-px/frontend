@@ -31,6 +31,9 @@ export default function AuthCallbackPage() {
           prov
         );
 
+        console.log(accessToken);
+        console.log(user);
+
         if (accessToken && user) {
           setAuth(accessToken, user);
           navigate('/'); // 성공! 메인 페이지로 이동

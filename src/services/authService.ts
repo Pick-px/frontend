@@ -1,5 +1,5 @@
 import apiClient from './apiClient';
-
+import { jwtDecode } from 'jwt-decode';
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const NAVER_CLIENT_ID = import.meta.env.VITE_NAVER_CLIENT_ID;
 const KAKAO_CLIENT_ID = import.meta.env.VITE_KAKAO_CLIENT_ID;
@@ -17,9 +17,15 @@ type AuthResult = {
   accessToken: string;
   user: {
     userId: string;
-    nickname: string;
-    email: string;
+    // nickname?: string;
+    // email?: string;
   };
+};
+
+type DecodedToken = {
+  userId: string;
+  // exp: number; // 만료 시간 등 JWT 표준 클레임
+  // iat: number; // 발급 시간 등
 };
 
 // --- 서비스 객체 ---
@@ -47,8 +53,21 @@ export const authService = {
         state,
       });
 
+      console.log('백엔드로부터 받은 전체 응답:', response);
+      console.log('응답 헤더:', response.headers);
+      console.log('Authorization 헤더 값:', response.headers['authorization']);
+
+      const authHeader = response.headers['authorization'];
+      const accessToken = authHeader?.split(' ')[1];
+
+      const decodedToken = jwtDecode<DecodedToken>(accessToken);
+
+      const user = {
+        userId: decodedToken.userId,
+      };
+
       // 응답에서 AT와 사용자 정보를 추출하여 반환
-      return response.data;
+      return { accessToken, user };
     } catch (error) {
       console.error(`${state} login failed`, error);
       throw error;
