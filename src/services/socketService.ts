@@ -6,14 +6,21 @@ interface PixelData {
   color: string;
 }
 
+interface PixelDataWithCanvas extends PixelData {
+  canvas_id: string;
+}
+
 class SocketService {
   private socket: Socket | null = null;
 
-  connect() {
-    this.socket = io('http://localhost:3000');
-    
+  connect(canvas_id: string) {
+    this.socket = io(
+      import.meta.env.VITE_SOCKET_URL || 'https://ws.pick-px.com'
+    );
+
     this.socket.on('connect', () => {
       console.log('소켓 연결됨');
+      this.socket!.emit('join_canvas', { canvas_id });
     });
 
     this.socket.on('disconnect', () => {
@@ -22,7 +29,7 @@ class SocketService {
   }
 
   // 픽셀 그리기 서버로 전송
-  drawPixel(pixelData: PixelData) {
+  drawPixel(pixelData: PixelDataWithCanvas) {
     if (this.socket) {
       this.socket.emit('draw-pixel', pixelData);
     }
@@ -32,20 +39,6 @@ class SocketService {
   onPixelUpdate(callback: (pixelData: PixelData) => void) {
     if (this.socket) {
       this.socket.on('pixel-update', callback);
-    }
-  }
-
-  // 초기 캔버스 데이터 요청
-  requestCanvasData() {
-    if (this.socket) {
-      this.socket.emit('get-canvas');
-    }
-  }
-
-  // 초기 캔버스 데이터 수신
-  onCanvasData(callback: (canvasData: string) => void) {
-    if (this.socket) {
-      this.socket.on('canvas-data', callback);
     }
   }
 
