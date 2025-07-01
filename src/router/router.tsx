@@ -9,8 +9,8 @@ export default function Router() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path='/' element={<Navigate to='/canvas' replace />} />
-        <Route path='/canvas' element={<App />} />
+        <Route path='/' element={<Navigate to='/canvas/pixels' replace />} />
+        <Route path='/canvas/pixels' element={<App />} />
         {/* ✨ OAuth 콜백을 처리할 전용 경로 */}
         <Route path='/auth/callback' element={<AuthCallbackPage />} />
         {/* 나중에 추가될 다른 페이지 경로들... */}

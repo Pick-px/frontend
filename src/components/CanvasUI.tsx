@@ -71,7 +71,7 @@ export default function CanvasUI({
       </div>
       <div
         ref={menuRef}
-        className='pointer-events-auto fixed top-[60px] left-[10px] z-50'
+        className='pointer-events-auto fixed top-[60px] left-[10px] z-60'
       >
         {/* 항상 보이는 메뉴 토글 버튼 (햄버거 아이콘) */}
         <button

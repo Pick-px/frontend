@@ -21,7 +21,7 @@ class SocketService {
 
     this.socket.on('connect', () => {
       console.log('소켓 연결됨');
-      this.socket!.emit('join_canvas', { canvas_id: { canvas_id } });
+      this.socket!.emit('join_canvas', { canvas_id });
     });
 
     this.socket.on('disconnect', () => {

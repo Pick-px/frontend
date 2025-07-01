@@ -4,8 +4,4 @@ import './index.css';
 
 import Router from './router/router.tsx';
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <Router />
-  </StrictMode>
-);
+createRoot(document.getElementById('root')!).render(<Router />);
