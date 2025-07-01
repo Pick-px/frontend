@@ -2,6 +2,7 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { usePixelSocket } from './SocketIntegration';
 import CanvasUI from './CanvasUI';
+import { canvasService } from '../api/CanvasAPI';
 
 // --- 상수 정의 ---
 const INITIAL_POSITION = { x: 0, y: 0 };
@@ -37,7 +38,7 @@ function PixelCanvas({
   const previewCanvasRef = useRef<HTMLCanvasElement>(null); // 반투명 오버레이용 캔버스
   const renderCanvasRef = useRef<HTMLCanvasElement>(null); // 색상 칠하는 아래층 Canvas
   const interactionCanvasRef = useRef<HTMLCanvasElement>(null); // 이벤트 레이어
-  const sourceCanvasRef = useRef<HTMLCanvasElement | null>(null!);
+  const sourceCanvasRef = useRef<HTMLCanvasElement>(null!);
 
   const scaleRef = useRef<number>(1);
   const viewPosRef = useRef<{ x: number; y: number }>(INITIAL_POSITION);
@@ -400,6 +401,19 @@ function PixelCanvas({
     });
     return () => interactionCanvas.removeEventListener('wheel', handleWheel);
   }, [draw, updateOverlay]);
+
+  // useEffect(() => {
+  //   const fetchCanvasPixels = async () => {
+  //     try {
+  //       // ✨ 호출 대상을 canvasService로 변경
+  //       const result = await canvasService.getCanvasPixels(canvas_id);
+  //       console.log('✅ API 응답 성공! 받은 데이터:', result);
+  //     } catch (error) {
+  //       console.error('❌ API 호출에 최종 실패했습니다:', error);
+  //     }
+  //   };
+  //   fetchCanvasPixels();
+  // }, [canvas_id]);
 
   return (
     <div ref={rootRef} className='relative h-full w-full'>

@@ -1,22 +1,20 @@
-// App.tsx
-
 import PixelCanvas from './components/PixelCanvas';
 
-import React, { useState, useEffect } from 'react'; // UI 상태 관리를 위해 import
+import { useState, useEffect } from 'react'; // UI 상태 관리를 위해 import
 import { useLocation } from 'react-router-dom';
 
 import { useModalStore } from './store/modalStore';
 import LoginModalContent from './components/modal/LoginModalContent';
 import Modal from './components/modal/Modal';
 import { useAuthStore } from './store/authStrore';
-import apiClient from './services/apiClient';
 import Chat from './components/chat/ChatUI';
 import MyPageModalContent from './components/modal/MyPageModalContent';
+import { canvasService } from './api/CanvasAPI';
 
 type HoverPos = { x: number; y: number } | null;
 
 function App() {
-  // URL에서 ?canvas_id= 값을 읽어온다
+  // URL에서 ?canvas_id= 값을 읽어온다 => Null 이라면 서버에서 뿌려주는 default Id 캔버스 렌더링
   const { search } = useLocation();
   const canvas_id = new URLSearchParams(search).get('canvas_id') || '';
 

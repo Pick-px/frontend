@@ -13,7 +13,6 @@ export default function LoginModalContent({ onClose }: LoginModalContentProps) {
 
   const handleLogin = ({}) => {
     // 실제 로그인 로직을
-    console.log(`로그인 시도: ${username} / ${password}`);
     onClose?.();
   };
 

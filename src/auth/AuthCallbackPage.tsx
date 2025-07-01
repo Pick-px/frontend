@@ -41,8 +41,6 @@ export default function AuthCallbackPage() {
           prov
         );
 
-        console.log(authResult);
-
         if (authResult?.accessToken && authResult?.user) {
           // ✨ 1. 객체를 JSON 문자열로 변환합니다.
           const authResultString = JSON.stringify(authResult);
