@@ -112,6 +112,7 @@ function PixelCanvas({
         pctx.fillStyle = px;
         pctx.fillRect(x, y, 1, 1);
       }
+      // pctx.drawImage(src, 0, 0);
       pctx.restore();
     }
   }, []);
@@ -292,8 +293,10 @@ function PixelCanvas({
         const wx = Math.floor((sx - viewPosRef.current.x) / scaleRef.current);
         const wy = Math.floor((sy - viewPosRef.current.y) / scaleRef.current);
         // 고정 픽셀 세팅 - fixedPosRef에 저장함. - 투명으로
-        fixedPosRef.current = { x: wx, y: wy, color: 'transparent' };
-        centerOnPixel(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+        if (wx >= 0 && wx < SOURCE_WIDTH && wy >= 0 && wy < SOURCE_HEIGHT) {
+          fixedPosRef.current = { x: wx, y: wy, color: 'transparent' };
+          centerOnPixel(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+        }
       }
     },
     [centerOnPixel]
