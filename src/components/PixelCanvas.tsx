@@ -251,11 +251,11 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
 
         if (progress < 1) {
           requestAnimationFrame(animate);
+          updateOverlay(screenX, screenY);
         } else {
           updateOverlay(screenX, screenY);
         }
       };
-
       requestAnimationFrame(animate);
     },
     [draw, updateOverlay, canvasSize]
