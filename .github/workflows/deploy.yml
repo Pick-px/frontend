@@ -1,0 +1,86 @@
+name: Deploy Frontend to S3 and CloudFront
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # PR에서는 빌드 테스트만 실행
+  test:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '23'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project (Test)
+        run: npm run build
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_GOOGLE_REDIRECT_URI: https://pick-px.com/user/oauth/callback
+          VITE_REDIRECT_URI: https://pick-px.com/auth/callback
+          VITE_AWS_PUBLIC_DNS: http://pick-px-alb-1363080572.ap-northeast-2.elb.amazonaws.com
+          VITE_API_URL: https://pick-px.com/api
+          VITE_SOCKET_URL: http://ws.pick-px.com
+
+      - name: Test Success
+        run: echo "✅ Build test passed! Ready for merge."
+
+  # Push에서는 실제 배포 실행
+  deploy:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_GOOGLE_REDIRECT_URI: https://pick-px.com/user/oauth/callback
+          VITE_REDIRECT_URI: https://pick-px.com/auth/callback
+          VITE_AWS_PUBLIC_DNS: http://pick-px-alb-1363080572.ap-northeast-2.elb.amazonaws.com
+          VITE_API_URL: https://pick-px.com/api
+          VITE_SOCKET_URL: http://ws.pick-px.com
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      - name: Deploy to S3
+        run: |
+          aws s3 sync dist/ s3://pick-px-front-s3 --delete --cache-control max-age=31536000
+          aws s3 cp dist/index.html s3://pick-px-front-s3/index.html --cache-control max-age=0
+
+      - name: Invalidate CloudFront
+        run: |
+          aws cloudfront create-invalidation --distribution-id E1MOCS2TPV7OH9 --paths "/*"
+
+      - name: Deployment Success
+        run: echo "🚀 Deployment completed successfully!"

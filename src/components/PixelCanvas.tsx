@@ -48,7 +48,7 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
   } | null>(null);
 
   // 쿨다운 관련 상태
-  const [canvasSize, setCanvasSize] = useState({ width: 512, height: 512 });
+  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
   const [cooldown, setCooldown] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const [color, setColor] = useState('#ffffff');
@@ -345,10 +345,12 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
 
   // ===== useEffect =======
   // --- canvas 전체 픽셀 데이터 요청
+
+  const API_URL = import.meta.env.VITE_API_URL || 'https://pick-px.com/api';
   useEffect(() => {
     const url = canvas_id
-      ? `http://localhost:3000/api/canvas/pixels?canvas_id=${canvas_id}`
-      : 'http://localhost:3000/api/canvas/pixels';
+      ? `${API_URL}/canvas/pixels?canvas_id=${canvas_id}`
+      : `${API_URL}/canvas/pixels`;
 
     // API 요청 후, 자동 압축해제 및 sourceCanvas 재구성
     fetch(url, {

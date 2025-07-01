@@ -6,7 +6,7 @@ import axios from 'axios';
 import { useAuthStore } from '../store/authStrore';
 
 const apiClient = axios.create({
-  baseURL: 'http://localhost:3000',
+  baseURL: import.meta.env.VITE_API_URL || 'https://pick-px.com/api',
   withCredentials: true, // 쿠키 주고 받기위함
 });
 
@@ -33,7 +33,7 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
-        const res = await apiClient.post('/api/auth/refresh');
+        const res = await apiClient.post('/auth/refresh');
 
         // 새로 발급받은 AT를 응답 본문에서 꺼냅니다.
         const newAccessToken = res.data.accessToken;
