@@ -64,7 +64,7 @@ jobs:
           VITE_REDIRECT_URI: https://pick-px.com/auth/callback
           VITE_AWS_PUBLIC_DNS: http://pick-px-alb-1363080572.ap-northeast-2.elb.amazonaws.com
           VITE_API_URL: https://pick-px.com/api
-          VITE_SOCKET_URL: http://ws.pick-px.com
+          VITE_SOCKET_URL: https://ws.pick-px.com
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
