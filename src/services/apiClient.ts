@@ -33,7 +33,7 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
-        const res = await apiClient.post('/auth/refresh');
+        const res = await apiClient.post('/api/auth/refresh');
 
         // 새로 발급받은 AT를 응답 본문에서 꺼냅니다.
         const newAccessToken = res.data.accessToken;
