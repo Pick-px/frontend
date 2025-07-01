@@ -84,13 +84,18 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
     const ctx = canvas?.getContext('2d');
     if (ctx && canvas) {
       ctx.save();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
       // 배경 + pan/zoom + 픽셀 데이터
-      ctx.fillStyle = VIEWPORT_BACKGROUND_COLOR;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // ctx.fillStyle = VIEWPORT_BACKGROUND_COLOR;
+      // ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.translate(viewPosRef.current.x, viewPosRef.current.y);
       ctx.scale(scaleRef.current, scaleRef.current);
       ctx.fillStyle = INITIAL_BACKGROUND_COLOR;
       ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
+      ctx.strokeStyle = 'rgba(0,192,0,0.9)';
+      ctx.lineWidth = 0.1;
+      ctx.strokeRect(0, 0, canvasSize.width, canvasSize.width);
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(src, 0, 0);
       ctx.restore();
@@ -128,6 +133,7 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
         pctx.fillStyle = px;
         pctx.fillRect(x, y, 1, 1);
       }
+
       pctx.restore();
     }
   }, [canvasSize]);
@@ -190,9 +196,11 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
     const canvas = renderCanvasRef.current;
     if (!canvas || canvas.clientWidth === 0) return;
 
-    scaleRef.current = 1;
-    viewPosRef.current.x = (canvas.clientWidth - canvasSize.width) / 2;
-    viewPosRef.current.y = (canvas.clientHeight - canvasSize.height) / 2;
+    scaleRef.current = 2;
+    viewPosRef.current.x =
+      (canvas.clientWidth - canvasSize.width * scaleRef.current) / 2;
+    viewPosRef.current.y =
+      (canvas.clientHeight - canvasSize.height * scaleRef.current) / 2;
 
     draw();
     clearOverlay();
@@ -222,13 +230,33 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
       const viewportCenterX = canvas.clientWidth / 2;
       const viewportCenterY = canvas.clientHeight / 2;
 
-      viewPosRef.current.x =
-        viewportCenterX - (worldX + 0.5) * scaleRef.current;
-      viewPosRef.current.y =
-        viewportCenterY - (worldY + 0.5) * scaleRef.current;
+      const targetX = viewportCenterX - (worldX + 0.5) * scaleRef.current;
+      const targetY = viewportCenterY - (worldY + 0.5) * scaleRef.current;
 
-      draw();
-      updateOverlay(screenX, screenY);
+      const startX = viewPosRef.current.x;
+      const startY = viewPosRef.current.y;
+      const duration = 1000;
+      const startTime = performance.now();
+
+      const animate = (currentTime: number) => {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+
+        const eased = 1 - Math.pow(1 - progress, 3);
+
+        viewPosRef.current.x = startX + (targetX - startX) * eased;
+        viewPosRef.current.y = startY + (targetY - startY) * eased;
+
+        draw();
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+          updateOverlay(screenX, screenY);
+        } else {
+          updateOverlay(screenX, screenY);
+        }
+      };
+      requestAnimationFrame(animate);
     },
     [draw, updateOverlay, canvasSize]
   );
@@ -375,6 +403,7 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
           const source = document.createElement('canvas');
           source.width = canvasSize.width;
           source.height = canvasSize.height;
+
           const ctx = source.getContext('2d');
           if (ctx) {
             ctx.fillStyle = '#000000';
@@ -462,7 +491,17 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
   }, []);
 
   return (
-    <div ref={rootRef} className='relative h-full w-full'>
+    <div
+      ref={rootRef}
+      className='relative h-full w-full'
+      style={{
+        backgroundImage: `url('/Creatives.png')`, // 이 배경 이미지가 이제 보일 것입니다.
+        backgroundSize: 'cover',
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'center center',
+        backgroundColor: '#2d3748', // 캔버스 바깥 공간의 색상도 div에서 담당하도록 추가
+      }}
+    >
       <canvas
         ref={renderCanvasRef}
         className='pointer-events-none absolute top-0 left-0'
