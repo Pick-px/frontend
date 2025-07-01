@@ -1,5 +1,3 @@
-import React from 'react';
-
 type CanvasModalContentProps = {
   onClose?: () => void;
 };
