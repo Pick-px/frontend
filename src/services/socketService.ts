@@ -14,7 +14,6 @@ class SocketService {
   private socket: Socket | null = null;
 
   connect(canvas_id: string) {
-    this.currentCanvasId = canvas_id;
     this.socket = io(
       import.meta.env.VITE_SOCKET_URL || 'https://ws.pick-px.com'
     );

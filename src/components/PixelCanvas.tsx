@@ -48,7 +48,7 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
   } | null>(null);
 
   // 쿨다운 관련 상태
-  const [canvasSize, setCanvasSize] = useState({ width: 512, height: 512 });
+  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
   const [cooldown, setCooldown] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const [color, setColor] = useState('#ffffff');
