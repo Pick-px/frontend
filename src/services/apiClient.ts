@@ -6,7 +6,7 @@ import axios from 'axios';
 import { useAuthStore } from '../store/authStrore';
 
 const apiClient = axios.create({
-  baseURL: 'http://localhost:3000',
+  baseURL: import.meta.env.VITE_API_URL || 'https://pick-px.com/api',
   withCredentials: true, // 쿠키 주고 받기위함
 });
 

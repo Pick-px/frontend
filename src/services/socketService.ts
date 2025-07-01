@@ -14,7 +14,10 @@ class SocketService {
   private socket: Socket | null = null;
 
   connect(canvas_id: string) {
-    this.socket = io('http://localhost:3000');
+    this.currentCanvasId = canvas_id;
+    this.socket = io(
+      import.meta.env.VITE_SOCKET_URL || 'https://ws.pick-px.com'
+    );
 
     this.socket.on('connect', () => {
       console.log('소켓 연결됨');

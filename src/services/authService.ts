@@ -48,7 +48,7 @@ export const authService = {
   ): Promise<AuthResult> {
     try {
       // state를 body에 담아 보내기.
-      const response = await apiClient.post('/api/user/oauth/login', {
+      const response = await apiClient.post('/user/oauth/login', {
         code,
         state,
       });

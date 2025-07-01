@@ -329,18 +329,62 @@ function PixelCanvas({
   }, [handleMouseUp, clearOverlay]);
 
   // ===== useEffect =======
+  // --- canvas 전체 픽셀 데이터 요청
+
+  const API_URL = import.meta.env.VITE_API_URL || 'https://pick-px.com/api';
+  useEffect(() => {
+    const url = canvas_id
+      ? `${API_URL}/canvas/pixels?canvas_id=${canvas_id}`
+      : `${API_URL}/canvas/pixels`;
+
+    // API 요청 후, 자동 압축해제 및 sourceCanvas 재구성
+    fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('잘못된 응답');
+        return res.json();
+      })
+
+      .then((json) => {
+        if (json.success) {
+          if (!json.success) throw new Error('실패 응답');
+          const { canvas_id: fetchedId, pixels, canvasSize } = json.data;
+          // 받아온 데이터로 대체
+          setCanvasId(fetchedId);
+          setCanvasSize(canvasSize);
+
+          const source = document.createElement('canvas');
+          source.width = canvasSize.width;
+          source.height = canvasSize.height;
+          const ctx = source.getContext('2d');
+          if (ctx) {
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
+
+            if (!Array.isArray(pixels))
+              throw new Error('픽셀 데이터 형식 오류');
+            pixels.forEach(({ x, y, color }) => {
+              ctx.fillStyle = color;
+              ctx.fillRect(x, y, 1, 1);
+            });
+          }
+          sourceCanvasRef.current = source;
+          draw();
+          setIsLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.error('캔버스 로딩 실패', err);
+        setHasError(true);
+        setIsLoading(false);
+      });
+  }, [canvas_id]);
 
   useEffect(() => {
-    const source = document.createElement('canvas');
-    source.width = SOURCE_WIDTH;
-    source.height = SOURCE_HEIGHT;
-    const sourceCtx = source.getContext('2d');
-    if (sourceCtx) {
-      sourceCtx.fillStyle = INITIAL_BACKGROUND_COLOR;
-      sourceCtx.fillRect(0, 0, SOURCE_WIDTH, SOURCE_HEIGHT);
-    }
-    sourceCanvasRef.current = source;
-
     const rootElement = rootRef.current;
     if (!rootElement) return;
 
