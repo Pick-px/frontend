@@ -2,14 +2,15 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { usePixelSocket } from './SocketIntegration';
 import CanvasUI from './CanvasUI';
-import { canvasService } from '../api/CanvasAPI';
 
 // --- 상수 정의 ---
 const INITIAL_POSITION = { x: 0, y: 0 };
 const MIN_SCALE = 0.1;
 const MAX_SCALE = 30;
-const SOURCE_WIDTH = 512;
-const SOURCE_HEIGHT = 512;
+//캔버스 크기 동적으로 관리
+// const SOURCE_WIDTH = 512;
+// const SOURCE_HEIGHT = 512;
+
 const INITIAL_BACKGROUND_COLOR = '#000000'; // 아트보드 배경색
 const VIEWPORT_BACKGROUND_COLOR = '#2d3748'; // 캔버스 바깥 공간 색
 
@@ -17,33 +18,24 @@ const VIEWPORT_BACKGROUND_COLOR = '#2d3748'; // 캔버스 바깥 공간 색
 // props를 외부에서 받아 컴포넌트 간 결합도 낮추기
 type HoverPos = { x: number; y: number } | null;
 type PixelCanvasProps = {
-  color: string;
-  setColor: React.Dispatch<React.SetStateAction<string>>;
-  hoverPos: HoverPos;
-  setHoverPos: React.Dispatch<React.SetStateAction<HoverPos>>;
-  colors: string[];
-  canvas_id: string; //[*]
+  canvas_id: string;
 };
 
-function PixelCanvas({
-  color,
-  setColor,
-  hoverPos,
-  setHoverPos,
-  colors,
-  canvas_id, //[*]
-}: PixelCanvasProps) {
+function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
+  const [canvas_id, setCanvasId] = useState(initialCanvasId);
   // --- Ref 정의 ---
   const rootRef = useRef<HTMLDivElement>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null); // 반투명 오버레이용 캔버스
   const renderCanvasRef = useRef<HTMLCanvasElement>(null); // 색상 칠하는 아래층 Canvas
   const interactionCanvasRef = useRef<HTMLCanvasElement>(null); // 이벤트 레이어
-  const sourceCanvasRef = useRef<HTMLCanvasElement>(null!);
+  const sourceCanvasRef = useRef<HTMLCanvasElement>(null!); // 비가시 캔버스 (실제 데이터 저장소)
 
   const scaleRef = useRef<number>(1);
   const viewPosRef = useRef<{ x: number; y: number }>(INITIAL_POSITION);
   const startPosRef = useRef<{ x: number; y: number }>(INITIAL_POSITION);
   const isPanningRef = useRef<boolean>(false);
+
+  // --- 고정 픽셀 정의 ---
   //테두리 고정 픽셀
   const fixedPosRef = useRef<{ x: number; y: number; color: string } | null>(
     null
@@ -56,8 +48,31 @@ function PixelCanvas({
   } | null>(null);
 
   // 쿨다운 관련 상태
+  const [canvasSize, setCanvasSize] = useState({ width: 512, height: 512 });
   const [cooldown, setCooldown] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
+  const [color, setColor] = useState('#ffffff');
+  const [hoverPos, setHoverPos] = useState<HoverPos>(null);
+  const colors = ['#ffffff', '#000000', '#ff0000', '#00ff00', '#0000ff'];
+  // --- pixel 로딩 관련 상태
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [hasError, setHasError] = useState(false);
+
+  // //--- 캔버스 로딩 에러
+  // if (isLoading)
+  //   return (
+  //     <div className='mt-10 text-center text-xl text-white'>
+  //       로딩 중입니다...
+  //     </div>
+  //   );
+
+  // if (hasError)
+  //   return (
+  //     <div className='mt-10 text-center text-xl text-red-500'>
+  //       캔버스를 불러오는 데 실패했습니다.
+  //     </div>
+  //   );
 
   // --- 렌더링 함수 ---
   const draw = useCallback(() => {
@@ -75,7 +90,7 @@ function PixelCanvas({
       ctx.translate(viewPosRef.current.x, viewPosRef.current.y);
       ctx.scale(scaleRef.current, scaleRef.current);
       ctx.fillStyle = INITIAL_BACKGROUND_COLOR;
-      ctx.fillRect(0, 0, SOURCE_WIDTH, SOURCE_HEIGHT);
+      ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(src, 0, 0);
       ctx.restore();
@@ -113,10 +128,9 @@ function PixelCanvas({
         pctx.fillStyle = px;
         pctx.fillRect(x, y, 1, 1);
       }
-      // pctx.drawImage(src, 0, 0);
       pctx.restore();
     }
-  }, []);
+  }, [canvasSize]);
 
   // 소켓 연결 및 픽셀 전송
   const { sendPixel } = usePixelSocket({ sourceCanvasRef, draw, canvas_id });
@@ -141,9 +155,9 @@ function PixelCanvas({
       // 좌표가 pixel Canvas 안에 있는지 확인하는 flag
       const isInBounds =
         worldX >= 0 &&
-        worldX < SOURCE_WIDTH &&
+        worldX < canvasSize.width &&
         worldY >= 0 &&
-        worldY < SOURCE_HEIGHT;
+        worldY < canvasSize.height;
 
       if (isInBounds) {
         setHoverPos({ x: worldX, y: worldY });
@@ -159,7 +173,7 @@ function PixelCanvas({
         setHoverPos(null);
       }
     },
-    [setHoverPos]
+    [setHoverPos, canvasSize]
   );
 
   // cursor pointer 지우는 함수
@@ -177,12 +191,12 @@ function PixelCanvas({
     if (!canvas || canvas.clientWidth === 0) return;
 
     scaleRef.current = 1;
-    viewPosRef.current.x = (canvas.clientWidth - SOURCE_WIDTH) / 2;
-    viewPosRef.current.y = (canvas.clientHeight - SOURCE_HEIGHT) / 2;
+    viewPosRef.current.x = (canvas.clientWidth - canvasSize.width) / 2;
+    viewPosRef.current.y = (canvas.clientHeight - canvasSize.height) / 2;
 
     draw();
     clearOverlay();
-  }, [draw, clearOverlay]);
+  }, [draw, clearOverlay, canvasSize]);
 
   const centerOnPixel = useCallback(
     (screenX: number, screenY: number) => {
@@ -198,9 +212,9 @@ function PixelCanvas({
 
       if (
         worldX < 0 ||
-        worldX >= SOURCE_WIDTH ||
+        worldX >= canvasSize.width ||
         worldY < 0 ||
-        worldY >= SOURCE_HEIGHT
+        worldY >= canvasSize.height
       ) {
         return;
       }
@@ -216,7 +230,7 @@ function PixelCanvas({
       draw();
       updateOverlay(screenX, screenY);
     },
-    [draw, updateOverlay]
+    [draw, updateOverlay, canvasSize]
   );
 
   //===== 쿨타임 핸들러 : 시작함수
@@ -249,17 +263,13 @@ function PixelCanvas({
 
     // 쿨타임 함수 호출
     handleCooltime();
-
-    // 1) previewPixelRef에 임시 픽셀 정보 저장
+    //previewPixelRef에 임시 픽셀 정보 저장
     previewPixelRef.current = { x: pos.x, y: pos.y, color };
-
-    // 2) 즉시 그리기
+    // 즉시 그리기
     draw();
-
-    // 3) 서버로 픽셀 전송
+    //서버로 픽셀 전송
     sendPixel({ x: pos.x, y: pos.y, color });
-
-    // 4) 4초 뒤에 previewPixelRef 비우고 다시 그리기
+    // 4초 뒤에 previewPixelRef 비우고 다시 그리기
     setTimeout(() => {
       previewPixelRef.current = null;
       pos.color = 'transparent';
@@ -294,13 +304,18 @@ function PixelCanvas({
         const wx = Math.floor((sx - viewPosRef.current.x) / scaleRef.current);
         const wy = Math.floor((sy - viewPosRef.current.y) / scaleRef.current);
         // 고정 픽셀 세팅 - fixedPosRef에 저장함. - 투명으로
-        if (wx >= 0 && wx < SOURCE_WIDTH && wy >= 0 && wy < SOURCE_HEIGHT) {
+        if (
+          wx >= 0 &&
+          wx < canvasSize.width &&
+          wy >= 0 &&
+          wy < canvasSize.height
+        ) {
           fixedPosRef.current = { x: wx, y: wy, color: 'transparent' };
           centerOnPixel(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
         }
       }
     },
-    [centerOnPixel]
+    [centerOnPixel, canvasSize]
   );
 
   const handleMouseMove = useCallback(
@@ -329,18 +344,60 @@ function PixelCanvas({
   }, [handleMouseUp, clearOverlay]);
 
   // ===== useEffect =======
+  // --- canvas 전체 픽셀 데이터 요청
+  useEffect(() => {
+    const url = canvas_id
+      ? `http://localhost:3000/api/canvas/pixels?canvas_id=${canvas_id}`
+      : 'http://localhost:3000/api/canvas/pixels';
+
+    // API 요청 후, 자동 압축해제 및 sourceCanvas 재구성
+    fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('잘못된 응답');
+        return res.json();
+      })
+
+      .then((json) => {
+        if (json.success) {
+          if (!json.success) throw new Error('실패 응답');
+          const { canvas_id: fetchedId, pixels, canvasSize } = json.data;
+          // 받아온 데이터로 대체
+          setCanvasId(fetchedId);
+          setCanvasSize(canvasSize);
+
+          const source = document.createElement('canvas');
+          source.width = canvasSize.width;
+          source.height = canvasSize.height;
+          const ctx = source.getContext('2d');
+          if (ctx) {
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
+
+            if (!Array.isArray(pixels))
+              throw new Error('픽셀 데이터 형식 오류');
+            pixels.forEach(({ x, y, color }) => {
+              ctx.fillStyle = color;
+              ctx.fillRect(x, y, 1, 1);
+            });
+          }
+          sourceCanvasRef.current = source;
+          draw();
+          setIsLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.error('캔버스 로딩 실패', err);
+        setHasError(true);
+        setIsLoading(false);
+      });
+  }, [canvas_id]);
 
   useEffect(() => {
-    const source = document.createElement('canvas');
-    source.width = SOURCE_WIDTH;
-    source.height = SOURCE_HEIGHT;
-    const sourceCtx = source.getContext('2d');
-    if (sourceCtx) {
-      sourceCtx.fillStyle = INITIAL_BACKGROUND_COLOR;
-      sourceCtx.fillRect(0, 0, SOURCE_WIDTH, SOURCE_HEIGHT);
-    }
-    sourceCanvasRef.current = source;
-
     const rootElement = rootRef.current;
     if (!rootElement) return;
 
@@ -400,20 +457,7 @@ function PixelCanvas({
       passive: false,
     });
     return () => interactionCanvas.removeEventListener('wheel', handleWheel);
-  }, [draw, updateOverlay]);
-
-  // useEffect(() => {
-  //   const fetchCanvasPixels = async () => {
-  //     try {
-  //       // ✨ 호출 대상을 canvasService로 변경
-  //       const result = await canvasService.getCanvasPixels(canvas_id);
-  //       console.log('✅ API 응답 성공! 받은 데이터:', result);
-  //     } catch (error) {
-  //       console.error('❌ API 호출에 최종 실패했습니다:', error);
-  //     }
-  //   };
-  //   fetchCanvasPixels();
-  // }, [canvas_id]);
+  }, []);
 
   return (
     <div ref={rootRef} className='relative h-full w-full'>
