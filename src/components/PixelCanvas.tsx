@@ -84,13 +84,18 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
     const ctx = canvas?.getContext('2d');
     if (ctx && canvas) {
       ctx.save();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
       // 배경 + pan/zoom + 픽셀 데이터
-      ctx.fillStyle = VIEWPORT_BACKGROUND_COLOR;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // ctx.fillStyle = VIEWPORT_BACKGROUND_COLOR;
+      // ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.translate(viewPosRef.current.x, viewPosRef.current.y);
       ctx.scale(scaleRef.current, scaleRef.current);
       ctx.fillStyle = INITIAL_BACKGROUND_COLOR;
       ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
+      ctx.strokeStyle = 'rgba(0,192,0,0.9)';
+      ctx.lineWidth = 0.1;
+      ctx.strokeRect(0, 0, canvasSize.width, canvasSize.width);
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(src, 0, 0);
       ctx.restore();
@@ -486,7 +491,17 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
   }, []);
 
   return (
-    <div ref={rootRef} className='relative h-full w-full'>
+    <div
+      ref={rootRef}
+      className='relative h-full w-full'
+      style={{
+        backgroundImage: `url('/Creatives.png')`, // 이 배경 이미지가 이제 보일 것입니다.
+        backgroundSize: 'cover',
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'center center',
+        backgroundColor: '#2d3748', // 캔버스 바깥 공간의 색상도 div에서 담당하도록 추가
+      }}
+    >
       <canvas
         ref={renderCanvasRef}
         className='pointer-events-none absolute top-0 left-0'
