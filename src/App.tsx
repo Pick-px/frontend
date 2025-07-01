@@ -6,12 +6,13 @@ import React, { useState, useEffect } from 'react'; // UI 상태 관리를 위�
 import { useLocation } from 'react-router-dom';
 
 import { useModalStore } from './store/modalStore';
-import LoginModalContent from './components/modal/LoginModalContent';
+
 import Modal from './components/modal/Modal';
 import { useAuthStore } from './store/authStrore';
 import apiClient from './services/apiClient';
-import Chat from './components/chat/ChatUI';
+import Chat from './components/chat/Chat';
 import MyPageModalContent from './components/modal/MyPageModalContent';
+import LoginModalContent from './components/modal/LoginModalContent';
 
 function App() {
   // URL에서 ?canvas_id= 값을 읽어온다
@@ -64,14 +65,6 @@ function App() {
 
   return (
     <main className='flex h-screen w-screen items-center justify-center bg-[#2d3748]'>
-      {/* <PixelCanvas
-        color={color}
-        setColor={setColor}
-        hoverPos={hoverPos}
-        setHoverPos={setHoverPos}
-        colors={colors}
-        canvas_id={canvas_id}
-      /> */}
       <PixelCanvas canvas_id={canvas_id} key={canvas_id} />
       <Modal isOpen={isLoginModalOpen} onClose={closeLoginModal}>
         <LoginModalContent onClose={closeLoginModal} />

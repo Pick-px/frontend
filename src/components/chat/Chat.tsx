@@ -1,47 +1,59 @@
-// src/components/chat/Chat.tsx (새 파일)
+// src/components/chat/Chat.tsx
 
 import React, { useState } from 'react';
-// import ChatWindow from './ChatWindow'; // 나중에 실제 채팅 기록 컴포넌트
-// import ChatInput from './ChatInput';   // 나중에 실제 채팅 입력 컴포넌트
+import MessageList from './MessageList';
+import MessageInput from './MessageInput';
+import type { Message } from './MessageItem';
+
+// 임시로 사용할 가짜 메시지 데이터
+const DUMMY_MESSAGES: Message[] = [
+  {
+    messageId: '1',
+    user: { userId: '1', nickname: '코딩파트너' },
+    content: '안녕하세요!',
+  },
+  {
+    messageId: '2',
+    user: { userId: '2', nickname: '일론 머스크' },
+    content: '픽셀 하나에 우주를 담았습니다.',
+  },
+];
 
 export default function Chat() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
+  const [messages, setMessages] = useState<Message[]>(DUMMY_MESSAGES);
+
+  // 메시지 전송 버튼을 눌렀을 때, 콘솔에만 찍어보는 임시 함수
+  const handleSendMessage = (text: string) => {
+    console.log('보낼 메시지:', text);
+    const newMessage: Message = {
+      messageId: Date.now().toString(),
+      user: { userId: 'me', nickname: '나' },
+      content: text,
+    };
+    setMessages((prev) => [...prev, newMessage]);
+  };
 
   return (
     <div className='fixed bottom-5 left-5 z-50 flex flex-col items-start'>
       <div
-        className={`mb-2 h-[500px] w-80 rounded-xl border border-white/20 bg-black/20 shadow-2xl backdrop-blur-lg transition-all duration-300 ease-in-out ${isOpen ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'} `}
+        className={`mb-2 flex h-[500px] w-80 flex-col rounded-xl border border-white/20 bg-black/20 shadow-2xl backdrop-blur-lg transition-all duration-300 ease-in-out ${isOpen ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'} `}
       >
         <div className='flex h-full flex-col'>
           <div className='flex-shrink-0 border-b border-white/20 p-4'>
             <h3 className='text-lg font-bold text-white'>전체 채팅</h3>
           </div>
 
-          {/* 메시지 목록 (나중에 ChatWindow 컴포넌트로 교체) */}
-          <div className='flex-grow overflow-y-auto p-4 text-white'>
-            <div>코딩파트너: 안녕하세요!</div>
-            <div>일론 머스크: 픽셀 하나에 우주를 담았습니다.</div>
-          </div>
-
-          {/* 메시지 입력창 (나중에 ChatInput 컴포넌트로 교체) */}
-          <div className='flex-shrink-0 border-t border-white/20 p-4'>
-            <input
-              type='text'
-              placeholder='메시지를 입력하세요...'
-              className='w-full rounded-md border-none bg-black/30 p-2 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500'
-            />
-          </div>
+          <MessageList messages={messages} />
+          <MessageInput onSendMessage={handleSendMessage} />
         </div>
       </div>
 
-      {/* ✨ 4. 채팅창을 열고 닫는 토글 버튼 */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className='flex h-16 w-16 items-center justify-center rounded-full bg-blue-500 text-white shadow-xl transition-transform hover:bg-blue-600 active:scale-90'
       >
-        {/* isOpen 상태에 따라 아이콘을 변경합니다. */}
         {isOpen ? (
-          // 닫기 'X' 아이콘
           <svg
             xmlns='http://www.w3.org/2000/svg'
             fill='none'
@@ -57,7 +69,6 @@ export default function Chat() {
             />
           </svg>
         ) : (
-          // 채팅 '말풍선' 아이콘
           <svg
             xmlns='http://www.w3.org/2000/svg'
             fill='none'

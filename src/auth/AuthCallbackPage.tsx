@@ -36,10 +36,12 @@ export default function AuthCallbackPage() {
         //   console.log(user);
         //   navigate('/canvas'); // 성공! 메인 페이지로 이동
         // }
+
         const authResult = await authService.handleOAuthCallback(
           authCode,
           prov
         );
+        console.log(authResult);
 
         if (authResult?.accessToken && authResult?.user) {
           // ✨ 1. 객체를 JSON 문자열로 변환합니다.
