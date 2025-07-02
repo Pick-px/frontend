@@ -1,59 +1,174 @@
-// src/components/chat/Chat.tsx
-
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
 import type { Message } from './MessageItem';
+import { chatService } from './ChatAPI';
+import { useCanvasStore } from '../../store/canvasStore';
 
 // 임시로 사용할 가짜 메시지 데이터
-const DUMMY_MESSAGES: Message[] = [
-  {
-    messageId: '1',
-    user: { userId: '1', nickname: '코딩파트너' },
-    content: '안녕하세요!',
+
+type Group = {
+  group_id: string;
+  group_title: string;
+};
+
+const DUMMY_RESPONSE = {
+  success: true,
+  status: '200',
+  message: '요청에 성공하였습니다.',
+  data: {
+    defaultGroupId: '1',
+    groups: [
+      { group_id: '1', group_title: 'team gmg' },
+      { group_id: '2', group_title: 'team dogs' },
+    ],
+    messages: [
+      {
+        messageId: '130',
+        user: { userId: '1', name: 'Alice' },
+        content: '가장 최신 메시지',
+        timestamp: '2025-06-30T16:00:00Z',
+      },
+      {
+        messageId: '101',
+        user: { userId: '2', name: 'Bob' },
+        content: '이번 페이지의 마지막 메시지',
+        timestamp: '2025-06-30T15:00:00Z',
+      },
+    ],
   },
-  {
-    messageId: '2',
-    user: { userId: '2', nickname: '일론 머스크' },
-    content: '픽셀 하나에 우주를 담았습니다.',
-  },
-];
+};
 
 export default function Chat() {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>(DUMMY_MESSAGES);
+  const [messages, setMessages] = useState<Message[]>([]);
 
-  // 메시지 전송 버튼을 눌렀을 때, 콘솔에만 찍어보는 임시 함수
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [currentGroupId, setCurrentGroupId] = useState<string | null>(null);
+
+  const canvas_id = useCanvasStore((state) => state.canvas_id);
+
+  // const {getChatMessages} = chatService();
+
+  // 그룹 변경 핸들러 함수
+  const handleGroupChange = async (groupId: string) => {
+    if (groupId === currentGroupId) return;
+
+    try {
+      setCurrentGroupId(groupId);
+      const newMessages = await chatService.getChatMessages(groupId);
+      setMessages(newMessages); // 메시지 상태 업데이트
+    } catch (error) {
+      console.error(
+        `${groupId} 그룹의 메시지를 불러오는 데 실패했습니다.`,
+        error
+      );
+    }
+  };
+
+  // Title은 거의 동일 => useMemo로 기억
+  const chatTitle = useMemo(() => {
+    const currentGroup = groups.find((g) => g.group_id === currentGroupId);
+    return currentGroup ? currentGroup.group_title : '채팅';
+  }, [groups, currentGroupId]);
+
+  // 메시지 보내는 로직(임시함수, 추후 Socket 구현시 로직 들어갈ㄹ 예정)
   const handleSendMessage = (text: string) => {
-    console.log('보낼 메시지:', text);
     const newMessage: Message = {
       messageId: Date.now().toString(),
-      user: { userId: 'me', nickname: '나' },
+      user: { userId: 'me', name: '나' },
       content: text,
     };
     setMessages((prev) => [...prev, newMessage]);
   };
 
+  // isOpen True 시, canvasId 변경시
+  // useEffect(() => {
+  //   console.log(`modal open, ${canvas_id}`);
+  //   if (isOpen && canvas_id) {
+  //     const fetchInitialData = async () => {
+  //       console.log(`start fetch, ${canvas_id}`);
+  //       try {
+  //         const response = await chatService.getChatInitMessages(canvas_id);
+  //         console.log(response);
+  //         const {
+  //           defaultGroupId,
+  //           groups: fetchedGroups,
+  //           messages: initialMessages,
+  //         } = response.data;
+
+  //         setGroups(fetchedGroups);
+  //         setCurrentGroupId(defaultGroupId);
+  //         setMessages(initialMessages);
+  //       } catch (error) {
+  //         console.error('초기 채팅 데이터를 불러오는 데 실패했습니다.', error);
+  //       }
+  //     };
+
+  //     fetchInitialData();
+  //   }
+  // }, [isOpen, canvas_id]);
+
+  useEffect(() => {
+    if (isOpen && canvas_id) {
+      console.log(`modal open, using dummy data for canvasId: ${canvas_id}`);
+
+      const {
+        defaultGroupId,
+        groups: fetchedGroups,
+        messages: initialMessages,
+      } = DUMMY_RESPONSE.data;
+
+      setGroups(fetchedGroups);
+      setCurrentGroupId(defaultGroupId);
+      setMessages(initialMessages);
+    }
+  }, [isOpen, canvas_id]);
+
   return (
     <div className='fixed bottom-5 left-5 z-50 flex flex-col items-start'>
+      {/* 채팅창 UI */}
       <div
-        className={`mb-2 flex h-[500px] w-80 flex-col rounded-xl border border-white/20 bg-black/20 shadow-2xl backdrop-blur-lg transition-all duration-300 ease-in-out ${isOpen ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'} `}
+        className={`mb-2 flex h-[500px] w-80 flex-col rounded-xl border border-white/20 bg-black/20 shadow-2xl backdrop-blur-lg transition-all duration-300 ease-in-out ${isOpen ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'}`}
       >
         <div className='flex h-full flex-col'>
+          {/* 헤더: 동적 제목 표시 */}
           <div className='flex-shrink-0 border-b border-white/20 p-4'>
-            <h3 className='text-lg font-bold text-white'>전체 채팅</h3>
+            <h3 className='text-lg font-bold text-white'>{chatTitle}</h3>
           </div>
 
+          {/* 그룹 목록 탭 */}
+          <div className='flex flex-shrink-0 space-x-2 border-b border-white/20 p-2'>
+            {groups.map((group) => (
+              <button
+                key={group.group_id}
+                onClick={() => handleGroupChange(group.group_id)}
+                className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
+                  currentGroupId === group.group_id
+                    ? 'bg-blue-500/50 text-white'
+                    : 'bg-black/20 text-gray-300 hover:bg-black/40'
+                }`}
+              >
+                {group.group_title}
+              </button>
+            ))}
+          </div>
+
+          {/* 메시지 목록 */}
           <MessageList messages={messages} />
+
+          {/* 메시지 입력창 */}
           <MessageInput onSendMessage={handleSendMessage} />
         </div>
       </div>
 
+      {/* 채팅창 여닫기 버튼 */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className='flex h-16 w-16 items-center justify-center rounded-full bg-blue-500 text-white shadow-xl transition-transform hover:bg-blue-600 active:scale-90'
       >
         {isOpen ? (
+          // 닫기 아이콘 (X)
           <svg
             xmlns='http://www.w3.org/2000/svg'
             fill='none'
@@ -69,6 +184,7 @@ export default function Chat() {
             />
           </svg>
         ) : (
+          // 열기 아이콘 (말풍선)
           <svg
             xmlns='http://www.w3.org/2000/svg'
             fill='none'

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useModalStore } from '../store/modalStore';
 import { useAuthStore } from '../store/authStrore';
+import { useModalStore } from '../store/modalStore';
 
 type HoverPos = { x: number; y: number } | null;
 

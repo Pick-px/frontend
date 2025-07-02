@@ -41,7 +41,6 @@ export default function Modal({ isOpen, onClose, children }: ModalProps) {
             />
           </svg>
         </button>
-        {/* ✨ 4. 부모로부터 받은 내용물(children)을 이곳에 렌더링 */}
         {children}
       </div>
     </div>,
