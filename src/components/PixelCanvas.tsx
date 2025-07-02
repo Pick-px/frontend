@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { usePixelSocket } from './SocketIntegration';
 import CanvasUI from './CanvasUI';
+import { useCanvasStore } from '../store/canvasStore';
 
 const INITIAL_POSITION = { x: 0, y: 0 };
 const MIN_SCALE = 0.1;
@@ -14,7 +15,9 @@ type PixelCanvasProps = {
 };
 
 function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
-  const [canvas_id, setCanvasId] = useState(initialCanvasId);
+  const { canvas_id, setCanvasId } = useCanvasStore();
+
+  // const [canvas_id, setCanvasId] = useState(initialCanvasId);
   const rootRef = useRef<HTMLDivElement>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const renderCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -338,6 +341,8 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
         pixels,
         canvasSize: fetchedCanvasSize,
       } = json.data;
+
+      // console.log(`fetchedID : ${fetchedId}`);
 
       setCanvasId(fetchedId);
       setCanvasSize(fetchedCanvasSize);
