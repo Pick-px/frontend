@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useModalStore } from '../store/modalStore';
+import { useAuthStore } from '../store/authStrore';
 
 type HoverPos = { x: number; y: number } | null;
 
@@ -25,6 +26,7 @@ export default function CanvasUI({
   timeLeft,
 }: CanvasUIProps) {
   const [isPressed, setIsPressed] = useState(false);
+  const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
 
   const {
     openLoginModal,
@@ -253,7 +255,12 @@ export default function CanvasUI({
           onMouseDown={() => !cooldown && setIsPressed(true)}
           onMouseUp={() => {
             setIsPressed(false);
-            if (!cooldown) onConfirm();
+            if (cooldown) return;
+            if (isLoggedIn) {
+              onConfirm();
+            } else {
+              openLoginModal();
+            }
           }}
           onMouseLeave={() => setIsPressed(false)}
           className={`mt-[8px] h-[40px] w-full cursor-pointer rounded-[4px] bg-white font-medium text-black transition-transform duration-100 ${
