@@ -20,7 +20,7 @@ const DUMMY_MESSAGES: Message[] = [
 ];
 
 export default function Chat() {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>(DUMMY_MESSAGES);
 
   // 메시지 전송 버튼을 눌렀을 때, 콘솔에만 찍어보는 임시 함수
