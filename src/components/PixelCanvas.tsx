@@ -415,6 +415,10 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
               ctx.fillStyle = color;
               ctx.fillRect(x, y, 1, 1);
             });
+
+            // ctx.strokeStyle = 'rgba(0,192,0,0.9)';
+            // ctx.lineWidth = 1;
+            // ctx.strokeRect(0, 0, canvasSize.width, canvasSize.width);
           }
           sourceCanvasRef.current = source;
           draw();

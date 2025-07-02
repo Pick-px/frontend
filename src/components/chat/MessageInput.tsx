@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useAuthStore } from '../../store/authStrore';
+import { useModalStore } from '../../store/modalStore';
 
 type MessageInputProps = {
   onSendMessage: (message: string) => void;
@@ -7,8 +9,17 @@ type MessageInputProps = {
 export default function MessageInput({ onSendMessage }: MessageInputProps) {
   const [text, setText] = useState('');
 
+  const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+  const openLoginModal = useModalStore((state) => state.openLoginModal);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!isLoggedIn) {
+      openLoginModal();
+      return;
+    }
+
     if (!text.trim()) return;
     onSendMessage(text);
     setText('');
