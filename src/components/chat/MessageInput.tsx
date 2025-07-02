@@ -28,14 +28,14 @@ export default function MessageInput({ onSendMessage }: MessageInputProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className='flex-shrink-0 border-t border-white/20 p-4'
+      className='flex-shrink-0 border-t border-white/30 p-3'
     >
       <input
         type='text'
         placeholder='메시지를 입력하세요...'
         value={text}
         onChange={(e) => setText(e.target.value)}
-        className='w-full rounded-md border-none bg-black/30 p-2 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500'
+        className='w-full rounded-lg border border-white/20 bg-white/10 p-2 text-sm text-white placeholder-gray-300 focus:border-blue-500 focus:ring-blue-500 outline-none'
       />
     </form>
   );
