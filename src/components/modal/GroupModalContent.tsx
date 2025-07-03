@@ -49,11 +49,9 @@ export default function GroupModalContent({ onClose }: GroupModalContentProps) {
       console.log('성공:', response.isSuccess);
       if (response.isSuccess) {
         const userGroup: GroupResponseDto[] = response.data.userGroup;
-        const filteredData: GroupResponseDto[] = response.data.allGroup.filter(
-          (group: GroupResponseDto) => group.madeBy !== user?.userId
-        );
+        const allGroup: GroupResponseDto[] = response.data.allGroup;
         setMyGroups(userGroup);
-        setSearchedGroup(filteredData);
+        setSearchedGroup(allGroup);
       } else {
         console.error(response.message);
       }
