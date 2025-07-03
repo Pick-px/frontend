@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 import { useAuthStore } from '../store/authStrore';
+import Preloader from '../components/Preloader';
 
 type Provider = 'google' | 'naver' | 'kakao';
 
@@ -63,5 +64,5 @@ export default function AuthCallbackPage() {
     processLogin(provider, code);
   }, [location, navigate, setAuth]);
 
-  return <div>로그인 처리 중입니다...</div>;
+  return <Preloader />;
 }

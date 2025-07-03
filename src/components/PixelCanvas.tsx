@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { usePixelSocket } from './SocketIntegration';
 import CanvasUI from './CanvasUI';
+import Preloader from './Preloader';
 import { useCanvasStore } from '../store/canvasStore';
 
 const INITIAL_POSITION = { x: 0, y: 0 };
@@ -465,6 +466,8 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
         onMouseLeave={handleMouseLeave}
         onContextMenu={(e) => e.preventDefault()}
       />
+
+      {isLoading && <Preloader />}
 
       <CanvasUI
         color={color}
