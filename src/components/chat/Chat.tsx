@@ -73,27 +73,6 @@ export default function Chat() {
       currentGroupId,
       userId: user?.userId,
     });
-
-    // 임시: 로컬에서 메시지 바로 추가 (백엔드 없이 테스트용)
-    // const localMessage: Message = {
-    //   messageId: Date.now().toString(),
-    //   user: { userId: user?.userId || 'local', name: user?.nickname || '나' },
-    //   content: text,
-    //   timestamp: new Date().toISOString(),
-    // };
-    // setMessages((prev) => [...prev, localMessage]);
-
-    const newMessage: Message = {
-      messageId: Date.now().toString(),
-      user: {
-        userId: user?.userId || 'anonymous',
-        name: user?.nickname || '나',
-      },
-      content: text,
-      timestamp: new Date().toISOString(),
-    };
-    setMessages((prev) => [...prev, newMessage]);
-    // 실제 소켓 전송 (백엔드 있을 때)
     if (currentGroupId && user?.userId) {
       sendSocketMessage(text);
     }
@@ -104,42 +83,27 @@ export default function Chat() {
   };
 
   // isOpen True 시, canvasId 변경시
-  // useEffect(() => {
-  //   console.log(`modal open, ${canvas_id}`);
-  //   if (isOpen && canvas_id) {
-  //     const fetchInitialData = async () => {
-  //       console.log(`start fetch, ${canvas_id}`);
-  //       try {
-  //         const {
-  //           defaultGroupId,
-  //           groups: fetchedGroups,
-  //           messages: initialMessages,
-  //         } = await chatService.getChatInitMessages(canvas_id);
-
-  //         setGroups(fetchedGroups);
-  //         setCurrentGroupId(defaultGroupId);
-  //         setMessages(initialMessages);
-  //       } catch (error) {
-  //         console.error('초기 채팅 데이터를 불러오는 데 실패했습니다.', error);
-  //       }
-  //     };
-
-  //     fetchInitialData();
-  //   }
-  // }, [isOpen, canvas_id]);
-
   useEffect(() => {
+    console.log(`modal open, ${canvas_id}`);
     if (isOpen && canvas_id) {
-      console.log(`modal open, using dummy data for canvasId: ${canvas_id}`);
-      const {
-        defaultGroupId,
-        groups: fetchedGroups,
-        messages: initialMessages,
-      } = DUMMY_RESPONSE.data;
+      const fetchInitialData = async () => {
+        console.log(`start fetch, ${canvas_id}`);
+        try {
+          const {
+            defaultGroupId,
+            groups: fetchedGroups,
+            messages: initialMessages,
+          } = await chatService.getChatInitMessages(canvas_id);
 
-      setGroups(fetchedGroups);
-      setCurrentGroupId(defaultGroupId);
-      setMessages(initialMessages);
+          setGroups(fetchedGroups);
+          setCurrentGroupId(defaultGroupId);
+          setMessages(initialMessages);
+        } catch (error) {
+          console.error('초기 채팅 데이터를 불러오는 데 실패했습니다.', error);
+        }
+      };
+
+      fetchInitialData();
     }
   }, [isOpen, canvas_id]);
 

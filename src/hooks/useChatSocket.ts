@@ -46,20 +46,8 @@ export const useChatSocket = (
 
       // 실제 소켓 전송
       socketService.sendChat({ group_id, user_id, message });
-
-      // 백엔드 없이 테스트: 3초 후 가짜 응답 시뮬레이션
-      setTimeout(() => {
-        const fakeResponse: ChatMessage = {
-          id: Date.now(),
-          user: { id: parseInt(user_id.split('@')[0]) || 123, user_name: user_id },
-          message: `"${message}"에 대한 내 응답`,
-          created_at: new Date().toISOString(),
-        };
-        console.log('가짜 메시지 수신 시뮬레이션:', fakeResponse);
-        onMessageReceived(fakeResponse);
-      }, 3000);
     },
-    [group_id, user_id, onMessageReceived]
+    [group_id, user_id]
   );
 
   return { sendMessage };

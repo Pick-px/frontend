@@ -1,4 +1,5 @@
 import { io, Socket } from 'socket.io-client';
+import { useAuthStore } from '../store/authStrore';
 
 interface PixelData {
   x: number;
@@ -14,8 +15,14 @@ class SocketService {
   private socket: Socket | null = null;
 
   connect(canvas_id: string) {
+    const { accessToken } = useAuthStore.getState();
     this.socket = io(
-      import.meta.env.VITE_SOCKET_URL || 'https://ws.pick-px.com'
+      import.meta.env.VITE_SOCKET_URL || 'https://ws.pick-px.com',
+      {
+        auth: {
+          token: accessToken,
+        },
+      }
     );
 
     this.socket.on('connect', () => {
@@ -36,7 +43,7 @@ class SocketService {
     }
   }
 
-  // 
+  //
   onPixelUpdate(callback: (pixelData: PixelData) => void) {
     if (this.socket) {
       this.socket.on('pixel-update', callback);
