@@ -24,10 +24,10 @@ export const groupServices = {
    * 입력한 그룹명으로 검색한 그룹 목록을 조회합니다.
    * @param groupName : 검색할 그룹의 제목
    */
-  async searchGroups(groupName: string) {
+  async searchGroups(groupName: string, canvas_id: string) {
     try {
       const response = await apiClient.get(`/group/search`, {
-        params: { groupName: groupName },
+        params: { groupName: groupName, canvas_id: canvas_id },
       });
       console.log(response);
       return response.data;
@@ -65,7 +65,7 @@ export const groupServices = {
   async joinGroup(groupId: string) {
     try {
       const response = await apiClient.post(`/group/join`, {
-        groupName: groupId,
+        group_id: groupId,
       });
       console.log(response);
       return response.data;
@@ -78,7 +78,7 @@ export const groupServices = {
   async deleteGroup(groupId: string) {
     try {
       const response = await apiClient.delete(`/group/quit`, {
-        params: { groupName: groupId },
+        data: { group_id: groupId },
       });
       console.log(response);
       return response.data;
