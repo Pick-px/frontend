@@ -44,7 +44,12 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
   const [timeLeft, setTimeLeft] = useState(0);
   const [color, setColor] = useState('#ffffff');
   const [hoverPos, setHoverPos] = useState<HoverPos>(null);
-  const colors = ['#ffffff', '#000000', '#ff0000', '#00ff00', '#0000ff'];
+  const colors = [
+    '#ffffff', '#000000', '#ff0000', '#00ff00', '#0000ff',
+    '#ffff00', '#ff00ff', '#00ffff', '#ff8000', '#8000ff',
+    '#ff0080', '#80ff00', '#0080ff', '#ff4040', '#40ff40',
+    '#4040ff', '#ffaa00', '#aa00ff', '#00aaff', '#808080'
+  ];
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 

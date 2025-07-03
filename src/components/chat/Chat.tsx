@@ -23,7 +23,7 @@ export default function Chat() {
   const user = useAuthStore((state) => state.user);
 
   // 채팅 소켓 연결 - 항상 훅 호출
-  const { sendMessage: sendSocketMessage } = useChatSocket({
+  const { sendMessage: sendSocketMessage, leaveChat } = useChatSocket({
     onMessageReceived: (message) => {
       console.log('메시지 수신:', message);
       const newMessage: Message = {
@@ -146,7 +146,12 @@ export default function Chat() {
 
       {/* 채팅창 여닫기 버튼 */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          if (isOpen) {
+            leaveChat();
+          }
+          setIsOpen(!isOpen);
+        }}
         className='flex h-14 w-14 items-center justify-center rounded-full bg-blue-500 text-white shadow-xl transition-transform hover:bg-blue-600 active:scale-90'
       >
         {isOpen ? (

@@ -115,7 +115,11 @@ export default function CanvasUI({
                   <path
                     strokeLinecap='round'
                     strokeLinejoin='round'
-                    d={isLoggedIn ? 'M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z' : 'M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9'}
+                    d={
+                      isLoggedIn
+                        ? 'M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z'
+                        : 'M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9'
+                    }
                   />
                 </svg>
               </button>
@@ -173,7 +177,7 @@ export default function CanvasUI({
                 앨범
               </span>
             </div>
-            
+
             {/* 그룹 버튼 */}
             <div className='group relative'>
               <button
@@ -208,22 +212,24 @@ export default function CanvasUI({
       </div>
 
       {/* 팔레트 */}
-      <div className='pointer-events-auto fixed top-[100px] right-[20px] z-[9999] flex flex-col gap-[8px] rounded-[8px] bg-[rgba(0,0,0,0.8)] p-[10px]'>
-        {colors.map((c, index) => (
-          <button
-            key={index}
-            onClick={() => {
-              setColor(c); // 기존 색상 업데이트
-              onSelectColor(c); // 선택된 색상으로 즉시 preview 칠하기
-            }}
-            style={{ backgroundColor: c }}
-            className={`h-[40px] w-[40px] cursor-pointer rounded-[4px] ${
-              color === c
-                ? 'border-[3px] border-solid border-white'
-                : 'border border-solid border-[#666]'
-            }`}
-          />
-        ))}
+      <div className='pointer-events-auto fixed top-[100px] right-[20px] z-[9999] rounded-2xl bg-gradient-to-br from-slate-900/90 to-black/80 backdrop-blur-xl border border-cyan-400/20 p-5 shadow-2xl'>
+        <div className='grid grid-cols-2 gap-3 mb-5'>
+          {colors.map((c, index) => (
+            <button
+              key={index}
+              onClick={() => {
+                setColor(c);
+                onSelectColor(c);
+              }}
+              style={{ backgroundColor: c }}
+              className={`h-8 w-8 cursor-pointer rounded-full transition-all duration-300 hover:scale-125 hover:rotate-12 ${
+                color === c
+                  ? 'ring-2 ring-cyan-300 ring-offset-2 ring-offset-slate-800 shadow-lg shadow-cyan-400/60 scale-110'
+                  : 'border border-white/30 hover:border-cyan-300/50 hover:shadow-md hover:shadow-white/20'
+              }`}
+            />
+          ))}
+        </div>
 
         {/*확정 버튼 */}
         <button
@@ -239,18 +245,57 @@ export default function CanvasUI({
             }
           }}
           onMouseLeave={() => setIsPressed(false)}
-          className={`mt-[8px] h-[40px] w-full cursor-pointer rounded-[4px] bg-white font-medium text-black transition-transform duration-100 ${
+          className={`w-full h-12 rounded-full transition-all duration-300 flex items-center justify-center ${
+            cooldown 
+              ? 'bg-red-500/20 text-red-400 cursor-not-allowed border border-red-500/30' 
+              : 'bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-white shadow-lg hover:shadow-emerald-400/30 hover:scale-105'
+          } ${
             isPressed ? 'scale-95' : 'scale-100'
-          } ${cooldown ? 'cursor-not-allowed opacity-50' : ''} }`}
+          }`}
         >
-          {cooldown ? `쿨다운` : '확정'}
+          {cooldown ? (
+            <svg className='w-6 h-6 animate-spin' fill='none' viewBox='0 0 24 24'>
+              <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
+              <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
+            </svg>
+          ) : (
+            <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={3} d='M13 10V3L4 14h7v7l9-11h-7z' />
+            </svg>
+          )}
         </button>
       </div>
 
       {/* 쿨타임 창 : 쿨타임 중에만 표시*/}
       {cooldown && (
-        <div className='pointer-events-none fixed bottom-[20px] left-1/2 z-[9999] -translate-x-1/2 transform rounded-[8px] bg-red-600 p-[10px] font-bold text-white'>
-          ⏳ {timeLeft}s
+        <div className='pointer-events-none fixed bottom-[20px] left-1/2 z-[9999] -translate-x-1/2 transform'>
+          <div className='relative'>
+            {/* 외부 링 */}
+            <div
+              className='h-16 w-16 animate-spin rounded-full border-4 border-red-500/60'
+              style={{ animationDuration: '2s' }}
+            ></div>
+            {/* 중간 링 */}
+            <div
+              className='absolute inset-1 animate-spin rounded-full border-2 border-orange-400/50'
+              style={{
+                animationDuration: '1.5s',
+                animationDirection: 'reverse',
+              }}
+            ></div>
+            {/* 내부 원 */}
+            <div className='absolute inset-3 flex animate-pulse items-center justify-center rounded-full border border-red-400/60 bg-gradient-to-br from-red-900/80 to-black/70 shadow-2xl backdrop-blur-xl'>
+              <span className='animate-pulse font-mono text-xl font-bold tracking-wider text-red-300'>
+                {timeLeft}
+              </span>
+            </div>
+            {/* 글로우 효과 */}
+            <div className='absolute inset-0 animate-ping rounded-full bg-red-500/15'></div>
+            <div
+              className='absolute inset-0 animate-ping rounded-full bg-orange-400/10'
+              style={{ animationDelay: '1s' }}
+            ></div>
+          </div>
         </div>
       )}
     </>

@@ -50,12 +50,12 @@ export const useChatSocket = ({
     console.error('채팅 에러:', error);
   }, []);
 
-  const { sendMessage } = useChatSocketHook(
+  const { sendMessage, leaveChat } = useChatSocketHook(
     onMessageReceived,
     handleChatError,
     group_id,
     user_id
   );
 
-  return { sendMessage };
+  return { sendMessage, leaveChat };
 };
