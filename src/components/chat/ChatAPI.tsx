@@ -22,7 +22,7 @@ export const chatService = {
           new Date(a.timestamp || a.created_at).getTime() -
           new Date(b.timestamp || b.created_at).getTime()
       );
-      return { defaultGroupId, groups, messages: messages };
+      return { defaultGroupId, groups, messages: sortedMessages };
     } catch (error) {
       console.error(`Failed to fetch message for chat ${canvasId}:`, error);
       throw error;
@@ -50,7 +50,6 @@ export const chatService = {
           new Date(a.timestamp || a.created_at).getTime() -
           new Date(b.timestamp || b.created_at).getTime()
       );
-      return messages;
     } catch (error) {
       console.error(`Failed to fetch messages for group ${groupId}:`, error);
       throw error;
