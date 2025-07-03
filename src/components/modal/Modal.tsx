@@ -17,13 +17,13 @@ export default function Modal({ isOpen, onClose, children }: ModalProps) {
       onClick={onClose}
     >
       <div
-        className='relative w-full max-w-md rounded-lg bg-white p-6 shadow-xl'
+        className='relative w-full max-w-md rounded-xl border border-white/30 shadow-2xl backdrop-blur-md text-white'
         onClick={(e) => e.stopPropagation()}
       >
         {/* 3. 닫기 버튼 */}
         <button
           onClick={onClose}
-          className='absolute top-2 right-2 rounded-full p-1 text-gray-500 hover:bg-gray-200'
+          className='absolute top-2 right-2 rounded-full p-1 text-white hover:bg-white/20'
         >
           {/* SVG로 만든 X 아이콘 */}
           <svg
