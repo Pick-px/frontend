@@ -18,14 +18,17 @@ type AuthResult = {
   user: {
     userId: string;
     nickname?: string;
-    email?: string;
   };
 };
 
 type DecodedToken = {
-  userId: string;
-  // exp: number; // 만료 시간 등 JWT 표준 클레임
-  // iat: number; // 발급 시간 등
+  sub: {
+    userId: string;
+    nickName: string;
+  };
+  jti: string;
+  exp: number;
+  iat: number;
 };
 
 // --- 서비스 객체 ---
@@ -53,19 +56,16 @@ export const authService = {
         state,
       });
 
-      console.log('백엔드로부터 받은 전체 응답:', response);
-      console.log('응답 헤더:', response.headers);
-      console.log('Authorization 헤더 값:', response.headers['authorization']);
-
       const authHeader = response.headers['authorization'];
       const accessToken = authHeader?.split(' ')[1];
 
       const decodedToken = jwtDecode<DecodedToken>(accessToken);
 
       const user = {
-        userId: decodedToken.userId,
+        userId: decodedToken.sub.userId,
+        nickname: decodedToken.sub.nickName,
       };
-
+      console.log('응답결과:', user);
       // 응답에서 AT와 사용자 정보를 추출하여 반환
       return { accessToken, user };
     } catch (error) {
