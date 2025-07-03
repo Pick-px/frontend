@@ -153,40 +153,40 @@ export default function GroupModalContent({ onClose }: GroupModalContentProps) {
   };
 
   return (
-    <>
-      <h2 className='text-xl font-bold'>그룹 관리</h2>
-      <p className='mt-2 text-gray-600'>
+    <div className='flex h-full flex-col p-3'>
+      <h2 className='text-md font-semibold text-white'>그룹 관리</h2>
+      <p className='mt-2 text-gray-300'>
         그룹을 생성하거나 참여하여 함께 픽셀 아트를 만들어보세요.
       </p>
 
       {/* 탭 네비게이션 */}
-      <div className='mt-4 flex border-b'>
+      <div className='mt-4 flex border-b border-white/20'>
         <button
           onClick={() => setActiveTab('list')}
-          className={`px-4 py-2 font-medium ${
+          className={`px-4 py-2 text-sm font-medium transition-colors ${
             activeTab === 'list'
-              ? 'border-b-2 border-blue-500 text-blue-500'
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'border-b-2 border-blue-500 text-blue-400'
+              : 'text-gray-300 hover:text-white'
           }`}
         >
           내 그룹
         </button>
         <button
           onClick={() => setActiveTab('create')}
-          className={`px-4 py-2 font-medium ${
+          className={`px-4 py-2 text-sm font-medium transition-colors ${
             activeTab === 'create'
-              ? 'border-b-2 border-blue-500 text-blue-500'
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'border-b-2 border-blue-500 text-blue-400'
+              : 'text-gray-300 hover:text-white'
           }`}
         >
           그룹 생성
         </button>
         <button
           onClick={() => setActiveTab('join')}
-          className={`px-4 py-2 font-medium ${
+          className={`px-4 py-2 text-sm font-medium transition-colors ${
             activeTab === 'join'
-              ? 'border-b-2 border-blue-500 text-blue-500'
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'border-b-2 border-blue-500 text-blue-400'
+              : 'text-gray-300 hover:text-white'
           }`}
         >
           그룹 참여
@@ -194,7 +194,7 @@ export default function GroupModalContent({ onClose }: GroupModalContentProps) {
       </div>
 
       {/* 탭 컨텐츠 */}
-      <div className='mt-4'>
+      <div className='mt-4 flex-1'>
         {/* 내 그룹 리스트 (최대 3개) */}
         {activeTab === 'list' && (
           <GroupListTab
@@ -224,9 +224,10 @@ export default function GroupModalContent({ onClose }: GroupModalContentProps) {
             searchedGroup={searchedGroup}
             handleSearch={handleSearch}
             handleJoinGroup={handleJoinGroup}
+            myGroups={myGroups}
           />
         )}
       </div>
-    </>
+    </div>
   );
 }

@@ -6,6 +6,7 @@ interface GroupJoinTabProps {
   searchedGroup: GroupResponseDto[];
   handleSearch: () => Promise<void>;
   handleJoinGroup: (groupId: string) => Promise<void>;
+  myGroups: GroupResponseDto[]; // 내가 참여한 그룹 목록 추가
 }
 
 export default function GroupJoinTab({
@@ -14,25 +15,31 @@ export default function GroupJoinTab({
   searchedGroup,
   handleSearch,
   handleJoinGroup,
+  myGroups,
 }: GroupJoinTabProps) {
+  // 이미 참여한 그룹인지 확인하는 함수
+  const isAlreadyJoined = (groupId: string) => {
+    return myGroups.some(myGroup => myGroup.id === groupId);
+  };
+
   return (
-    <div className='space-y-4'>
+    <div className='flex flex-col gap-4 h-full'>
       {/* 그룹 검색 */}
       <div>
-        <label className='block text-sm font-medium text-gray-700'>
+        <label className='block text-sm font-medium text-gray-300 mb-2'>
           그룹 검색
         </label>
         <div className='flex gap-2'>
           <input
             type='text'
-            placeholder='그룹 이름이나 설명으로 검색하세요'
-            className='mt-1 w-full rounded border p-2'
+            placeholder='그룹 이름으로 검색하세요'
+            className='flex-1 rounded-none border-b border-white/20 bg-white/10 p-2 text-sm text-white placeholder-gray-300 outline-none focus:border-blue-500 focus:ring-blue-500'
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           <button
             onClick={handleSearch}
-            className='bg-white-500 w-28 rounded px-1 py-1 text-black hover:bg-gray-500 disabled:bg-gray-300'
+            className='rounded bg-blue-500 px-4 py-2 text-sm text-white shadow-md transition-colors hover:bg-blue-600'
           >
             검색
           </button>
@@ -40,41 +47,52 @@ export default function GroupJoinTab({
       </div>
 
       {/* 전체 그룹 목록 */}
-      <div className='max-h-64 space-y-2 overflow-y-auto'>
-        {searchedGroup.length === 0 ? (
-          <div className='py-4 text-center text-gray-500'>
-            {searchQuery
-              ? '검색 결과가 없습니다.'
-              : '참여 가능한 그룹이 없습니다.'}
-          </div>
-        ) : (
-          searchedGroup.map((group) => (
-            <div
-              key={group.id}
-              className='flex items-center justify-between rounded-lg border p-3 hover:bg-gray-50'
-            >
-              <div className='flex-1'>
-                <h4 className='font-medium text-gray-900'>{group.name}</h4>
-
-                <p className='text-xs text-gray-500'>
-                  멤버 {group.currentParticipantsCount}/{group.maxParticipants}
-                  명
-                </p>
-              </div>
-              <button
-                onClick={() => handleJoinGroup(group.id)}
-                disabled={
-                  group.currentParticipantsCount >= group.maxParticipants
-                }
-                className='min-w-[70px] flex-shrink-0 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-2 text-center text-sm font-semibold whitespace-nowrap text-white shadow-md transition-all duration-200 hover:scale-105 hover:from-blue-600 hover:to-blue-700 hover:shadow-lg active:scale-95 disabled:cursor-not-allowed disabled:from-gray-300 disabled:to-gray-400 disabled:shadow-none disabled:hover:scale-100'
-              >
-                {group.currentParticipantsCount >= group.maxParticipants
-                  ? '정원초과'
-                  : '참여'}
-              </button>
+      <div className='flex-1 overflow-y-auto'>
+        <div className='space-y-2'>
+          {searchedGroup.length === 0 ? (
+            <div className='py-8 text-center text-gray-400'>
+              {searchQuery
+                ? '검색 결과가 없습니다.'
+                : '참여 가능한 그룹이 없습니다.'}
             </div>
-          ))
-        )}
+          ) : (
+            searchedGroup.map((group) => {
+              const alreadyJoined = isAlreadyJoined(group.id);
+              const isFull = group.currentParticipantsCount >= group.maxParticipants;
+              
+              return (
+                <div
+                  key={group.id}
+                  className='flex items-center justify-between rounded border border-white/20 bg-white/5 p-3 hover:bg-white/10 transition-colors'
+                >
+                  <div className='flex-1'>
+                    <h4 className='font-medium text-white'>{group.name}</h4>
+                    <p className='text-xs text-gray-400'>
+                      멤버 {group.currentParticipantsCount}/{group.maxParticipants}명
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => !alreadyJoined && handleJoinGroup(group.id)}
+                    disabled={alreadyJoined || isFull}
+                    className={`rounded px-3 py-1 text-sm shadow-md transition-colors ${
+                      alreadyJoined
+                        ? 'bg-green-500 text-white cursor-default'
+                        : isFull
+                        ? 'bg-gray-600 text-gray-300 cursor-not-allowed'
+                        : 'bg-blue-500 text-white hover:bg-blue-600'
+                    }`}
+                  >
+                    {alreadyJoined
+                      ? '참여중'
+                      : isFull
+                      ? '정원초과'
+                      : '참여'}
+                  </button>
+                </div>
+              );
+            })
+          )}
+        </div>
       </div>
     </div>
   );
