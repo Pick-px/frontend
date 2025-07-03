@@ -15,7 +15,10 @@ export const chatService = {
       const { defaultGroupId, groups, messages } = response.data.data;
       // 메시지를 시간순으로 정렬 (오래된 것부터)
       const sortedMessages = messages.sort(
-        (a, b) =>
+        (
+          a: { timestamp: any; created_at: any },
+          b: { timestamp: any; created_at: any }
+        ) =>
           new Date(a.timestamp || a.created_at).getTime() -
           new Date(b.timestamp || b.created_at).getTime()
       );
@@ -40,7 +43,10 @@ export const chatService = {
       const messages = response.data.messages;
       // 메시지를 시간순으로 정렬
       return messages.sort(
-        (a, b) =>
+        (
+          a: { timestamp: any; created_at: any },
+          b: { timestamp: any; created_at: any }
+        ) =>
           new Date(a.timestamp || a.created_at).getTime() -
           new Date(b.timestamp || b.created_at).getTime()
       );
