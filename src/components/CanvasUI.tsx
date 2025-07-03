@@ -13,6 +13,8 @@ type CanvasUIProps = {
   onConfirm: () => void;
   cooldown: boolean;
   timeLeft: number;
+  showPalette: boolean;
+  setShowPalette: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 export default function CanvasUI({
@@ -24,8 +26,11 @@ export default function CanvasUI({
   onSelectColor,
   cooldown,
   timeLeft,
+  showPalette,
+  setShowPalette,
 }: CanvasUIProps) {
   const [isPressed, setIsPressed] = useState(false);
+  const [showConfirmEffect, setShowConfirmEffect] = useState(false);
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
 
   const {
@@ -212,7 +217,9 @@ export default function CanvasUI({
       </div>
 
       {/* 팔레트 */}
-      <div className='pointer-events-auto fixed top-[100px] right-[20px] z-[9999] rounded-2xl bg-gradient-to-br from-slate-900/90 to-black/80 backdrop-blur-xl border border-cyan-400/20 p-5 shadow-2xl'>
+      <div className={`pointer-events-auto fixed top-[100px] z-[9999] rounded-2xl bg-gradient-to-br from-slate-900/90 to-black/80 backdrop-blur-xl border border-cyan-400/20 p-5 shadow-2xl transition-all duration-500 ease-out ${
+        showPalette ? 'right-[20px] opacity-100 scale-100' : 'right-[-300px] opacity-0 scale-95'
+      }`}>
         <div className='grid grid-cols-2 gap-3 mb-5'>
           {colors.map((c, index) => (
             <button
@@ -239,6 +246,8 @@ export default function CanvasUI({
             setIsPressed(false);
             if (cooldown) return;
             if (isLoggedIn) {
+              setShowConfirmEffect(true);
+              setTimeout(() => setShowConfirmEffect(false), 2000);
               onConfirm();
             } else {
               openLoginModal();
