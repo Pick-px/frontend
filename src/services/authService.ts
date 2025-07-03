@@ -60,7 +60,7 @@ export const authService = {
       const accessToken = authHeader?.split(' ')[1];
 
       const decodedToken = jwtDecode<DecodedToken>(accessToken);
-
+      console.log('--------로그인sub:', decodedToken.sub);
       const user = {
         userId: decodedToken.sub.userId,
         nickname: decodedToken.sub.nickName,

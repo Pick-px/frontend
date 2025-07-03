@@ -13,6 +13,7 @@ import apiClient from './services/apiClient';
 import Chat from './components/chat/Chat';
 import MyPageModalContent from './components/modal/MyPageModalContent';
 import LoginModalContent from './components/modal/LoginModalContent';
+import GroupModalContent from './components/modal/GroupModalContent';
 
 function App() {
   // URL에서 ?canvas_id= 값을 읽어온다
@@ -24,6 +25,8 @@ function App() {
     closeLoginModal,
     isMyPageModalOpen,
     closeMyPageModal,
+    isGroupModalOpen,
+    closeGroupModal,
   } = useModalStore();
 
   // if (!canvas_id) {
@@ -71,6 +74,9 @@ function App() {
       </Modal>
       <Modal isOpen={isMyPageModalOpen} onClose={closeMyPageModal}>
         <MyPageModalContent />
+      </Modal>
+      <Modal isOpen={isGroupModalOpen} onClose={closeGroupModal}>
+        <GroupModalContent />
       </Modal>
       {/* Chat 컴포넌트 에러 처리 */}
       {(() => {
