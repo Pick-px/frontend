@@ -4,42 +4,15 @@ import MessageInput from './MessageInput';
 import type { Message } from './MessageItem';
 import { chatService } from './ChatAPI';
 import { useCanvasStore } from '../../store/canvasStore';
+import { useChatSocket } from '../SocketIntegration';
+import { useAuthStore } from '../../store/authStrore';
+import { DUMMY_RESPONSE, type Group } from '../../data/dummyChatData';
 
 // 임시로 사용할 가짜 메시지 데이터
 
-type Group = {
-  group_id: string;
-  group_title: string;
-};
-
-const DUMMY_RESPONSE = {
-  success: true,
-  status: '200',
-  message: '요청에 성공하였습니다.',
-  data: {
-    defaultGroupId: '1',
-    groups: [
-      { group_id: '1', group_title: 'team gmg' },
-      { group_id: '2', group_title: 'team dogs' },
-    ],
-    messages: [
-      {
-        messageId: '130',
-        user: { userId: '1', name: 'Alice' },
-        content: '가장 최신 메시지',
-        timestamp: '2025-06-30T16:00:00Z',
-      },
-      {
-        messageId: '101',
-        user: { userId: '2', name: 'Bob' },
-        content: '이번 페이지의 마지막 메시지',
-        timestamp: '2025-06-30T15:00:00Z',
-      },
-    ],
-  },
-};
-
 export default function Chat() {
+  console.log('Chat 컴포넌트 시작');
+
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -47,6 +20,27 @@ export default function Chat() {
   const [currentGroupId, setCurrentGroupId] = useState<string | null>(null);
 
   const canvas_id = useCanvasStore((state) => state.canvas_id);
+  const user = useAuthStore((state) => state.user);
+
+  // 채팅 소켓 연결 - 항상 훅 호출
+  const { sendMessage: sendSocketMessage } = useChatSocket({
+    onMessageReceived: (message) => {
+      console.log('메시지 수신:', message);
+      const newMessage: Message = {
+        messageId: message.id.toString(),
+        user: {
+          userId: message.user.id.toString(),
+          name: message.user.user_name,
+        },
+        content: message.message,
+        timestamp: message.created_at,
+      };
+      setMessages((prev) => [...prev, newMessage]);
+    },
+
+    group_id: currentGroupId || '', // null이면 기본값 사용
+    user_id: user?.userId || '',
+  });
 
   // const {getChatMessages} = chatService();
 
@@ -72,56 +66,44 @@ export default function Chat() {
     return currentGroup ? currentGroup.group_title : '채팅';
   }, [groups, currentGroupId]);
 
-  // 메시지 보내는 로직(임시함수, 추후 Socket 구현시 로직 들어갈ㄹ 예정)
+  // 메시지 보내는 로직
   const handleSendMessage = (text: string) => {
-    const newMessage: Message = {
-      messageId: Date.now().toString(),
-      user: { userId: 'me', name: '나' },
-      content: text,
-    };
-    setMessages((prev) => [...prev, newMessage]);
+    console.log('메시지 전송 시도:', {
+      text,
+      currentGroupId,
+      userId: user?.userId,
+    });
+    if (currentGroupId && user?.userId) {
+      sendSocketMessage(text);
+    }
+  };
+
+  const requestAdditionalMsg = () => {
+    console.log('요청 보내기');
   };
 
   // isOpen True 시, canvasId 변경시
-  // useEffect(() => {
-  //   console.log(`modal open, ${canvas_id}`);
-  //   if (isOpen && canvas_id) {
-  //     const fetchInitialData = async () => {
-  //       console.log(`start fetch, ${canvas_id}`);
-  //       try {
-  //         const response = await chatService.getChatInitMessages(canvas_id);
-  //         console.log(response);
-  //         const {
-  //           defaultGroupId,
-  //           groups: fetchedGroups,
-  //           messages: initialMessages,
-  //         } = response.data;
-
-  //         setGroups(fetchedGroups);
-  //         setCurrentGroupId(defaultGroupId);
-  //         setMessages(initialMessages);
-  //       } catch (error) {
-  //         console.error('초기 채팅 데이터를 불러오는 데 실패했습니다.', error);
-  //       }
-  //     };
-
-  //     fetchInitialData();
-  //   }
-  // }, [isOpen, canvas_id]);
-
   useEffect(() => {
+    console.log(`modal open, ${canvas_id}`);
     if (isOpen && canvas_id) {
-      console.log(`modal open, using dummy data for canvasId: ${canvas_id}`);
+      const fetchInitialData = async () => {
+        console.log(`start fetch, ${canvas_id}`);
+        try {
+          const {
+            defaultGroupId,
+            groups: fetchedGroups,
+            messages: initialMessages,
+          } = await chatService.getChatInitMessages(canvas_id);
 
-      const {
-        defaultGroupId,
-        groups: fetchedGroups,
-        messages: initialMessages,
-      } = DUMMY_RESPONSE.data;
+          setGroups(fetchedGroups);
+          setCurrentGroupId(defaultGroupId);
+          setMessages(initialMessages);
+        } catch (error) {
+          console.error('초기 채팅 데이터를 불러오는 데 실패했습니다.', error);
+        }
+      };
 
-      setGroups(fetchedGroups);
-      setCurrentGroupId(defaultGroupId);
-      setMessages(initialMessages);
+      fetchInitialData();
     }
   }, [isOpen, canvas_id]);
 
@@ -129,24 +111,24 @@ export default function Chat() {
     <div className='fixed bottom-5 left-5 z-50 flex flex-col items-start'>
       {/* 채팅창 UI */}
       <div
-        className={`mb-2 flex h-[500px] w-80 flex-col rounded-xl border border-white/20 bg-black/20 shadow-2xl backdrop-blur-lg transition-all duration-300 ease-in-out ${isOpen ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'}`}
+        className={`mb-2 flex h-[500px] w-80 flex-col rounded-xl border border-white/30 bg-black/30 shadow-2xl backdrop-blur-md transition-all duration-300 ease-in-out ${isOpen ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'}`}
       >
         <div className='flex h-full flex-col'>
           {/* 헤더: 동적 제목 표시 */}
-          <div className='flex-shrink-0 border-b border-white/20 p-4'>
-            <h3 className='text-lg font-bold text-white'>{chatTitle}</h3>
+          <div className='flex-shrink-0 border-b border-white/30 p-3'>
+            <h3 className='text-md font-semibold text-white'>{chatTitle}</h3>
           </div>
 
           {/* 그룹 목록 탭 */}
-          <div className='flex flex-shrink-0 space-x-2 border-b border-white/20 p-2'>
+          <div className='flex flex-shrink-0 space-x-2 border-b border-white/30 p-2'>
             {groups.map((group) => (
               <button
                 key={group.group_id}
                 onClick={() => handleGroupChange(group.group_id)}
-                className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
+                className={`rounded-full px-3 py-1 text-xs font-medium transition-colors duration-200 ${
                   currentGroupId === group.group_id
-                    ? 'bg-blue-500/50 text-white'
-                    : 'bg-black/20 text-gray-300 hover:bg-black/40'
+                    ? 'bg-blue-500 text-white shadow-md'
+                    : 'bg-white/10 text-gray-200 hover:bg-white/20'
                 }`}
               >
                 {group.group_title}
@@ -165,7 +147,7 @@ export default function Chat() {
       {/* 채팅창 여닫기 버튼 */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className='flex h-16 w-16 items-center justify-center rounded-full bg-blue-500 text-white shadow-xl transition-transform hover:bg-blue-600 active:scale-90'
+        className='flex h-14 w-14 items-center justify-center rounded-full bg-blue-500 text-white shadow-xl transition-transform hover:bg-blue-600 active:scale-90'
       >
         {isOpen ? (
           // 닫기 아이콘 (X)
@@ -173,9 +155,9 @@ export default function Chat() {
             xmlns='http://www.w3.org/2000/svg'
             fill='none'
             viewBox='0 0 24 24'
-            strokeWidth={2.5}
+            strokeWidth={2}
             stroke='currentColor'
-            className='h-8 w-8'
+            className='h-7 w-7'
           >
             <path
               strokeLinecap='round'
@@ -191,7 +173,7 @@ export default function Chat() {
             viewBox='0 0 24 24'
             strokeWidth={1.5}
             stroke='currentColor'
-            className='h-8 w-8'
+            className='h-7 w-7'
           >
             <path
               strokeLinecap='round'

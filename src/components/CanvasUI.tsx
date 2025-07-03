@@ -98,10 +98,10 @@ export default function CanvasUI({
         {/* isMenuOpen이 true일 때만 드롭다운 메뉴가 보입니다. */}
         {isMenuOpen && (
           <div className='absolute top-full mt-2 flex w-auto flex-col gap-2'>
-            {/* 로그인 버튼 */}
+            {/* 로그인/마이페이지 버튼 */}
             <div className='group relative'>
               <button
-                onClick={openLoginModal}
+                onClick={isLoggedIn ? openMyPageModal : openLoginModal}
                 className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
               >
                 <svg
@@ -115,12 +115,12 @@ export default function CanvasUI({
                   <path
                     strokeLinecap='round'
                     strokeLinejoin='round'
-                    d='M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9'
+                    d={isLoggedIn ? 'M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z' : 'M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9'}
                   />
                 </svg>
               </button>
               <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs text-white transition-all group-hover:scale-100'>
-                로그인
+                {isLoggedIn ? '마이페이지' : '로그인'}
               </span>
             </div>
             {/* 캔버스 버튼 */}
@@ -173,31 +173,7 @@ export default function CanvasUI({
                 앨범
               </span>
             </div>
-            {/* 마이페이지 버튼 */}
-            <div className='group relative'>
-              <button
-                onClick={openMyPageModal}
-                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
-              >
-                <svg
-                  className='h-6 w-6'
-                  xmlns='http://www.w3.org/2000/svg'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  strokeWidth={1.5}
-                  stroke='currentColor'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    d='M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z'
-                  />
-                </svg>
-              </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs text-white transition-all group-hover:scale-100'>
-                마이페이지
-              </span>
-            </div>
+            
             {/* 그룹 버튼 */}
             <div className='group relative'>
               <button

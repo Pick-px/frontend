@@ -56,10 +56,6 @@ export const authService = {
         state,
       });
 
-      console.log('백엔드로부터 받은 전체 응답:', response);
-      console.log('응답 헤더:', response.headers);
-      console.log('Authorization 헤더 값:', response.headers['authorization']);
-
       const authHeader = response.headers['authorization'];
       const accessToken = authHeader?.split(' ')[1];
 

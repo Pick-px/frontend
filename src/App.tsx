@@ -78,7 +78,19 @@ function App() {
       <Modal isOpen={isGroupModalOpen} onClose={closeGroupModal}>
         <GroupModalContent />
       </Modal>
-      <Chat />
+      {/* Chat 컴포넌트 에러 처리 */}
+      {(() => {
+        try {
+          return <Chat />;
+        } catch (error) {
+          console.error('Chat 컴포넌트 에러:', error);
+          return (
+            <div className='fixed bottom-5 left-5 text-red-500'>
+              채팅 로드 실패
+            </div>
+          );
+        }
+      })()}
     </main>
   );
 }
