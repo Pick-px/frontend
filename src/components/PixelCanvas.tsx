@@ -342,7 +342,8 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
         canvasSize: fetchedCanvasSize,
       } = json.data;
 
-      // console.log(`fetchedID : ${fetchedId}`);
+      console.log(`fetchedID : ${fetchedId}`);
+      console.log(`pixels : ${pixels.length}`);
 
       setCanvasId(fetchedId);
       setCanvasSize(fetchedCanvasSize);
