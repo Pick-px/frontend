@@ -52,14 +52,20 @@ class SocketService {
 
   //==== 채팅 관련 ====//
   // 채팅방 참여
-  joinChat(data: { group_id: string; user_id: string }) {
+  joinChat(data: { group_id: string }) {
     if (this.socket) {
       this.socket.emit('join_chat', data);
     }
   }
 
+  leaveChat(data: { group_id: string }) {
+    if (this.socket) {
+      this.socket.emit('leave_chat', data);
+    }
+  }
+
   // 채팅 메시지 전송
-  sendChat(data: { group_id: string; user_id: string; message: string }) {
+  sendChat(data: { group_id: string; message: string }) {
     if (this.socket) {
       this.socket.emit('send_chat', data);
     }

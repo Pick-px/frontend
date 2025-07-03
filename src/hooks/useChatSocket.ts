@@ -30,8 +30,8 @@ export const useChatSocket = (
     socketService.onChatError(onChatError);
 
     // 채팅방 참여
-    socketService.joinChat({ group_id, user_id });
-    console.log(`채팅방 참여: group_id=${group_id}, user_id=${user_id}`);
+    socketService.joinChat({ group_id });
+    console.log(`채팅방 참여: group_id=${group_id}`);
 
     return () => {
       // 클린업 시 이벤트 리스너 제거
@@ -42,13 +42,19 @@ export const useChatSocket = (
 
   const sendMessage = useCallback(
     (message: string) => {
-      if (!group_id || !user_id) return;
+      if (!group_id) return;
 
       // 실제 소켓 전송
-      socketService.sendChat({ group_id, user_id, message });
+      socketService.sendChat({ group_id, message });
     },
-    [group_id, user_id]
+    [group_id]
   );
 
-  return { sendMessage };
+  const leaveChat = useCallback(() => {
+    if (!group_id) return;
+    socketService.leaveChat({ group_id });
+    console.log(`채팅방 나가기: group_id=${group_id}`);
+  }, [group_id]);
+
+  return { sendMessage, leaveChat };
 };

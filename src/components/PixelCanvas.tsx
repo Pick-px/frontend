@@ -44,9 +44,32 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
   const [timeLeft, setTimeLeft] = useState(0);
   const [color, setColor] = useState('#ffffff');
   const [hoverPos, setHoverPos] = useState<HoverPos>(null);
-  const colors = ['#ffffff', '#000000', '#ff0000', '#00ff00', '#0000ff'];
+  const colors = [
+    '#ffffff',
+    '#c0c0c0',
+    '#808080',
+    '#000000',
+    '#ff0000',
+    '#ff8000',
+    '#ffff00',
+    '#80ff00',
+    '#00ff00',
+    '#00ff80',
+    '#00ffff',
+    '#0080ff',
+    '#0000ff',
+    '#8000ff',
+    '#ff00ff',
+    '#ff0080',
+    '#ffa07a',
+    '#f08080',
+    '#ffd700',
+    '#87cefa',
+  ];
+
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [showPalette, setShowPalette] = useState(false);
 
   const draw = useCallback(() => {
     const src = sourceCanvasRef.current;
@@ -285,6 +308,7 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
           wy < canvasSize.height
         ) {
           fixedPosRef.current = { x: wx, y: wy, color: 'transparent' };
+          setShowPalette(true);
           centerOnPixel(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
         }
       }
@@ -478,6 +502,8 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
         onSelectColor={handleSelectColor}
         cooldown={cooldown}
         timeLeft={timeLeft}
+        showPalette={showPalette}
+        setShowPalette={setShowPalette}
       />
     </div>
   );

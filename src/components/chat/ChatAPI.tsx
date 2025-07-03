@@ -33,14 +33,14 @@ export const chatService = {
    * 특정 그룹의 메시지 목록
    * @param groupId - 조회할 그룹의 ID
    */
-  async getChatMessages(groupId: string, limit = 30) {
+  async getChatMessages(groupId: string, limit = 50) {
     try {
-      const response = await apiClient.get('/chat', {
+      const response = await apiClient.get('group/chat', {
         // 이 엔드포인트는 예시입니다.
         params: { group_id: groupId, limit },
       });
       // 실제 API에서는 data.messages 형태로 올 수 있습니다.
-      const messages = response.data.messages;
+      const messages = response.data.data.messages;
       // 메시지를 시간순으로 정렬
       return messages.sort(
         (
