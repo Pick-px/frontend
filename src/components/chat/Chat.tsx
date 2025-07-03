@@ -4,11 +4,15 @@ import MessageInput from './MessageInput';
 import type { Message } from './MessageItem';
 import { chatService } from './ChatAPI';
 import { useCanvasStore } from '../../store/canvasStore';
+import { useChatSocket } from '../SocketIntegration';
+import { useAuthStore } from '../../store/authStrore';
 import { DUMMY_RESPONSE, type Group } from '../../data/dummyChatData';
 
 // 임시로 사용할 가짜 메시지 데이터
 
 export default function Chat() {
+  console.log('Chat 컴포넌트 시작');
+
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -16,6 +20,27 @@ export default function Chat() {
   const [currentGroupId, setCurrentGroupId] = useState<string | null>(null);
 
   const canvas_id = useCanvasStore((state) => state.canvas_id);
+  const user = useAuthStore((state) => state.user);
+
+  // 채팅 소켓 연결 - 항상 훅 호출
+  const { sendMessage: sendSocketMessage } = useChatSocket({
+    onMessageReceived: (message) => {
+      console.log('메시지 수신:', message);
+      const newMessage: Message = {
+        messageId: message.id.toString(),
+        user: {
+          userId: message.user.id.toString(),
+          name: message.user.user_name,
+        },
+        content: message.message,
+        timestamp: message.created_at,
+      };
+      setMessages((prev) => [...prev, newMessage]);
+    },
+
+    group_id: currentGroupId || '', // null이면 기본값 사용
+    user_id: user?.userId || '',
+  });
 
   // const {getChatMessages} = chatService();
 
@@ -41,19 +66,41 @@ export default function Chat() {
     return currentGroup ? currentGroup.group_title : '채팅';
   }, [groups, currentGroupId]);
 
-  // 메시지 보내는 로직(임시함수, 추후 Socket 구현시 로직 들어갈ㄹ 예정)
+  // 메시지 보내는 로직
   const handleSendMessage = (text: string) => {
+    console.log('메시지 전송 시도:', {
+      text,
+      currentGroupId,
+      userId: user?.userId,
+    });
+
+    // 임시: 로컬에서 메시지 바로 추가 (백엔드 없이 테스트용)
+    // const localMessage: Message = {
+    //   messageId: Date.now().toString(),
+    //   user: { userId: user?.userId || 'local', name: user?.nickname || '나' },
+    //   content: text,
+    //   timestamp: new Date().toISOString(),
+    // };
+    // setMessages((prev) => [...prev, localMessage]);
+
     const newMessage: Message = {
       messageId: Date.now().toString(),
-      user: { userId: 'me', name: '나' },
+      user: {
+        userId: user?.userId || 'anonymous',
+        name: user?.nickname || '나',
+      },
       content: text,
       timestamp: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, newMessage]);
+    // 실제 소켓 전송 (백엔드 있을 때)
+    if (currentGroupId && user?.userId) {
+      sendSocketMessage(text);
+    }
   };
 
   const requestAdditionalMsg = () => {
-    console.log("요청 보내기");
+    console.log('요청 보내기');
   };
 
   // isOpen True 시, canvasId 변경시
@@ -63,13 +110,11 @@ export default function Chat() {
   //     const fetchInitialData = async () => {
   //       console.log(`start fetch, ${canvas_id}`);
   //       try {
-  //         const response = await chatService.getChatInitMessages(canvas_id);
-  //         console.log(response);
   //         const {
   //           defaultGroupId,
   //           groups: fetchedGroups,
   //           messages: initialMessages,
-  //         } = response.data;
+  //         } = await chatService.getChatInitMessages(canvas_id);
 
   //         setGroups(fetchedGroups);
   //         setCurrentGroupId(defaultGroupId);
@@ -86,7 +131,6 @@ export default function Chat() {
   useEffect(() => {
     if (isOpen && canvas_id) {
       console.log(`modal open, using dummy data for canvasId: ${canvas_id}`);
-
       const {
         defaultGroupId,
         groups: fetchedGroups,
