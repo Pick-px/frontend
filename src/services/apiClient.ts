@@ -34,7 +34,7 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
       try {
         const res = await apiClient.post('/auth/refresh');
-        console.log(res);
+        // console.log(res);
 
         // 새로 발급받은 AT를 응답 헤더에서 꺼냅니다.
         // const newAccessToken = res.data.accessToken;

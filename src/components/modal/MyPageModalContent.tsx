@@ -17,6 +17,7 @@ export default function MyPageModalContent() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log('MyPage', isLoggedIn);
     const fetchMyPageData = async () => {
       if (!isLoggedIn) {
         setLoading(false);
@@ -46,9 +47,14 @@ export default function MyPageModalContent() {
 
   if (loading) {
     return (
-      <div className='flex h-full flex-col items-center justify-center text-white p-4'>
-        <div className='h-12 w-12 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] text-blue-500 motion-reduce:animate-[spin_1.5s_linear_infinite]' role='status'>
-          <span className='!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]'>Loading...</span>
+      <div className='flex h-full flex-col items-center justify-center p-4 text-white'>
+        <div
+          className='h-12 w-12 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] text-blue-500 motion-reduce:animate-[spin_1.5s_linear_infinite]'
+          role='status'
+        >
+          <span className='!absolute !-m-px !h-px !w-px !overflow-hidden !border-0 !p-0 !whitespace-nowrap ![clip:rect(0,0,0,0)]'>
+            Loading...
+          </span>
         </div>
         <p className='mt-4 text-lg'>데이터 로딩 중...</p>
       </div>
@@ -68,23 +74,30 @@ export default function MyPageModalContent() {
 
       {/* 콘텐츠 영역 */}
       <div className='flex-grow overflow-y-auto p-3'>
-        {isLoggedIn && user && userInfo ? (
+        {isLoggedIn && userInfo ? (
           <div className='flex flex-col gap-6'>
             {/* User Info Section */}
             <div className='flex flex-col items-center text-center'>
               <h3 className='text-2xl font-bold text-white'>
-                {userInfo.user_name || user.nickname || user.userId}
+                {userInfo.user_name || userInfo.user_name || userInfo.email}
               </h3>
-              {userInfo.email && <p className='text-gray-300'>{userInfo.email}</p>}
+              {userInfo.email && (
+                <p className='text-gray-300'>{userInfo.email}</p>
+              )}
             </div>
 
             {/* Canvases Section */}
             {userInfo.canvases && userInfo.canvases.length > 0 && (
               <div className='flex flex-col gap-3'>
-                <h3 className='text-lg font-semibold text-white border-b border-white/20 pb-2'>내 캔버스</h3>
+                <h3 className='border-b border-white/20 pb-2 text-lg font-semibold text-white'>
+                  내 캔버스
+                </h3>
                 <ul className='space-y-3'>
                   {userInfo.canvases.map((canvas, index) => (
-                    <li key={index} className='rounded-md bg-white/10 p-3 flex flex-col gap-1'>
+                    <li
+                      key={index}
+                      className='flex flex-col gap-1 rounded-md bg-white/10 p-3'
+                    >
                       <p className='font-medium text-white'>{canvas.title}</p>
                       <p className='text-sm text-gray-300'>
                         크기: {canvas.size_x}x{canvas.size_y}

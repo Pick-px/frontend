@@ -27,22 +27,57 @@ type ModalState = {
 export const useModalStore = create<ModalState>((set) => ({
   // 기존 로그인 모달 상태
   isLoginModalOpen: false,
-  openLoginModal: () => set({ isLoginModalOpen: true }),
+  openLoginModal: () =>
+    set({
+      isLoginModalOpen: true,
+      isCanvasModalOpen: false,
+      isAlbumModalOpen: false,
+      isMyPageModalOpen: false,
+      isGroupModalOpen: false,
+    }),
   closeLoginModal: () => set({ isLoginModalOpen: false }),
 
   isCanvasModalOpen: false,
-  openCanvasModal: () => set({ isCanvasModalOpen: true }),
+  openCanvasModal: () =>
+    set({
+      isLoginModalOpen: false,
+      isCanvasModalOpen: true,
+      isAlbumModalOpen: false,
+      isMyPageModalOpen: false,
+      isGroupModalOpen: false,
+    }),
   closeCanvasModal: () => set({ isCanvasModalOpen: false }),
 
   isAlbumModalOpen: false,
-  openAlbumModal: () => set({ isAlbumModalOpen: true }),
+  openAlbumModal: () =>
+    set({
+      isLoginModalOpen: false,
+      isCanvasModalOpen: false,
+      isAlbumModalOpen: true,
+      isMyPageModalOpen: false,
+      isGroupModalOpen: false,
+    }),
   closeAlbumModal: () => set({ isAlbumModalOpen: false }),
 
   isMyPageModalOpen: false,
-  openMyPageModal: () => set({ isMyPageModalOpen: true }),
+  openMyPageModal: () =>
+    set({
+      isLoginModalOpen: false,
+      isCanvasModalOpen: false,
+      isAlbumModalOpen: false,
+      isMyPageModalOpen: true,
+      isGroupModalOpen: false,
+    }),
   closeMyPageModal: () => set({ isMyPageModalOpen: false }),
 
   isGroupModalOpen: false,
-  openGroupModal: () => set({ isGroupModalOpen: true }),
+  openGroupModal: () =>
+    set({
+      isLoginModalOpen: false,
+      isCanvasModalOpen: false,
+      isAlbumModalOpen: false,
+      isMyPageModalOpen: false,
+      isGroupModalOpen: true,
+    }),
   closeGroupModal: () => set({ isGroupModalOpen: false }),
 }));
