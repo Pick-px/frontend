@@ -14,6 +14,7 @@ import Chat from './components/chat/Chat';
 import MyPageModalContent from './components/modal/MyPageModalContent';
 import LoginModalContent from './components/modal/LoginModalContent';
 import GroupModalContent from './components/modal/GroupModalContent';
+import { toast } from 'react-toastify';
 
 function App() {
   // URL에서 ?canvas_id= 값을 읽어온다
@@ -61,6 +62,7 @@ function App() {
           setAuth(newAccessToken, response.data.user);
         } catch (error) {
           // 실패 시 (유효한 RT 없음) 로그아웃 상태
+          toast.error('로그인에 실패했습니다.');
           clearAuth();
         } finally {
           setIsLoading(false);

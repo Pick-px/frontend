@@ -63,7 +63,8 @@ export default function Chat() {
   // Title은 거의 동일 => useMemo로 기억
   const chatTitle = useMemo(() => {
     const currentGroup = groups.find((g) => g.group_id === currentGroupId);
-    return currentGroup ? currentGroup.group_title : '채팅';
+    const title = currentGroup ? currentGroup.group_title : '채팅';
+    return title.length > 15 ? `${title.substring(0, 15)}...` : title;
   }, [groups, currentGroupId]);
 
   // 메시지 보내는 로직
@@ -116,7 +117,9 @@ export default function Chat() {
         <div className='flex h-full flex-col'>
           {/* 헤더: 동적 제목 표시 */}
           <div className='flex-shrink-0 border-b border-white/30 p-3'>
-            <h3 className='text-md font-semibold text-white'>{chatTitle}</h3>
+            <h3 className='text-md font-semibold text-ellipsis text-white'>
+              {chatTitle}
+            </h3>
           </div>
 
           {/* 그룹 목록 탭 */}
@@ -131,7 +134,9 @@ export default function Chat() {
                     : 'bg-white/10 text-gray-200 hover:bg-white/20'
                 }`}
               >
-                {group.group_title}
+                {group.group_title.length > 10
+                  ? `${group.group_title.substring(0, 10)}...`
+                  : group.group_title}
               </button>
             ))}
           </div>
