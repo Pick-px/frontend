@@ -51,18 +51,18 @@ function App() {
 
       setIsLoading(false);
     } else {
-      // const checkLoginStatus = async () => {
-      //   try {
-      //     const response = await apiClient.post('/auth/refresh');
-      //     setAuth(response.data.accessToken, response.data.user);
-      //   } catch (error) {
-      //     // 실패 시 (유효한 RT 없음) 로그아웃 상태
-      //     clearAuth();
-      //   } finally {
-      //     setIsLoading(false);
-      //   }
-      // };
-      // checkLoginStatus();
+      const checkLoginStatus = async () => {
+        try {
+          const response = await apiClient.post('/auth/refresh');
+          setAuth(response.data.accessToken, response.data.user);
+        } catch (error) {
+          // 실패 시 (유효한 RT 없음) 로그아웃 상태
+          clearAuth();
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      checkLoginStatus();
     }
   }, [setAuth, clearAuth]);
 
