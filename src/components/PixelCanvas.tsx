@@ -300,6 +300,8 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
   const handleMouseDown = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
       if (e.button === 2) {
+        // 기본 브라우저 동작 방지 코드 추가
+        e.preventDefault();
         isPanningRef.current = true;
         startPosRef.current = {
           x: e.nativeEvent.offsetX - viewPosRef.current.x,

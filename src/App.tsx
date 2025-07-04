@@ -14,6 +14,18 @@ import Chat from './components/chat/Chat';
 import MyPageModalContent from './components/modal/MyPageModalContent';
 import LoginModalContent from './components/modal/LoginModalContent';
 import GroupModalContent from './components/modal/GroupModalContent';
+import { toast } from 'react-toastify';
+import { jwtDecode } from 'jwt-decode';
+
+type DecodedToken = {
+  sub: {
+    userId: string;
+    nickName: string;
+  };
+  jti: string;
+  exp: number;
+  iat: number;
+};
 
 function App() {
   // URL에서 ?canvas_id= 값을 읽어온다
@@ -54,13 +66,18 @@ function App() {
       const checkLoginStatus = async () => {
         try {
           const response = await apiClient.post('/auth/refresh');
-          console.log(response);
           const authHeader = response.headers['authorization'];
           const newAccessToken = authHeader?.split(' ')[1];
-          console.log(newAccessToken);
-          setAuth(newAccessToken, response.data.user);
+          const decodedToken = jwtDecode<DecodedToken>(newAccessToken);
+          const user = {
+            userId: decodedToken.sub.userId,
+            nickname: decodedToken.sub.nickName,
+          };
+          console.log(user);
+          setAuth(newAccessToken, user);
         } catch (error) {
           // 실패 시 (유효한 RT 없음) 로그아웃 상태
+          toast.error('로그인에 실패했습니다.');
           clearAuth();
         } finally {
           setIsLoading(false);

@@ -1,5 +1,7 @@
 import apiClient from './apiClient';
 import { jwtDecode } from 'jwt-decode';
+import { toast } from 'react-toastify';
+import { useAuthStore } from '../store/authStrore';
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const NAVER_CLIENT_ID = import.meta.env.VITE_NAVER_CLIENT_ID;
 const KAKAO_CLIENT_ID = import.meta.env.VITE_KAKAO_CLIENT_ID;
@@ -30,6 +32,8 @@ type DecodedToken = {
   exp: number;
   iat: number;
 };
+
+// const { isLoggedIn, setAuth, clearAuth } = useAuthStore();
 
 // --- 서비스 객체 ---
 export const authService = {
@@ -70,6 +74,7 @@ export const authService = {
       return { accessToken, user };
     } catch (error) {
       console.error(`${state} login failed`, error);
+      toast.error('로그인에 실패했습니다.');
       throw error;
     }
   },
@@ -82,9 +87,15 @@ export const authService = {
     try {
       // 이 요청에는 브라우저가 자동으로 RT 쿠키를 실어 보냅니다.
       const response = await apiClient.post('/auth/refresh');
+      const authHeader = response.headers['authorization'];
+      const newAccessToken = authHeader?.split(' ')[1];
+      console.log(newAccessToken);
+      // setAuth(newAccessToken, response.data.user);
       return response.data;
     } catch (error) {
       console.error('Failed to refresh token', error);
+      // clearAuth();
+      toast.error('세션이 만료되었습니다. 다시 로그인해주세요.');
       throw error;
     }
   },
