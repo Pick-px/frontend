@@ -2,7 +2,7 @@
 
 import PixelCanvas from './components/PixelCanvas';
 
-import React, { useState, useEffect } from 'react'; // UI 상태 관리를 위해 import
+import React, { useState, useEffect, useReducer } from 'react'; // UI 상태 관리를 위해 import
 import { useLocation } from 'react-router-dom';
 
 import { useModalStore } from './store/modalStore';
