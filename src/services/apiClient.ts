@@ -52,7 +52,11 @@ apiClient.interceptors.response.use(
         // 새 토큰으로 교체하여 로그인 처리
         originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
         // 소켓 끊고 재연결
-        const canvas_id = useCanvasStore((state) => state.canvas_id);
+
+        // Hook❌
+        // const canvas_id = useCanvasStore((state) => state.canvas_id);
+        // 일반함수
+        const canvas_id = useCanvasStore.getState().canvas_id;
         socketService.disconnect();
         socketService.connect(canvas_id);
 

@@ -108,6 +108,7 @@ export const authService = {
       await apiClient.post('/auth/logout');
     } catch (error) {
       console.error('Logout failed', error);
+      toast('로그아웃 실패');
       // 추후 clearAuth
     }
   },

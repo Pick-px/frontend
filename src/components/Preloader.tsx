@@ -36,7 +36,7 @@ const Preloader = () => {
           width: 20px;
           height: 20px;
           background-color: #333;
-          animation: jump 2s infinite; /* 애니메이션 시간을 2초로 유지 */
+          animation: jump 2s infinite; 
         }
 
         @keyframes jump {
