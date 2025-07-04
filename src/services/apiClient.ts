@@ -34,9 +34,13 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
       try {
         const res = await apiClient.post('/auth/refresh');
+        // console.log(res);
 
-        // 새로 발급받은 AT를 응답 본문에서 꺼냅니다.
-        const newAccessToken = res.data.accessToken;
+        // 새로 발급받은 AT를 응답 헤더에서 꺼냅니다.
+        // const newAccessToken = res.data.accessToken;
+        // console.log(res);
+        const authHeader = res.headers['authorization'];
+        const newAccessToken = authHeader?.split(' ')[1];
 
         // 전역 스토어의 토큰을 업데이트
         useAuthStore

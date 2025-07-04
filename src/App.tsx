@@ -13,6 +13,19 @@ import apiClient from './services/apiClient';
 import Chat from './components/chat/Chat';
 import MyPageModalContent from './components/modal/MyPageModalContent';
 import LoginModalContent from './components/modal/LoginModalContent';
+import GroupModalContent from './components/modal/GroupModalContent';
+import { toast } from 'react-toastify';
+import { jwtDecode } from 'jwt-decode';
+
+type DecodedToken = {
+  sub: {
+    userId: string;
+    nickName: string;
+  };
+  jti: string;
+  exp: number;
+  iat: number;
+};
 
 function App() {
   // URL에서 ?canvas_id= 값을 읽어온다
@@ -24,6 +37,8 @@ function App() {
     closeLoginModal,
     isMyPageModalOpen,
     closeMyPageModal,
+    isGroupModalOpen,
+    closeGroupModal,
   } = useModalStore();
 
   // if (!canvas_id) {
@@ -48,18 +63,27 @@ function App() {
 
       setIsLoading(false);
     } else {
-      // const checkLoginStatus = async () => {
-      //   try {
-      //     const response = await apiClient.post('/auth/refresh');
-      //     setAuth(response.data.accessToken, response.data.user);
-      //   } catch (error) {
-      //     // 실패 시 (유효한 RT 없음) 로그아웃 상태
-      //     clearAuth();
-      //   } finally {
-      //     setIsLoading(false);
-      //   }
-      // };
-      // checkLoginStatus();
+      const checkLoginStatus = async () => {
+        try {
+          const response = await apiClient.post('/auth/refresh');
+          const authHeader = response.headers['authorization'];
+          const newAccessToken = authHeader?.split(' ')[1];
+          const decodedToken = jwtDecode<DecodedToken>(newAccessToken);
+          const user = {
+            userId: decodedToken.sub.userId,
+            nickname: decodedToken.sub.nickName,
+          };
+          console.log(user);
+          setAuth(newAccessToken, user);
+        } catch (error) {
+          // 실패 시 (유효한 RT 없음) 로그아웃 상태
+          toast.error('로그인에 실패했습니다.');
+          clearAuth();
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      checkLoginStatus();
     }
   }, [setAuth, clearAuth]);
 
@@ -72,7 +96,22 @@ function App() {
       <Modal isOpen={isMyPageModalOpen} onClose={closeMyPageModal}>
         <MyPageModalContent />
       </Modal>
-      <Chat />
+      <Modal isOpen={isGroupModalOpen} onClose={closeGroupModal}>
+        <GroupModalContent />
+      </Modal>
+      {/* Chat 컴포넌트 에러 처리 */}
+      {(() => {
+        try {
+          return <Chat />;
+        } catch (error) {
+          console.error('Chat 컴포넌트 에러:', error);
+          return (
+            <div className='fixed bottom-5 left-5 text-red-500'>
+              채팅 로드 실패
+            </div>
+          );
+        }
+      })()}
     </main>
   );
 }

@@ -39,9 +39,9 @@ export default function OAuthButton({ provider, onClick }: OAuthButtonProps) {
     <button
       onClick={onClick}
       // 공통 스타일: 클릭 시 눌리는 효과만 적용
-      className='h-10 w-[180px] transition-transform active:scale-95'
+      className='w-[180px] transition-transform active:scale-95'
     >
-      <img src={info.src} alt={info.alt} className='h-full w-full' />
+      <img src={info.src} alt={info.alt} className='h-[40px] w-[180px]' />
     </button>
   );
 }
