@@ -57,7 +57,7 @@ export default function AuthCallbackPage() {
           throw new Error('Authentication failed');
         }
       } catch (error) {
-        navigate('/login-failed');
+        navigate('/');
       }
     };
 

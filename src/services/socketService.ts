@@ -43,10 +43,17 @@ class SocketService {
     }
   }
 
-  //
+  //픽셀 업데이트 수신
   onPixelUpdate(callback: (pixelData: PixelData) => void) {
     if (this.socket) {
       this.socket.on('pixel-update', callback);
+    }
+  }
+
+  //쿨다운 정보 수신
+  onCooldownInfo(callback: (data: { cooldown: string; remaining: string }) => void) {
+    if (this.socket) {
+      this.socket.on('cooldown_info', callback);
     }
   }
 
