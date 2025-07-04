@@ -19,11 +19,11 @@ export const useChatSocket = (
   user_id: string
 ) => {
   useEffect(() => {
-    // 빈 값이거나 anonymous면 소켓 연결 안 함
-    // if (!group_id || !user_id || group_id === '1' && user_id === 'anonymous') {
-    //   console.log('소켓 연결 스킵: 빈 값');
-    //   return;
-    // }
+    // 유효하지 않은 group_id이면 소켓 연결 안 함
+    if (!group_id || group_id === '0' || !user_id) {
+      console.log('소켓 연결 스킵: 유효하지 않은 group_id 또는 user_id');
+      return;
+    }
 
     // 채팅 이벤트 리스너 등록
     socketService.onChatMessage(onMessageReceived);

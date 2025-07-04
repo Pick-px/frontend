@@ -4,6 +4,8 @@
 
 import axios from 'axios';
 import { useAuthStore } from '../store/authStrore';
+import socketService from './socketService';
+import { useCanvasStore } from '../store/canvasStore';
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'https://pick-px.com/api',
@@ -49,6 +51,11 @@ apiClient.interceptors.response.use(
 
         // 새 토큰으로 교체하여 로그인 처리
         originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+        // 소켓 끊고 재연결
+        const canvas_id = useCanvasStore((state) => state.canvas_id);
+        socketService.disconnect();
+        socketService.connect(canvas_id);
+
         return apiClient(originalRequest);
       } catch (refreshError) {
         // RT마저 만료되면 로그아웃
