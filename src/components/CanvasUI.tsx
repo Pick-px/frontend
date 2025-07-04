@@ -186,7 +186,7 @@ export default function CanvasUI({
             {/* 그룹 버튼 */}
             <div className='group relative'>
               <button
-                onClick={openGroupModal}
+                onClick={isLoggedIn ? openGroupModal : openLoginModal}
                 className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
               >
                 <svg
@@ -217,10 +217,14 @@ export default function CanvasUI({
       </div>
 
       {/* 팔레트 */}
-      <div className={`pointer-events-auto fixed top-[100px] z-[9999] rounded-2xl bg-gradient-to-br from-slate-900/90 to-black/80 backdrop-blur-xl border border-cyan-400/20 p-5 shadow-2xl transition-all duration-500 ease-out ${
-        showPalette ? 'right-[20px] opacity-100 scale-100' : 'right-[-300px] opacity-0 scale-95'
-      }`}>
-        <div className='grid grid-cols-2 gap-3 mb-5'>
+      <div
+        className={`pointer-events-auto fixed top-[100px] z-[9999] rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-900/90 to-black/80 p-5 shadow-2xl backdrop-blur-xl transition-all duration-500 ease-out ${
+          showPalette
+            ? 'right-[20px] scale-100 opacity-100'
+            : 'right-[-300px] scale-95 opacity-0'
+        }`}
+      >
+        <div className='mb-5 grid grid-cols-2 gap-3'>
           {colors.map((c, index) => (
             <button
               key={index}
@@ -231,7 +235,7 @@ export default function CanvasUI({
               style={{ backgroundColor: c }}
               className={`h-8 w-8 cursor-pointer rounded-full transition-all duration-300 hover:scale-125 hover:rotate-12 ${
                 color === c
-                  ? 'ring-2 ring-cyan-300 ring-offset-2 ring-offset-slate-800 shadow-lg shadow-cyan-400/60 scale-110'
+                  ? 'scale-110 shadow-lg ring-2 shadow-cyan-400/60 ring-cyan-300 ring-offset-2 ring-offset-slate-800'
                   : 'border border-white/30 hover:border-cyan-300/50 hover:shadow-md hover:shadow-white/20'
               }`}
             />
@@ -254,22 +258,45 @@ export default function CanvasUI({
             }
           }}
           onMouseLeave={() => setIsPressed(false)}
-          className={`w-full h-12 rounded-full transition-all duration-300 flex items-center justify-center ${
-            cooldown 
-              ? 'bg-red-500/20 text-red-400 cursor-not-allowed border border-red-500/30' 
-              : 'bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-white shadow-lg hover:shadow-emerald-400/30 hover:scale-105'
-          } ${
-            isPressed ? 'scale-95' : 'scale-100'
-          }`}
+          className={`flex h-12 w-full items-center justify-center rounded-full transition-all duration-300 ${
+            cooldown
+              ? 'cursor-not-allowed border border-red-500/30 bg-red-500/20 text-red-400'
+              : 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-lg hover:scale-105 hover:from-emerald-400 hover:to-cyan-400 hover:shadow-emerald-400/30'
+          } ${isPressed ? 'scale-95' : 'scale-100'}`}
         >
           {cooldown ? (
-            <svg className='w-6 h-6 animate-spin' fill='none' viewBox='0 0 24 24'>
-              <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
-              <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
+            <svg
+              className='h-6 w-6 animate-spin'
+              fill='none'
+              viewBox='0 0 24 24'
+            >
+              <circle
+                className='opacity-25'
+                cx='12'
+                cy='12'
+                r='10'
+                stroke='currentColor'
+                strokeWidth='4'
+              ></circle>
+              <path
+                className='opacity-75'
+                fill='currentColor'
+                d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
+              ></path>
             </svg>
           ) : (
-            <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={3} d='M13 10V3L4 14h7v7l9-11h-7z' />
+            <svg
+              className='h-6 w-6'
+              fill='none'
+              stroke='currentColor'
+              viewBox='0 0 24 24'
+            >
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth={3}
+                d='M13 10V3L4 14h7v7l9-11h-7z'
+              />
             </svg>
           )}
         </button>
