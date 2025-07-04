@@ -18,7 +18,14 @@ type PixelCanvasProps = {
 function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
   const { canvas_id, setCanvasId } = useCanvasStore();
 
-  // const [canvas_id, setCanvasId] = useState(initialCanvasId);
+  // props로 받은 canvas_id를 store에 설정
+  useEffect(() => {
+    if (initialCanvasId && initialCanvasId !== canvas_id) {
+      setCanvasId(initialCanvasId);
+    }
+    console.log(`zustadn:${canvas_id}`);
+  }, [initialCanvasId, canvas_id, setCanvasId]);
+
   const rootRef = useRef<HTMLDivElement>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const renderCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -124,7 +131,11 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
     }
   }, [canvasSize]);
 
-  const { sendPixel } = usePixelSocket({ sourceCanvasRef, draw, canvas_id });
+  const { sendPixel } = usePixelSocket({
+    sourceCanvasRef,
+    draw,
+    canvas_id,
+  });
 
   const updateOverlay = useCallback(
     (screenX: number, screenY: number) => {
@@ -398,8 +409,9 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
   }, []);
 
   useEffect(() => {
-    fetchCanvasData(canvas_id);
-  }, [canvas_id, fetchCanvasData]);
+    // 최초 마운트 시 props로 받은 id로만 fetch
+    fetchCanvasData(initialCanvasId);
+  }, [initialCanvasId, fetchCanvasData]);
 
   useEffect(() => {
     const rootElement = rootRef.current;
