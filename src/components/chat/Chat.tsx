@@ -22,7 +22,7 @@ export default function Chat() {
   const canvas_id = useCanvasStore((state) => state.canvas_id);
   const user = useAuthStore((state) => state.user);
 
-  // 채팅 소켓 연결 - 항상 훅 호출
+  // 채팅 소켓 연결 - 유효한 group_id가 있을 때만
   const { sendMessage: sendSocketMessage, leaveChat } = useChatSocket({
     onMessageReceived: (message) => {
       console.log('메시지 수신:', message);
@@ -38,7 +38,7 @@ export default function Chat() {
       setMessages((prev) => [...prev, newMessage]);
     },
 
-    group_id: currentGroupId || '', // null이면 기본값 사용
+    group_id: currentGroupId || '0', // 유효하지 않은 group_id 사용
     user_id: user?.userId || '',
   });
 
