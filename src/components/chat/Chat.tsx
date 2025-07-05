@@ -6,6 +6,7 @@ import { chatService } from './ChatAPI';
 import { useCanvasStore } from '../../store/canvasStore';
 import { useChatSocket } from '../SocketIntegration';
 import { useAuthStore } from '../../store/authStrore';
+import { useModalStore } from '../../store/modalStore';
 import { DUMMY_RESPONSE, type Group } from '../../data/dummyChatData';
 
 // 임시로 사용할 가짜 메시지 데이터
@@ -20,7 +21,8 @@ function Chat() {
   const [currentGroupId, setCurrentGroupId] = useState<string | null>(null);
 
   const canvas_id = useCanvasStore((state) => state.canvas_id);
-  const user = useAuthStore((state) => state.user);
+  const { user, isLoggedIn } = useAuthStore();
+  const { openLoginModal } = useModalStore();
 
   // 채팅 소켓 연결 - 유효한 group_id가 있을 때만
   const { sendMessage: sendSocketMessage, leaveChat } = useChatSocket({
@@ -152,6 +154,12 @@ function Chat() {
       {/* 채팅창 여닫기 버튼 */}
       <button
         onClick={() => {
+          // 로그인 상태 확인
+          if (!isLoggedIn) {
+            openLoginModal();
+            return;
+          }
+          
           if (isOpen) {
             leaveChat();
           }
