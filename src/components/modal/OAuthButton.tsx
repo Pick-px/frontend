@@ -3,9 +3,9 @@
 import React from 'react';
 
 // 1. 각 이미지 파일을 직접 import 합니다.
-import googleButtonImage from '../../assets/google_login.png';
-import naverButtonImage from '../../assets/naver_login_official.png';
-import kakaoButtonImage from '../../assets/kakao_login_large_narrow.png';
+import googleButtonImage from '../../assets/google_login_icon.png';
+import naverButtonImage from '../../assets/naver_login_icon.png';
+import kakaoButtonImage from '../../assets/kakao_login_icon.png';
 
 // provider의 타입 정의
 type Provider = 'google' | 'naver' | 'kakao';
@@ -39,9 +39,9 @@ export default function OAuthButton({ provider, onClick }: OAuthButtonProps) {
     <button
       onClick={onClick}
       // 공통 스타일: 클릭 시 눌리는 효과만 적용
-      className='w-[180px] transition-transform active:scale-95'
+      className='transition-transform active:scale-95'
     >
-      <img src={info.src} alt={info.alt} className='h-[40px] w-[180px]' />
+      <img src={info.src} alt={info.alt} className='h-[40px] w-[40px]' />
     </button>
   );
 }

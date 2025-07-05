@@ -7,9 +7,13 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { useChatSocket } from '../SocketIntegration';
 import { useAuthStore } from '../../store/authStrore';
 import { useModalStore } from '../../store/modalStore';
-import { DUMMY_RESPONSE, type Group } from '../../data/dummyChatData';
 
 // 임시로 사용할 가짜 메시지 데이터
+
+export type Group = {
+  group_id: string;
+  group_title: string;
+};
 
 function Chat() {
   console.log('Chat 컴포넌트 시작');
@@ -19,6 +23,7 @@ function Chat() {
 
   const [groups, setGroups] = useState<Group[]>([]);
   const [currentGroupId, setCurrentGroupId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false); // 로딩 상태 추가
 
   const canvas_id = useCanvasStore((state) => state.canvas_id);
   const { user, isLoggedIn } = useAuthStore();
@@ -52,6 +57,7 @@ function Chat() {
 
     try {
       setCurrentGroupId(groupId);
+      setIsLoading(true); // 로딩 시작
       const newMessages = await chatService.getChatMessages(groupId);
       setMessages(newMessages); // 메시지 상태 업데이트
     } catch (error) {
@@ -59,6 +65,8 @@ function Chat() {
         `${groupId} 그룹의 메시지를 불러오는 데 실패했습니다.`,
         error
       );
+    } finally {
+      setIsLoading(false); // 로딩 종료
     }
   };
 
@@ -98,6 +106,7 @@ function Chat() {
     if (isOpen && canvas_id) {
       const fetchInitialData = async () => {
         console.log(`start fetch, ${canvas_id}`);
+        setIsLoading(true); // 로딩 시작
         try {
           const {
             defaultGroupId,
@@ -110,6 +119,8 @@ function Chat() {
           setMessages(initialMessages);
         } catch (error) {
           console.error('초기 채팅 데이터를 불러오는 데 실패했습니다.', error);
+        } finally {
+          setIsLoading(false); // 로딩 종료
         }
       };
 
@@ -150,8 +161,17 @@ function Chat() {
             ))}
           </div>
 
-          {/* 메시지 목록 */}
-          <MessageList messages={messages} />
+          {/* 메시지 목록 또는 스피너 */}
+          {isLoading ? (
+            <div className='flex flex-grow items-center justify-center'>
+              <div
+                className='h-12 w-12 animate-spin rounded-full border-4 border-solid border-current border-r-transparent text-blue-500 motion-reduce:animate-[spin_1.5s_linear_infinite]'
+                role='status'
+              />
+            </div>
+          ) : (
+            <MessageList messages={messages} />
+          )}
 
           {/* 메시지 입력창 */}
           <MessageInput onSendMessage={handleSendMessage} />
@@ -166,7 +186,7 @@ function Chat() {
             openLoginModal();
             return;
           }
-          
+
           if (isOpen) {
             leaveChat();
           }
