@@ -79,7 +79,7 @@ export default function MyPageModalContent() {
             {/* User Info Section */}
             <div className='flex flex-col items-center text-center'>
               <h3 className='text-2xl font-bold text-white'>
-                {userInfo.user_name || userInfo.user_name || userInfo.email}
+                {userInfo.nickName}
               </h3>
               {userInfo.email && (
                 <p className='text-gray-300'>{userInfo.email}</p>
