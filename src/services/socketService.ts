@@ -33,6 +33,10 @@ class SocketService {
     this.socket.on('disconnect', () => {
       console.log('소켓 연결 끊김');
     });
+
+    this.socket.on('connect_error', (error) => {
+      console.error('소켓 연결 실패:', error.message);
+    });
   }
 
   //==== 픽셀 관련 ====//
@@ -51,9 +55,11 @@ class SocketService {
   }
 
   //쿨다운 정보 수신
-  onCooldownInfo(callback: (data: { cooldown: string; remaining: string }) => void) {
+  onCooldownInfo(
+    callback: (data: { cooldown: boolean; remaining: number }) => void
+  ) {
     if (this.socket) {
-      this.socket.on('cooldown_info', callback);
+      this.socket.on('cooldown-info', callback);
     }
   }
 

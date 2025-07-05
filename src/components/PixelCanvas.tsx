@@ -23,7 +23,7 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
     if (initialCanvasId && initialCanvasId !== canvas_id) {
       setCanvasId(initialCanvasId);
     }
-    console.log(`zustadn:${canvas_id}`);
+    console.log(`zustadn:${initialCanvasId}`);
   }, [initialCanvasId, canvas_id, setCanvasId]);
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -135,6 +135,17 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
     sourceCanvasRef,
     draw,
     canvas_id,
+    onCooldownReceived: (cooldownData) => {
+      console.log('쿨다운 정보 수신:', cooldownData);
+      console.log('쿨다운 체크:', cooldownData.cooldown === 'true');
+
+      if (cooldownData.cooldown) {
+        console.log(`쿨다운 시작: ${cooldownData.remaining}초`);
+        startCooldown(cooldownData.remaining);
+      } else {
+        console.log('쿨다운 없음');
+      }
+    },
   });
 
   const updateOverlay = useCallback(
