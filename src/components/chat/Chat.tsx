@@ -7,9 +7,13 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { useChatSocket } from '../SocketIntegration';
 import { useAuthStore } from '../../store/authStrore';
 import { useModalStore } from '../../store/modalStore';
-import { DUMMY_RESPONSE, type Group } from '../../data/dummyChatData';
 
 // 임시로 사용할 가짜 메시지 데이터
+
+export type Group = {
+  group_id: string;
+  group_title: string;
+};
 
 function Chat() {
   console.log('Chat 컴포넌트 시작');
@@ -182,7 +186,7 @@ function Chat() {
             openLoginModal();
             return;
           }
-          
+
           if (isOpen) {
             leaveChat();
           }
