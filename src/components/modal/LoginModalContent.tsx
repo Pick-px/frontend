@@ -17,53 +17,65 @@ export default function LoginModalContent({ onClose }: LoginModalContentProps) {
   };
 
   const handleOAuthLogin = (provider: 'google' | 'naver' | 'kakao') => {
-    sessionStorage.setItem("redirectPath", window.location.pathname + window.location.search);
+    sessionStorage.setItem(
+      'redirectPath',
+      window.location.pathname + window.location.search
+    );
     authService.redirectToProvider(provider);
   };
 
   return (
-    <div className='flex h-full flex-col p-3'>
-      <h2 className='text-md font-semibold text-white'>로그인</h2>
-      <p className='mt-2 text-gray-300'>
-        서비스를 이용하시려면 로그인해주세요.
+    <div className='flex h-full flex-col p-6 text-center'>
+      <h2 className='text-2xl font-bold text-white'>Sign In</h2>
+      <p className='mt-2 text-sm text-gray-400'>
+        Pick-px에 오신것을 환영합니다!
       </p>
-      <div className='mt-4 mb-4 flex flex-col gap-3'>
+
+      {/* 이메일 및 비밀번호 입력 */}
+      <div className='mt-6 mb-4 flex flex-col gap-4 px-8'>
         <input
           type='text'
-          placeholder='이메일을 입력해주세요'
-          className='w-full rounded-none border-b border-white/20 bg-white/10 p-2 text-sm text-white placeholder-gray-300 outline-none focus:border-blue-500 focus:ring-blue-500'
+          placeholder='이메일'
+          className='bg-gray-900 p-2 text-white placeholder-gray-500 focus:outline-none'
           value={username}
           onChange={(e) => setUsername(e.target.value)}
         />
         <input
           type='password'
-          placeholder='비밀번호를 입력해주세요'
-          className='w-full rounded-none border-b border-white/20 bg-white/10 p-2 text-sm text-white placeholder-gray-300 outline-none focus:border-blue-500 focus:ring-blue-500'
+          placeholder='비밀번호'
+          className='bg-gray-900 p-2 text-white placeholder-gray-500 focus:outline-none'
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
       </div>
-      <div className='mt-4 flex flex-col items-center gap-3'>
-        <div className='w-[180px]'>
+
+      {/* 로그인 버튼 */}
+      <div className='mt-4 flex flex-col items-center gap-4'>
+        <div className='w-[200px]'>
           <button
             onClick={handleLogin}
-            className='w-full rounded bg-blue-500 py-2 text-white shadow-md transition-colors hover:bg-blue-600'
+            className='w-full bg-blue-600 py-2 text-white font-bold shadow-[4px_4px_0px_#1e40af] transition-all hover:bg-blue-500 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_#1e40af]'
           >
-            로그인하기
+            Sign In
           </button>
         </div>
-        <OAuthButton
-          provider='google'
-          onClick={() => handleOAuthLogin('google')}
-        />
-        <OAuthButton
-          provider='naver'
-          onClick={() => handleOAuthLogin('naver')}
-        />
-        <OAuthButton
-          provider='kakao'
-          onClick={() => handleOAuthLogin('kakao')}
-        />
+
+        {/* 소셜 로그인 */}
+        <p className='text-xs text-gray-400'>또는 소셜 계정으로 로그인</p>
+        <div className='flex w-full justify-center gap-6 pt-2'>
+          <OAuthButton
+            provider='google'
+            onClick={() => handleOAuthLogin('google')}
+          />
+          <OAuthButton
+            provider='naver'
+            onClick={() => handleOAuthLogin('naver')}
+          />
+          <OAuthButton
+            provider='kakao'
+            onClick={() => handleOAuthLogin('kakao')}
+          />
+        </div>
       </div>
     </div>
   );

@@ -92,7 +92,7 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
       ctx.fillStyle = INITIAL_BACKGROUND_COLOR;
       ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
       ctx.strokeStyle = 'rgba(0,192,0,0.9)';
-      ctx.lineWidth = 0.1;
+      ctx.lineWidth = 0.3;
       ctx.strokeRect(0, 0, canvasSize.width, canvasSize.width);
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(src, 0, 0);

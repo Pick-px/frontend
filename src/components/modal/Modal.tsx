@@ -12,11 +12,11 @@ export default function Modal({ isOpen, onClose, children }: ModalProps) {
 
   return ReactDOM.createPortal(
     <div
-      className='fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4'
+      className='fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-lg p-4'
       onClick={onClose}
     >
       <div
-        className='relative w-full max-w-lg max-h-[80vh] rounded-xl border border-white/30 shadow-2xl backdrop-blur-md text-white bg-gradient-to-br from-slate-900/90 to-slate-800/90 transition-all duration-300 ease-out'
+        className='relative w-full max-w-lg max-h-[80vh] rounded-xl border border-white/30 shadow-2xl backdrop-blur-md text-white bg-black/50 transition-all duration-300 ease-out'
         onClick={(e) => e.stopPropagation()}
         style={{
           transitionProperty: 'height, min-height, max-height, transform',
