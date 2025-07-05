@@ -17,6 +17,7 @@ export default function LoginModalContent({ onClose }: LoginModalContentProps) {
   };
 
   const handleOAuthLogin = (provider: 'google' | 'naver' | 'kakao') => {
+    sessionStorage.setItem("redirectPath", window.location.pathname + window.location.search);
     authService.redirectToProvider(provider);
   };
 
