@@ -13,9 +13,13 @@ const VIEWPORT_BACKGROUND_COLOR = '#2d3748';
 type HoverPos = { x: number; y: number } | null;
 type PixelCanvasProps = {
   canvas_id: string;
+  onLoadingChange?: (loading: boolean) => void;
 };
 
-function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
+function PixelCanvas({
+  canvas_id: initialCanvasId,
+  onLoadingChange,
+}: PixelCanvasProps) {
   const { canvas_id, setCanvasId } = useCanvasStore();
 
   // props로 받은 canvas_id를 store에 설정
@@ -77,6 +81,7 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [showPalette, setShowPalette] = useState(false);
+  const [showCanvas, setShowCanvas] = useState(false);
 
   const draw = useCallback(() => {
     const src = sourceCanvasRef.current;
@@ -91,9 +96,28 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
       ctx.scale(scaleRef.current, scaleRef.current);
       ctx.fillStyle = INITIAL_BACKGROUND_COLOR;
       ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
-      ctx.strokeStyle = 'rgba(0,192,0,0.9)';
-      ctx.lineWidth = 0.3;
-      ctx.strokeRect(0, 0, canvasSize.width, canvasSize.width);
+      // 캔버스 테두리 그라데이션 효과
+      const gradient = ctx.createLinearGradient(
+        0,
+        0,
+        canvasSize.width,
+        canvasSize.height
+      );
+      gradient.addColorStop(0, 'rgba(34, 197, 94, 0.8)');
+      gradient.addColorStop(0.25, 'rgba(59, 130, 246, 0.8)');
+      gradient.addColorStop(0.5, 'rgba(168, 85, 247, 0.8)');
+      gradient.addColorStop(0.75, 'rgba(236, 72, 153, 0.8)');
+      gradient.addColorStop(1, 'rgba(34, 197, 94, 0.8)');
+
+      // 외곽 테두리 (두껋게)
+      ctx.strokeStyle = gradient;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(-1, -1, canvasSize.width + 2, canvasSize.height + 2);
+
+      // 내부 테두리 (연하게)
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(0, 0, canvasSize.width, canvasSize.height);
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(src, 0, 0);
       ctx.restore();
@@ -418,6 +442,9 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
       setHasError(true);
     } finally {
       setIsLoading(false);
+      onLoadingChange?.(false);
+      // 짧은 딩레이 후 캔버스 애니메이션 시작
+      setTimeout(() => setShowCanvas(true), 100);
     }
   }, []);
 
@@ -489,47 +516,69 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
   return (
     <div
       ref={rootRef}
-      className='relative h-full w-full'
+      className='relative h-full w-full transition-all duration-300'
       style={{
         backgroundImage: `url('/Creatives.png')`,
         backgroundSize: 'cover',
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'center center',
         backgroundColor: VIEWPORT_BACKGROUND_COLOR,
+        boxShadow: cooldown
+          ? 'inset 0 0 50px rgba(239, 68, 68, 0.3), 0 0 100px rgba(239, 68, 68, 0.2)'
+          : 'none',
       }}
     >
-      <canvas
-        ref={renderCanvasRef}
-        className='pointer-events-none absolute top-0 left-0'
-      />
-      <canvas
-        ref={previewCanvasRef}
-        className='pointer-events-none absolute top-0 left-0'
-      />
-      <canvas
-        ref={interactionCanvasRef}
-        className='absolute top-0 left-0'
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseLeave}
-        onContextMenu={(e) => e.preventDefault()}
-      />
+      {/* 쿨다운 중 빨간 경계선 효과 */}
+      {cooldown && (
+        <>
+          <div className='pointer-events-none absolute inset-0 border-4 border-red-500/30' />
+          <div className='pointer-events-none absolute inset-2 border-2 border-red-400/20' />
+          <div className='pointer-events-none absolute inset-4 border border-red-300/10' />
+        </>
+      )}
+      <div
+        className={`transition-all duration-1000 ease-out ${
+          showCanvas
+            ? 'scale-100 transform opacity-100'
+            : 'scale-50 transform opacity-0'
+        }`}
+      >
+        <canvas
+          ref={renderCanvasRef}
+          className='pointer-events-none absolute top-0 left-0'
+        />
+        <canvas
+          ref={previewCanvasRef}
+          className='pointer-events-none absolute top-0 left-0'
+        />
+        <canvas
+          ref={interactionCanvasRef}
+          className='absolute top-0 left-0'
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseLeave}
+          onContextMenu={(e) => e.preventDefault()}
+        />
+      </div>
 
-      {isLoading && <Preloader />}
-
-      <CanvasUI
-        color={color}
-        setColor={setColor}
-        hoverPos={hoverPos}
-        colors={colors}
-        onConfirm={handleConfirm}
-        onSelectColor={handleSelectColor}
-        cooldown={cooldown}
-        timeLeft={timeLeft}
-        showPalette={showPalette}
-        setShowPalette={setShowPalette}
-      />
+      {/* 로딩 중이면 모든 UI 숨기고 프리로더만 표시 */}
+      {isLoading ? (
+        <Preloader />
+      ) : (
+        <CanvasUI
+          color={color}
+          setColor={setColor}
+          hoverPos={hoverPos}
+          colors={colors}
+          onConfirm={handleConfirm}
+          onSelectColor={handleSelectColor}
+          cooldown={cooldown}
+          timeLeft={timeLeft}
+          showPalette={showPalette}
+          setShowPalette={setShowPalette}
+        />
+      )}
     </div>
   );
 }
