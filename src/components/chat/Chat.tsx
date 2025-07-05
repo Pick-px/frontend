@@ -10,7 +10,7 @@ import { DUMMY_RESPONSE, type Group } from '../../data/dummyChatData';
 
 // 임시로 사용할 가짜 메시지 데이터
 
-export default function Chat() {
+function Chat() {
   console.log('Chat 컴포넌트 시작');
 
   const [isOpen, setIsOpen] = useState(false);
@@ -196,3 +196,5 @@ export default function Chat() {
     </div>
   );
 }
+
+export default React.memo(Chat);
