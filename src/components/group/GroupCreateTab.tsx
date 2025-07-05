@@ -44,7 +44,7 @@ export default function GroupCreateTab({
           <div className='mt-2 text-sm text-red-400'>{errorMessage}</div>
         )}
       </div>
-      <div className='flex justify-center'>
+      <div className='mt-4 flex justify-center'>
         <div className='w-[180px]'>
           <button
             onClick={handleCreateGroup}
