@@ -85,6 +85,13 @@ function Chat() {
     console.log('요청 보내기');
   };
 
+  // 로그아웃 시 채팅창 닫기
+  useEffect(() => {
+    if (!isLoggedIn && isOpen) {
+      setIsOpen(false);
+    }
+  }, [isLoggedIn, isOpen]);
+
   // isOpen True 시, canvasId 변경시
   useEffect(() => {
     console.log(`modal open, ${canvas_id}`);
