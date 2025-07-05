@@ -18,6 +18,7 @@ export type GroupResponseDto = {
   currentParticipantsCount: number;
   createdAt: string;
   madeBy: string;
+  is_default: boolean;
 };
 
 export default function GroupModalContent({ onClose }: GroupModalContentProps) {
@@ -76,8 +77,12 @@ export default function GroupModalContent({ onClose }: GroupModalContentProps) {
       const response = await groupServices.getGroupList(canvas_id);
       console.log('성공:', response.isSuccess);
       if (response.isSuccess) {
-        const userGroup: GroupResponseDto[] = response.data.userGroup;
-        const allGroup: GroupResponseDto[] = response.data.allGroup;
+        const userGroup: GroupResponseDto[] = response.data.userGroup.filter(
+          (group: GroupResponseDto) => group.is_default !== true
+        );
+        const allGroup: GroupResponseDto[] = response.data.allGroup.filter(
+          (group: GroupResponseDto) => group.is_default !== true
+        );
         setMyGroups(userGroup);
         setSearchedGroup(allGroup);
       } else {
