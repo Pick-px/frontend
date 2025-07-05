@@ -33,7 +33,7 @@ export default function AuthCallbackPage() {
         // );
 
         // if (accessToken && user) {
-        //   setAuth(accessToken, user);
+        //   setAuth(accessToken, user);그
         //   console.log(user);
         //   navigate('/canvas'); // 성공! 메인 페이지로 이동
         // }
@@ -51,8 +51,9 @@ export default function AuthCallbackPage() {
           // ✨ 2. 'authResult'라는 키(key)로 sessionStorage에 저장합니다.
           sessionStorage.setItem('authResult', authResultString);
 
-          // 3. 성공했으니 메인 페이지로 이동
-          navigate('/');
+          const redirectPath = sessionStorage.getItem('redirectPath');
+          sessionStorage.removeItem('redirectPath');
+          navigate(redirectPath || '/');
         } else {
           throw new Error('Authentication failed');
         }
