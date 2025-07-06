@@ -50,6 +50,7 @@ function App() {
 
   const { isLoggedIn, setAuth, clearAuth } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
+  const [canvasLoading, setCanvasLoading] = useState(true);
 
   useEffect(() => {
     //=======canvas_id 파싱
@@ -92,7 +93,11 @@ function App() {
 
   return (
     <main className='flex h-screen w-screen items-center justify-center bg-[#2d3748]'>
-      <PixelCanvas canvas_id={canvas_id} key={canvas_id} />
+      <PixelCanvas
+        canvas_id={canvas_id}
+        key={canvas_id}
+        onLoadingChange={setCanvasLoading}
+      />
       <Modal isOpen={isLoginModalOpen} onClose={closeLoginModal}>
         <LoginModalContent onClose={closeLoginModal} />
       </Modal>
@@ -105,19 +110,21 @@ function App() {
       <Modal isOpen={isCanvasModalOpen} onClose={closeCanvasModal}>
         <CanvasModalContent onClose={closeCanvasModal} />
       </Modal>
-      {/* Chat 컴포넌트 에러 처리 */}
-      {(() => {
-        try {
-          return <Chat />;
-        } catch (error) {
-          console.error('Chat 컴포넌트 에러:', error);
-          return (
-            <div className='fixed bottom-5 left-5 text-red-500'>
-              채팅 로드 실패
-            </div>
-          );
-        }
-      })()}
+      {/* 로딩 완료 후 채팅 컴포넌트 표시 */}
+      {!isLoading &&
+        !canvasLoading &&
+        (() => {
+          try {
+            return <Chat />;
+          } catch (error) {
+            console.error('Chat 컴포넌트 에러:', error);
+            return (
+              <div className='fixed bottom-5 left-5 text-red-500'>
+                채팅 로드 실패
+              </div>
+            );
+          }
+        })()}
     </main>
   );
 }
