@@ -27,7 +27,7 @@ function Chat() {
 
   const canvas_id = useCanvasStore((state) => state.canvas_id);
   const { user, isLoggedIn } = useAuthStore();
-  const { openLoginModal } = useModalStore();
+  const { openLoginModal, isGroupModalOpen } = useModalStore();
 
   // 채팅 소켓 연결 - 유효한 group_id가 있을 때만
   const { sendMessage: sendSocketMessage, leaveChat } = useChatSocket({
@@ -92,13 +92,13 @@ function Chat() {
   const requestAdditionalMsg = () => {
     console.log('요청 보내기');
   };
-
-  // 로그아웃 시 채팅창 닫기
+  
+  // 모달 열림 또는 로그아웃 시 채팅창 닫기
   useEffect(() => {
-    if (!isLoggedIn && isOpen) {
+    if (isOpen && (isGroupModalOpen || !isLoggedIn)) {
       setIsOpen(false);
     }
-  }, [isLoggedIn, isOpen]);
+  }, [isGroupModalOpen, isLoggedIn, isOpen]);
 
   // isOpen True 시, canvasId 변경시
   useEffect(() => {
