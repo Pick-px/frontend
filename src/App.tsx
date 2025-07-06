@@ -14,6 +14,7 @@ import Chat from './components/chat/Chat';
 import MyPageModalContent from './components/modal/MyPageModalContent';
 import LoginModalContent from './components/modal/LoginModalContent';
 import GroupModalContent from './components/modal/GroupModalContent';
+import CanvasModalContent from './components/modal/CanvasModalContent';
 import { toast } from 'react-toastify';
 import { jwtDecode } from 'jwt-decode';
 
@@ -39,6 +40,8 @@ function App() {
     closeMyPageModal,
     isGroupModalOpen,
     closeGroupModal,
+    isCanvasModalOpen,
+    closeCanvasModal,
   } = useModalStore();
 
   // if (!canvas_id) {
@@ -98,6 +101,9 @@ function App() {
       </Modal>
       <Modal isOpen={isGroupModalOpen} onClose={closeGroupModal}>
         <GroupModalContent />
+      </Modal>
+      <Modal isOpen={isCanvasModalOpen} onClose={closeCanvasModal}>
+        <CanvasModalContent onClose={closeCanvasModal} />
       </Modal>
       {/* Chat 컴포넌트 에러 처리 */}
       {(() => {

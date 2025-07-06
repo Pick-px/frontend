@@ -135,7 +135,7 @@ export default function CanvasUI({
             {/* 캔버스 버튼 */}
             <div className='group relative'>
               <button
-                onClick={openCanvasModal}
+                onClick={isLoggedIn ? openCanvasModal : openLoginModal}
                 className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
               >
                 <svg
