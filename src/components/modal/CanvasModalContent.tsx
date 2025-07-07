@@ -2,26 +2,48 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { canvasService } from '../../api/CanvasAPI';
 import type { Canvas } from '../../api/CanvasAPI';
+import { useCanvasStore } from '../../store/canvasStore';
 
 // CSS 애니메이션 스타일
 const glowStyles = `
-  @keyframes glow {
+  @keyframes rainbow-border {
     0% {
-      border-color: rgba(250, 204, 21, 0.4);
-      box-shadow: 0 0 15px rgba(250, 204, 21, 0.2), inset 0 0 15px rgba(250, 204, 21, 0.1);
+      background-position: 0% 50%;
     }
     50% {
-      border-color: rgba(250, 204, 21, 0.8);
-      box-shadow: 0 0 25px rgba(250, 204, 21, 0.4), inset 0 0 25px rgba(250, 204, 21, 0.2);
+      background-position: 100% 50%;
     }
     100% {
-      border-color: rgba(250, 204, 21, 0.4);
-      box-shadow: 0 0 15px rgba(250, 204, 21, 0.2), inset 0 0 15px rgba(250, 204, 21, 0.1);
+      background-position: 0% 50%;
     }
   }
   
-  .canvas-glow {
-    animation: glow 2s ease-in-out infinite;
+  .canvas-rainbow-border {
+    position: relative;
+    border-radius: 12px;
+    padding: 1.5px;
+    background: linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000);
+    background-size: 400% 400%;
+    animation: rainbow-border 3s linear infinite;
+  }
+  
+  .canvas-rainbow-border::before {
+    content: '';
+    position: absolute;
+    top: 1.5px;
+    left: 1.5px;
+    right: 1.5px;
+    bottom: 1.5px;
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 10.5px;
+    z-index: 0;
+  }
+  
+  .canvas-content {
+    position: relative;
+    z-index: 1;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 10.5px;
   }
 `;
 
@@ -32,18 +54,124 @@ type CanvasModalContentProps = {
 const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
   const navigate = useNavigate();
   const [canvases, setCanvases] = useState<Canvas[]>([]);
-  const [expiredCanvases, setExpiredCanvases] = useState<Canvas[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   // 캐러셀 관련 상태
   const [activeScrollLeft, setActiveScrollLeft] = useState(0);
-  const [expiredScrollLeft, setExpiredScrollLeft] = useState(0);
+  const [eventScrollLeft, setEventScrollLeft] = useState(0);
   const activeScrollRef = useRef<HTMLDivElement>(null);
-  const expiredScrollRef = useRef<HTMLDivElement>(null);
+  const eventScrollRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollStart, setScrollStart] = useState(0);
+
+  // 현재 canvas_id
+  const { canvas_id } = useCanvasStore();
+
+  // 실시간 시간 업데이트
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // 캔버스가 종료되었는지 확인하는 함수
+  const isCanvasExpired = (endedAt: string) => {
+    if (!endedAt || endedAt === 'null' || endedAt === 'undefined') {
+      return false;
+    }
+
+    try {
+      let endTime: Date;
+
+      if (endedAt.includes('T')) {
+        endTime = endedAt.endsWith('Z')
+          ? new Date(endedAt)
+          : new Date(endedAt + 'Z');
+      } else {
+        endTime = new Date(endedAt);
+      }
+
+      if (isNaN(endTime.getTime())) {
+        return false;
+      }
+
+      return endTime.getTime() <= currentTime.getTime();
+    } catch (error) {
+      console.error('Error checking canvas expiration:', error);
+      return false;
+    }
+  };
+  const getTimeRemaining = (endedAt: string) => {
+    try {
+      // 다양한 날짜 형식 처리
+      let endTime: Date;
+
+      if (!endedAt || endedAt === 'null' || endedAt === 'undefined') {
+        return { text: '종료 시간 없음', isExpired: false, isUrgent: false };
+      }
+
+      if (endedAt.includes('T')) {
+        // ISO 형식인 경우 (2024-12-31T23:59:59 또는 2024-12-31T23:59:59Z)
+        endTime = endedAt.endsWith('Z')
+          ? new Date(endedAt)
+          : new Date(endedAt + 'Z');
+      } else {
+        // 다른 형식인 경우
+        endTime = new Date(endedAt);
+      }
+
+      // 날짜가 유효하지 않은 경우
+      if (isNaN(endTime.getTime())) {
+        console.warn('Invalid ended_at date:', endedAt);
+        return { text: '날짜 오류', isExpired: false, isUrgent: false };
+      }
+
+      const now = currentTime;
+      const timeDiff = endTime.getTime() - now.getTime();
+
+      if (timeDiff <= 0) {
+        return { text: '종료됨', isExpired: true };
+      }
+
+      const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor(
+        (timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+      );
+      const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+
+      let text = '';
+      let isUrgent = false;
+
+      if (days > 0) {
+        text = `${days}일 ${hours}시간 남음`;
+      } else if (hours > 0) {
+        text = `${hours}시간 ${minutes}분 남음`;
+        isUrgent = hours < 1; // 1시간 미만일 때 긴급
+      } else if (minutes > 0) {
+        text = `${minutes}분 ${seconds}초 남음`;
+        isUrgent = true;
+      } else {
+        text = `${seconds}초 남음`;
+        isUrgent = true;
+      }
+
+      return { text, isExpired: false, isUrgent };
+    } catch (error) {
+      console.error(
+        'Error calculating time remaining:',
+        error,
+        'endedAt:',
+        endedAt
+      );
+      return { text: '계산 오류', isExpired: false, isUrgent: false };
+    }
+  };
 
   // 캔버스 목록 가져오기 함수
   const fetchCanvases = async () => {
@@ -53,52 +181,8 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
 
       // 실제 API 호출
       const data = await canvasService.getActiveCanvases();
+      console.log('Fetched canvases:', data.canvases); // 디버깅용
       setCanvases(data.canvases);
-
-      // 종료된 캔버스 더미 데이터
-      const expiredData: Canvas[] = [
-        {
-          canvasId: 101,
-          title: 'Pixel Art Challenge 2024',
-          created_at: '2024-12-01T10:00:00Z',
-          size_x: 150,
-          size_y: 150,
-          status: 'inactive',
-        },
-        {
-          canvasId: 102,
-          title: 'Christmas Special Canvas',
-          created_at: '2024-12-25T15:30:00Z',
-          size_x: 200,
-          size_y: 100,
-          status: 'inactive',
-        },
-        {
-          canvasId: 103,
-          title: 'New Year Countdown',
-          created_at: '2024-12-31T23:00:00Z',
-          size_x: 300,
-          size_y: 200,
-          status: 'inactive',
-        },
-        {
-          canvasId: 104,
-          title: 'Winter Wonderland',
-          created_at: '2024-11-15T12:00:00Z',
-          size_x: 250,
-          size_y: 180,
-          status: 'inactive',
-        },
-        {
-          canvasId: 105,
-          title: 'Halloween Special',
-          created_at: '2024-10-31T18:00:00Z',
-          size_x: 180,
-          size_y: 180,
-          status: 'inactive',
-        },
-      ];
-      setExpiredCanvases(expiredData);
     } catch (err) {
       setError(
         err instanceof Error
@@ -136,6 +220,11 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
       return;
     }
 
+    // 현재 캔버스와 같은 캔버스라면 이동안함.
+    if (canvasId === Number(canvas_id)) {
+      return;
+    }
+
     // 1. 모달 먼저 닫기
     if (onClose) {
       onClose();
@@ -153,11 +242,11 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
   // 캐러셀 스크롤 함수
   const scrollCarousel = (
     direction: 'left' | 'right',
-    type: 'active' | 'expired'
+    type: 'active' | 'event'
   ) => {
-    const scrollRef = type === 'active' ? activeScrollRef : expiredScrollRef;
+    const scrollRef = type === 'active' ? activeScrollRef : eventScrollRef;
     const setScrollLeft =
-      type === 'active' ? setActiveScrollLeft : setExpiredScrollLeft;
+      type === 'active' ? setActiveScrollLeft : setEventScrollLeft;
 
     if (scrollRef.current) {
       const scrollAmount = 300;
@@ -175,8 +264,8 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
   };
 
   // 마우스 드래그 시작
-  const handleMouseDown = (e: React.MouseEvent, type: 'active' | 'expired') => {
-    const scrollRef = type === 'active' ? activeScrollRef : expiredScrollRef;
+  const handleMouseDown = (e: React.MouseEvent, type: 'active' | 'event') => {
+    const scrollRef = type === 'active' ? activeScrollRef : eventScrollRef;
     if (scrollRef.current) {
       setIsDragging(true);
       setStartX(e.pageX - scrollRef.current.offsetLeft);
@@ -185,13 +274,13 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
   };
 
   // 마우스 드래그 중
-  const handleMouseMove = (e: React.MouseEvent, type: 'active' | 'expired') => {
+  const handleMouseMove = (e: React.MouseEvent, type: 'active' | 'event') => {
     if (!isDragging) return;
     e.preventDefault();
 
-    const scrollRef = type === 'active' ? activeScrollRef : expiredScrollRef;
+    const scrollRef = type === 'active' ? activeScrollRef : eventScrollRef;
     const setScrollLeft =
-      type === 'active' ? setActiveScrollLeft : setExpiredScrollLeft;
+      type === 'active' ? setActiveScrollLeft : setEventScrollLeft;
 
     if (scrollRef.current) {
       const x = e.pageX - scrollRef.current.offsetLeft;
@@ -282,9 +371,7 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
           {/* 활성 캔버스 섹션 */}
           <div className='mb-6'>
             <div className='mb-3 flex items-center justify-between'>
-              <h3 className='text-sm font-medium text-gray-300'>
-                활성 캔버스 ({canvases.length}개)
-              </h3>
+              <h3 className='text-sm font-medium text-gray-300'>상시 캔버스</h3>
               {canvases.length > 2 && (
                 <div className='flex gap-2'>
                   <button
@@ -356,32 +443,34 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
               >
-                {canvases.map((canvas) => (
-                  <div
-                    key={canvas.canvasId}
-                    onClick={(e) => handleCanvasSelect(e, canvas.canvasId)}
-                    className='group canvas-glow block min-w-[200px] cursor-pointer rounded-lg border-2 bg-white/5 p-3 transition-all duration-300 hover:border-gray-500/60 hover:bg-gray-900/50 hover:shadow-xl hover:shadow-gray-900/20'
-                  >
-                    <div className='flex flex-col'>
-                      <h3 className='mb-1 truncate font-medium text-white group-hover:text-gray-200'>
-                        {canvas.title}
-                      </h3>
-                      <p className='mb-2 text-xs text-gray-400 group-hover:text-gray-300'>
-                        {formatDate(canvas.created_at)}
-                      </p>
-                      <div className='flex flex-col gap-1'>
-                        <span className='rounded bg-white/10 px-2 py-1 text-center text-xs text-gray-300 group-hover:bg-gray-800/60 group-hover:text-gray-200'>
-                          {canvas.size_x} × {canvas.size_y}
-                        </span>
-                        {canvas.status && (
-                          <span className='rounded bg-green-500/20 px-2 py-1 text-center text-xs text-green-400 group-hover:bg-green-600/30 group-hover:text-green-300'>
-                            {canvas.status}
+                {canvases
+                  .filter((canvas) => canvas.type === 'public')
+                  .map((canvas) => (
+                    <div
+                      key={canvas.canvasId}
+                      onClick={(e) => handleCanvasSelect(e, canvas.canvasId)}
+                      className='group block min-w-[200px] cursor-pointer rounded-lg border border-2 border-gray-300 transition-all duration-300 hover:shadow-xl hover:shadow-gray-900/20'
+                    >
+                      <div className='canvas-content flex flex-col p-3'>
+                        <h3 className='mb-1 truncate font-medium text-white group-hover:text-gray-200'>
+                          {canvas.title}
+                        </h3>
+                        <p className='mb-2 text-xs text-gray-400 group-hover:text-gray-300'>
+                          {formatDate(canvas.created_at)}
+                        </p>
+                        <div className='flex flex-col gap-1'>
+                          <span className='rounded bg-white/10 px-2 py-1 text-center text-xs text-gray-300 group-hover:bg-gray-800/60 group-hover:text-gray-200'>
+                            {canvas.size_x} × {canvas.size_y}
                           </span>
-                        )}
+                          {canvas.status && (
+                            <span className='rounded bg-green-500/20 px-2 py-1 text-center text-xs text-green-400 group-hover:bg-green-600/30 group-hover:text-green-300'>
+                              {canvas.status}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             )}
           </div>
@@ -390,13 +479,20 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
           <div>
             <div className='mb-3 flex items-center justify-between'>
               <h3 className='text-sm font-medium text-gray-400'>
-                종료된 캔버스 ({expiredCanvases.length}개)
+                이벤트 캔버스 (
+                {
+                  canvases
+                    .filter((canvas) => canvas.type !== 'public')
+                    .filter((canvas) => !isCanvasExpired(canvas.ended_at))
+                    .length
+                }
+                개)
               </h3>
-              {expiredCanvases.length > 2 && (
+              {canvases.length > 2 && (
                 <div className='flex gap-2'>
                   <button
-                    onClick={() => scrollCarousel('left', 'expired')}
-                    className='rounded-full bg-white/10 p-1 text-gray-500 transition-colors hover:bg-white/20 hover:text-gray-400'
+                    onClick={() => scrollCarousel('left', 'event')}
+                    className='rounded-lg bg-white/10 p-1 text-gray-500 transition-colors hover:bg-white/20 hover:text-gray-400'
                   >
                     <svg
                       className='h-4 w-4'
@@ -413,7 +509,7 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
                     </svg>
                   </button>
                   <button
-                    onClick={() => scrollCarousel('right', 'expired')}
+                    onClick={() => scrollCarousel('right', 'event')}
                     className='rounded-full bg-white/10 p-1 text-gray-500 transition-colors hover:bg-white/20 hover:text-gray-400'
                   >
                     <svg
@@ -435,37 +531,59 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
             </div>
 
             <div
-              ref={expiredScrollRef}
+              ref={eventScrollRef}
               className='scrollbar-hide flex cursor-grab gap-3 overflow-x-auto active:cursor-grabbing'
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-              onMouseDown={(e) => handleMouseDown(e, 'expired')}
-              onMouseMove={(e) => handleMouseMove(e, 'expired')}
+              onMouseDown={(e) => handleMouseDown(e, 'event')}
+              onMouseMove={(e) => handleMouseMove(e, 'event')}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
             >
-              {expiredCanvases.map((canvas) => (
-                <div
-                  key={canvas.canvasId}
-                  className='group block min-w-[200px] rounded-lg border border-white/10 bg-white/5 p-3 opacity-60 transition-all duration-300 hover:border-gray-600/40 hover:bg-gray-900/30 hover:opacity-80'
-                >
-                  <div className='flex flex-col'>
-                    <h3 className='mb-1 truncate font-medium text-gray-400 group-hover:text-gray-300'>
-                      {canvas.title}
-                    </h3>
-                    <p className='mb-2 text-xs text-gray-500 group-hover:text-gray-400'>
-                      {formatDate(canvas.created_at)}
-                    </p>
-                    <div className='flex flex-col gap-1'>
-                      <span className='rounded bg-white/5 px-2 py-1 text-center text-xs text-gray-500 group-hover:bg-gray-800/40 group-hover:text-gray-400'>
-                        {canvas.size_x} × {canvas.size_y}
-                      </span>
-                      <span className='rounded bg-red-500/20 px-2 py-1 text-center text-xs text-red-400'>
-                        종료됨
-                      </span>
+              {canvases
+                .filter((canvas) => canvas.type !== 'public')
+                .filter((canvas) => !isCanvasExpired(canvas.ended_at)) // 종료된 캔버스 제외
+                .map((canvas) => {
+                  const timeInfo = canvas.ended_at
+                    ? getTimeRemaining(canvas.ended_at)
+                    : null;
+                  return (
+                    <div
+                      key={canvas.canvasId}
+                      onClick={(e) => handleCanvasSelect(e, canvas.canvasId)}
+                      className='group canvas-rainbow-border block min-w-[200px] cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-gray-900/20'
+                    >
+                      <div className='canvas-content flex flex-col p-3'>
+                        <h3 className='mb-1 truncate font-medium text-white group-hover:text-gray-200'>
+                          {canvas.title}
+                        </h3>
+                        <p
+                          className={`mb-2 text-xs group-hover:text-gray-300 ${
+                            timeInfo?.isUrgent
+                              ? 'text-yellow-400'
+                              : 'text-gray-400'
+                          }`}
+                        >
+                          {timeInfo
+                            ? timeInfo.text
+                            : formatDate(canvas.created_at)}
+                        </p>
+                        <div className='flex flex-col gap-1'>
+                          <span className='rounded bg-white/10 px-2 py-1 text-center text-xs text-gray-300 group-hover:bg-gray-800/60 group-hover:text-gray-200'>
+                            {canvas.size_x} × {canvas.size_y}
+                          </span>
+                          {canvas.status && (
+                            <span className='rounded bg-green-500/20 px-2 py-1 text-center text-xs text-green-400 group-hover:bg-green-600/30 group-hover:text-green-300'>
+                              {canvas.status}
+                            </span>
+                          )}
+                          <span className='rounded bg-purple-500/20 px-2 py-1 text-center text-xs text-purple-400 group-hover:bg-purple-600/30 group-hover:text-purple-300'>
+                            {canvas.type}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              ))}
+                  );
+                })}
             </div>
           </div>
         </div>

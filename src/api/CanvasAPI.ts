@@ -6,6 +6,8 @@ export interface Canvas {
   created_at: string;
   size_x: number;
   size_y: number;
+  type: string;
+  ended_at: string;
   status?: 'active' | 'inactive' | 'archived';
   // 향후 이미지 관련 필드 추가 예정
   // thumbnail?: string;        // 썸네일 이미지 URL
