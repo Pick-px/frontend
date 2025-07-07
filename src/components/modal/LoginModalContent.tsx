@@ -32,7 +32,7 @@ export default function LoginModalContent({ onClose }: LoginModalContentProps) {
       </p>
 
       {/* 이메일 및 비밀번호 입력 */}
-      <div className='mt-6 mb-4 flex flex-col gap-4 px-8'>
+      {/* <div className='mt-6 mb-4 flex flex-col gap-4 px-8'>
         <input
           type='text'
           placeholder='이메일'
@@ -47,34 +47,34 @@ export default function LoginModalContent({ onClose }: LoginModalContentProps) {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-      </div>
+      </div> */}
 
       {/* 로그인 버튼 */}
       <div className='mt-4 flex flex-col items-center gap-4'>
-        <div className='w-[200px]'>
+        {/* <div className='w-[200px]'>
           <button
             onClick={handleLogin}
-            className='w-full bg-blue-600 py-2 text-white font-bold shadow-[4px_4px_0px_#1e40af] transition-all hover:bg-blue-500 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_#1e40af]'
+            className='w-full bg-blue-600 py-2 font-bold text-white shadow-[4px_4px_0px_#1e40af] transition-all hover:bg-blue-500 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_#1e40af]'
           >
             Sign In
           </button>
-        </div>
+        </div> */}
 
         {/* 소셜 로그인 */}
-        <p className='text-xs text-gray-400'>또는 소셜 계정으로 로그인</p>
+        {/* <p className='text-xs text-gray-400'>구글 계정으로 로그인</p> */}
         <div className='flex w-full justify-center gap-6 pt-2'>
           <OAuthButton
             provider='google'
             onClick={() => handleOAuthLogin('google')}
           />
-          <OAuthButton
+          {/* <OAuthButton
             provider='naver'
             onClick={() => handleOAuthLogin('naver')}
           />
           <OAuthButton
             provider='kakao'
             onClick={() => handleOAuthLogin('kakao')}
-          />
+          /> */}
         </div>
       </div>
     </div>

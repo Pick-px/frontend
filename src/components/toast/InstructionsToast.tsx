@@ -86,7 +86,7 @@ export const showInstructionsToast = () => {
     </div>,
     {
       position: 'top-center',
-      autoClose: 5000, // 10초간 표시
+      autoClose: 5000,
       hideProgressBar: true,
       closeOnClick: true,
       pauseOnHover: true,

@@ -97,9 +97,22 @@ export default function CanvasUI({
         {onImageAttach && (
           <div className='flex flex-col gap-1'>
             <div className='flex items-center gap-2'>
-              <label className='flex h-[40px] w-[40px] cursor-pointer items-center justify-center rounded-[4px] border-2 border-solid border-white bg-gray-700 text-white hover:bg-gray-600 transition-colors duration-200' title='이미지 첨부 (JPG, PNG, GIF, WebP)'>
-                <svg className='h-5 w-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z' />
+              <label
+                className='flex h-[40px] w-[40px] cursor-pointer items-center justify-center rounded-[4px] border-2 border-solid border-white bg-gray-700 text-white transition-colors duration-200 hover:bg-gray-600'
+                title='이미지 첨부 (JPG, PNG, GIF, WebP)'
+              >
+                <svg
+                  className='h-5 w-5'
+                  fill='none'
+                  stroke='currentColor'
+                  viewBox='0 0 24 24'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'
+                  />
                 </svg>
                 <input
                   type='file'
@@ -115,34 +128,50 @@ export default function CanvasUI({
                   className='hidden'
                 />
               </label>
-              
+
               {hasImage && (
-                <div className='flex items-center gap-2 bg-gray-800/80 px-3 py-1 rounded-md'>
+                <div className='flex items-center gap-2 rounded-md bg-gray-800/80 px-3 py-1'>
                   {setImageTransparency && (
                     <div className='flex items-center gap-2'>
-                      <span className='text-xs text-white whitespace-nowrap'>투명도</span>
+                      <span className='text-xs whitespace-nowrap text-white'>
+                        투명도
+                      </span>
                       <input
                         type='range'
                         min='0.1'
                         max='1'
                         step='0.1'
                         value={imageTransparency}
-                        onChange={(e) => setImageTransparency(parseFloat(e.target.value))}
-                        className='w-[60px] h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer'
+                        onChange={(e) =>
+                          setImageTransparency(parseFloat(e.target.value))
+                        }
+                        className='h-2 w-[60px] cursor-pointer appearance-none rounded-lg bg-gray-600'
                         title='이미지 투명도 조절'
                       />
-                      <span className='text-xs text-gray-300 w-8'>{Math.round(imageTransparency * 100)}%</span>
+                      <span className='w-8 text-xs text-gray-300'>
+                        {Math.round(imageTransparency * 100)}%
+                      </span>
                     </div>
                   )}
-                  
+
                   {onImageDelete && (
-                    <button 
+                    <button
                       onClick={onImageDelete}
-                      className='flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-full bg-red-600 text-white hover:bg-red-500 transition-colors duration-200'
+                      className='flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-full bg-red-600 text-white transition-colors duration-200 hover:bg-red-500'
                       title='이미지 삭제'
                     >
-                      <svg className='h-4 w-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
+                      <svg
+                        className='h-4 w-4'
+                        fill='none'
+                        stroke='currentColor'
+                        viewBox='0 0 24 24'
+                      >
+                        <path
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          strokeWidth={2}
+                          d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
+                        />
                       </svg>
                     </button>
                   )}
@@ -151,7 +180,6 @@ export default function CanvasUI({
             </div>
           </div>
         )}
-
       </div>
       <div
         ref={menuRef}
@@ -289,8 +317,8 @@ export default function CanvasUI({
         )}
       </div>
       {/* 좌표 표시창 */}
-      <div className='pointer-events-none fixed top-[50px] right-[20px] z-[9999] rounded-[8px] bg-[rgba(0,0,0,0.8)] p-[10px] text-white'>
-        {hoverPos ? `(${hoverPos.x}, ${hoverPos.y})` : 'Canvas outside'}
+      <div className='pointer-events-none fixed right-[20px] bottom-[20px] z-[9999] rounded-[8px] bg-[rgba(0,0,0,0.8)] p-[10px] text-white'>
+        {hoverPos ? `(${hoverPos.x}, ${hoverPos.y})` : 'OutSide'}
       </div>
 
       {/* 팔레트 */}

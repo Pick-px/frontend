@@ -453,7 +453,9 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
                     >
                       <div className='canvas-content flex flex-col p-3'>
                         <h3 className='mb-1 truncate font-medium text-white group-hover:text-gray-200'>
-                          {canvas.title}
+                          {canvas.title}{' '}
+                          {canvas.canvasId === Number(canvas_id) &&
+                            '(현재 캔버스)'}
                         </h3>
                         <p className='mb-2 text-xs text-gray-400 group-hover:text-gray-300'>
                           {formatDate(canvas.created_at)}
@@ -554,7 +556,8 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
                     >
                       <div className='canvas-content flex flex-col p-3'>
                         <h3 className='mb-1 truncate font-medium text-white group-hover:text-gray-200'>
-                          {canvas.title}
+                          {canvas.title}{' '}
+                          {canvas.canvasId === Number(canvas_id) && '📍'}
                         </h3>
                         <p
                           className={`mb-2 text-xs group-hover:text-gray-300 ${
