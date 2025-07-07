@@ -33,25 +33,31 @@ class SocketService {
     this.socket.on('disconnect', () => {
       console.log('소켓 연결 끊김');
     });
+
+    this.socket.on('connect_error', (error) => {
+      console.error('소켓 연결 실패:', error.message);
+    });
   }
 
   //==== 픽셀 관련 ====//
   //픽셀 드로잉 요청
   drawPixel(pixelData: PixelDataWithCanvas) {
     if (this.socket) {
-      this.socket.emit('draw-pixel', pixelData);
+      this.socket.emit('draw_pixel', pixelData);
     }
   }
 
   //픽셀 업데이트 수신
   onPixelUpdate(callback: (pixelData: PixelData) => void) {
     if (this.socket) {
-      this.socket.on('pixel-update', callback);
+      this.socket.on('pixel_update', callback);
     }
   }
 
   //쿨다운 정보 수신
-  onCooldownInfo(callback: (data: { cooldown: string; remaining: string }) => void) {
+  onCooldownInfo(
+    callback: (data: { cooldown: boolean; remaining: number }) => void
+  ) {
     if (this.socket) {
       this.socket.on('cooldown_info', callback);
     }
@@ -81,27 +87,27 @@ class SocketService {
   // 채팅 메시지 수신
   onChatMessage(callback: (message: any) => void) {
     if (this.socket) {
-      this.socket.on('chat-message', callback);
+      this.socket.on('chat_message', callback);
     }
   }
 
   // 채팅 에러 수신
   onChatError(callback: (error: any) => void) {
     if (this.socket) {
-      this.socket.on('chat-error', callback);
+      this.socket.on('chat_error', callback);
     }
   }
 
   // 채팅 이벤트 리스너 제거
   offChatMessage(callback: (message: any) => void) {
     if (this.socket) {
-      this.socket.off('chat-message', callback);
+      this.socket.off('chat_message', callback);
     }
   }
 
   offChatError(callback: (error: any) => void) {
     if (this.socket) {
-      this.socket.off('chat-error', callback);
+      this.socket.off('chat_error', callback);
     }
   }
 

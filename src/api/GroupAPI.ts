@@ -1,4 +1,4 @@
-// src/services/canvasService.ts
+// src/api/GroupAPI.ts
 
 import apiClient from '../services/apiClient';
 

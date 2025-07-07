@@ -17,7 +17,7 @@ export default function Modal({ isOpen, onClose, children }: ModalProps) {
       onClick={onClose}
     >
       <div
-        className='relative w-full max-w-md rounded-xl border border-white/30 shadow-2xl backdrop-blur-md text-white'
+        className='relative w-full max-w-md rounded-xl border border-white/30 text-white shadow-2xl backdrop-blur-md'
         onClick={(e) => e.stopPropagation()}
       >
         {/* 3. 닫기 버튼 */}

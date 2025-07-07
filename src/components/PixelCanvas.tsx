@@ -3,9 +3,10 @@ import { usePixelSocket } from './SocketIntegration';
 import CanvasUI from './CanvasUI';
 import Preloader from './Preloader';
 import { useCanvasStore } from '../store/canvasStore';
+import { toast } from 'react-toastify';
 
 const INITIAL_POSITION = { x: 0, y: 0 };
-const MIN_SCALE = 0.1;
+const MIN_SCALE = 0.5;
 const MAX_SCALE = 30;
 const INITIAL_BACKGROUND_COLOR = '#000000';
 const VIEWPORT_BACKGROUND_COLOR = '#2d3748';
@@ -13,17 +14,19 @@ const VIEWPORT_BACKGROUND_COLOR = '#2d3748';
 type HoverPos = { x: number; y: number } | null;
 type PixelCanvasProps = {
   canvas_id: string;
+  onLoadingChange?: (loading: boolean) => void;
 };
 
-function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
+function PixelCanvas({
+  canvas_id: initialCanvasId,
+  onLoadingChange,
+}: PixelCanvasProps) {
   const { canvas_id, setCanvasId } = useCanvasStore();
 
-  // props로 받은 canvas_id를 store에 설정
   useEffect(() => {
     if (initialCanvasId && initialCanvasId !== canvas_id) {
       setCanvasId(initialCanvasId);
     }
-    console.log(`zustadn:${canvas_id}`);
   }, [initialCanvasId, canvas_id, setCanvasId]);
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -51,6 +54,76 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
   const [timeLeft, setTimeLeft] = useState(0);
   const [color, setColor] = useState('#ffffff');
   const [hoverPos, setHoverPos] = useState<HoverPos>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const [showPalette, setShowPalette] = useState(false);
+  const [showCanvas, setShowCanvas] = useState(false);
+  const [imageTransparency, setImageTransparency] = useState(0.5);
+  const imageTransparencyRef = useRef(0.5);
+
+  // 이미지 관련 상태
+  const imageCanvasRef = useRef<HTMLCanvasElement>(null);
+  const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
+  const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
+  const [isDraggingImage, setIsDraggingImage] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [showImageControls, setShowImageControls] = useState(false);
+  const [isImageFixed, setIsImageFixed] = useState(false);
+  const [imageMode, setImageMode] = useState(true);
+
+  // 이미지 리사이즈 핸들 상태
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizeHandle, setResizeHandle] = useState<'se' | 'e' | 's' | null>(
+    null
+  );
+  const [resizeStart, setResizeStart] = useState({
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+  });
+
+  // 리사이즈 핸들 클릭 감지
+  const getResizeHandle = useCallback(
+    (wx: number, wy: number) => {
+      if (!imageCanvasRef.current || isImageFixed) return null;
+
+      const hs = 12 / scaleRef.current;
+      const right = imagePosition.x + imageSize.width;
+      const bottom = imagePosition.y + imageSize.height;
+
+      // 우하단 핸들 (대각선 리사이즈)
+      if (
+        wx >= right - hs &&
+        wx <= right &&
+        wy >= bottom - hs &&
+        wy <= bottom
+      ) {
+        return 'se';
+      }
+      // 우측 핸들 (가로 리사이즈)
+      if (
+        wx >= right - hs &&
+        wx <= right &&
+        wy >= imagePosition.y + imageSize.height / 2 - hs / 2 &&
+        wy <= imagePosition.y + imageSize.height / 2 + hs / 2
+      ) {
+        return 'e';
+      }
+      // 하단 핸들 (세로 리사이즈)
+      if (
+        wy >= bottom - hs &&
+        wy <= bottom &&
+        wx >= imagePosition.x + imageSize.width / 2 - hs / 2 &&
+        wx <= imagePosition.x + imageSize.width / 2 + hs / 2
+      ) {
+        return 's';
+      }
+      return null;
+    },
+    [imagePosition, imageSize, isImageFixed]
+  );
+
   const colors = [
     '#ffffff',
     '#c0c0c0',
@@ -74,10 +147,6 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
     '#87cefa',
   ];
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-  const [showPalette, setShowPalette] = useState(false);
-
   const draw = useCallback(() => {
     const src = sourceCanvasRef.current;
     if (!src) return;
@@ -91,11 +160,96 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
       ctx.scale(scaleRef.current, scaleRef.current);
       ctx.fillStyle = INITIAL_BACKGROUND_COLOR;
       ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
-      ctx.strokeStyle = 'rgba(0,192,0,0.9)';
-      ctx.lineWidth = 0.1;
-      ctx.strokeRect(0, 0, canvasSize.width, canvasSize.width);
+
+      const gradient = ctx.createLinearGradient(
+        0,
+        0,
+        canvasSize.width,
+        canvasSize.height
+      );
+      gradient.addColorStop(0, 'rgba(34, 197, 94, 0.8)');
+      gradient.addColorStop(0.25, 'rgba(59, 130, 246, 0.8)');
+      gradient.addColorStop(0.5, 'rgba(168, 85, 247, 0.8)');
+      gradient.addColorStop(0.75, 'rgba(236, 72, 153, 0.8)');
+      gradient.addColorStop(1, 'rgba(34, 197, 94, 0.8)');
+
+      ctx.strokeStyle = gradient;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(-1, -1, canvasSize.width + 2, canvasSize.height + 2);
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(0, 0, canvasSize.width, canvasSize.height);
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(src, 0, 0);
+
+      // 이미지 렌더링
+      if (imageCanvasRef.current) {
+        ctx.globalAlpha = imageTransparencyRef.current;
+        ctx.imageSmoothingEnabled = false;
+        if (!isImageFixed) {
+          // 이미지 경계선
+          ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)';
+          ctx.lineWidth = 2 / scaleRef.current;
+          ctx.strokeRect(
+            imagePosition.x - 1,
+            imagePosition.y - 1,
+            imageSize.width + 2,
+            imageSize.height + 2
+          );
+        }
+        ctx.drawImage(
+          imageCanvasRef.current,
+          imagePosition.x,
+          imagePosition.y,
+          imageSize.width,
+          imageSize.height
+        );
+        ctx.globalAlpha = 1.0;
+
+        if (!isImageFixed) {
+          // 리사이즈 핸들 (네모) - 이미지 위에 그리기
+          const hs = 10 / scaleRef.current;
+
+          // 모든 핸들에 동일한 색상 적용 (하늘색)
+          ctx.fillStyle = 'rgba(0, 191, 255, 0.95)';
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+          ctx.lineWidth = 2 / scaleRef.current;
+
+          // 대각선 리사이즈 핸들 (우하단)
+          ctx.beginPath();
+          ctx.rect(
+            imagePosition.x + imageSize.width - hs,
+            imagePosition.y + imageSize.height - hs,
+            hs,
+            hs
+          );
+          ctx.fill();
+          ctx.stroke();
+
+          // 수평 리사이즈 핸들 (우측 중앙)
+          ctx.beginPath();
+          ctx.rect(
+            imagePosition.x + imageSize.width - hs,
+            imagePosition.y + imageSize.height / 2 - hs / 2,
+            hs,
+            hs
+          );
+          ctx.fill();
+          ctx.stroke();
+
+          // 수직 리사이즈 핸들 (하단 중앙)
+          ctx.beginPath();
+          ctx.rect(
+            imagePosition.x + imageSize.width / 2 - hs / 2,
+            imagePosition.y + imageSize.height - hs,
+            hs,
+            hs
+          );
+          ctx.fill();
+          ctx.stroke();
+        }
+      }
       ctx.restore();
     }
 
@@ -106,8 +260,6 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
       pctx.clearRect(0, 0, preview.width, preview.height);
       pctx.translate(viewPosRef.current.x, viewPosRef.current.y);
       pctx.scale(scaleRef.current, scaleRef.current);
-      pctx.imageSmoothingEnabled = false;
-      pctx.drawImage(src, 0, 0);
 
       if (fixedPosRef.current && fixedPosRef.current.color !== 'transparent') {
         const { x, y, color: fx } = fixedPosRef.current;
@@ -129,12 +281,134 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
 
       pctx.restore();
     }
-  }, [canvasSize]);
+  }, [canvasSize, imagePosition, imageSize, isImageFixed]);
+
+  // 이미지 첨부 핸들러
+  const handleImageAttach = useCallback(
+    (file: File) => {
+      // 팔레트 닫기
+      setShowPalette(false);
+
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error(
+          '이미지 파일이 너무 큽니다. 10MB 이하의 파일을 선택해주세요.'
+        );
+        return;
+      }
+
+      const supportedTypes = [
+        'image/jpeg',
+        'image/jpg',
+        'image/png',
+        'image/gif',
+        'image/webp',
+      ];
+      if (!supportedTypes.includes(file.type)) {
+        toast.error(
+          '지원되지 않는 이미지 형식입니다. JPG, PNG, GIF, WebP 파일을 사용해주세요.'
+        );
+        return;
+      }
+
+      const img = new Image();
+      img.onload = () => {
+        if (!canvasSize.width || !canvasSize.height) {
+          toast.error(
+            '캔버스가 준비되지 않았습니다. 잠시 후 다시 시도해주세요.'
+          );
+          return;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          imageCanvasRef.current = canvas;
+
+          const maxScale = 0.8;
+          const scale = Math.min(
+            (canvasSize.width * maxScale) / img.width,
+            (canvasSize.height * maxScale) / img.height
+          );
+          const scaledWidth = img.width * scale;
+          const scaledHeight = img.height * scale;
+
+          setImageSize({ width: scaledWidth, height: scaledHeight });
+          setImagePosition({
+            x: (canvasSize.width - scaledWidth) / 2,
+            y: (canvasSize.height - scaledHeight) / 2,
+          });
+          setShowImageControls(true);
+          setIsImageFixed(false);
+
+          toast.success('이미지가 성공적으로 첨부되었습니다!');
+          draw();
+        }
+      };
+
+      img.onerror = () => {
+        toast.error('이미지를 불러올 수 없습니다. 다른 이미지를 시도해주세요.');
+      };
+
+      img.src = URL.createObjectURL(file);
+    },
+    [canvasSize, draw]
+  );
+
+  // 이미지 확대축소
+  const handleImageScale = useCallback(
+    (scaleFactor: number) => {
+      const newWidth = imageSize.width * scaleFactor;
+      const newHeight = imageSize.height * scaleFactor;
+
+      if (
+        newWidth > 10 &&
+        newHeight > 10 &&
+        newWidth < canvasSize.width * 3 &&
+        newHeight < canvasSize.height * 3
+      ) {
+        const centerX = imagePosition.x + imageSize.width / 2;
+        const centerY = imagePosition.y + imageSize.height / 2;
+
+        const newX = centerX - newWidth / 2;
+        const newY = centerY - newHeight / 2;
+
+        setImageSize({ width: newWidth, height: newHeight });
+        setImagePosition({ x: newX, y: newY });
+        draw();
+      }
+    },
+    [imageSize, imagePosition, canvasSize, draw]
+  );
+
+  // 이미지 확정
+  const confirmImage = useCallback(() => {
+    setIsImageFixed(true);
+    setShowImageControls(false);
+    toast.success('이미지가 고정되었습니다!');
+  }, []);
+
+  // 이미지 취소
+  const cancelImage = useCallback(() => {
+    imageCanvasRef.current = null;
+    setShowImageControls(false);
+    setIsImageFixed(false);
+    toast.info('이미지가 제거되었습니다.');
+    draw();
+  }, [draw]);
 
   const { sendPixel } = usePixelSocket({
     sourceCanvasRef,
     draw,
     canvas_id,
+    onCooldownReceived: (cooldownData) => {
+      if (cooldownData.cooldown) {
+        startCooldown(cooldownData.remaining);
+      }
+    },
   });
 
   const updateOverlay = useCallback(
@@ -161,7 +435,6 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
 
       if (isInBounds) {
         setHoverPos({ x: worldX, y: worldY });
-
         overlayCtx.save();
         overlayCtx.translate(viewPosRef.current.x, viewPosRef.current.y);
         overlayCtx.scale(scaleRef.current, scaleRef.current);
@@ -173,7 +446,7 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
         setHoverPos(null);
       }
     },
-    [setHoverPos, canvasSize]
+    [canvasSize]
   );
 
   const clearOverlay = useCallback(() => {
@@ -182,7 +455,7 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
     if (!overlayCanvas) return;
     const overlayCtx = overlayCanvas.getContext('2d');
     overlayCtx?.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-  }, [setHoverPos]);
+  }, []);
 
   const resetAndCenter = useCallback(() => {
     const canvas = renderCanvasRef.current;
@@ -221,7 +494,6 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
 
       const viewportCenterX = canvas.clientWidth / 2;
       const viewportCenterY = canvas.clientHeight / 2;
-
       const targetX = viewportCenterX - (worldX + 0.5) * scaleRef.current;
       const targetY = viewportCenterY - (worldY + 0.5) * scaleRef.current;
 
@@ -233,7 +505,6 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
       const animate = (currentTime: number) => {
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / duration, 1);
-
         const eased = 1 - Math.pow(1 - progress, 3);
 
         viewPosRef.current.x = startX + (targetX - startX) * eased;
@@ -270,7 +541,7 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
   }, []);
 
   const handleCooltime = useCallback(() => {
-    startCooldown(20);
+    startCooldown(10);
   }, [startCooldown]);
 
   const handleConfirm = useCallback(() => {
@@ -285,7 +556,7 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
       previewPixelRef.current = null;
       pos.color = 'transparent';
       draw();
-    }, 4000);
+    }, 1000);
   }, [color, draw, sendPixel, handleCooltime]);
 
   const handleSelectColor = useCallback(
@@ -299,40 +570,138 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
+      const sx = e.nativeEvent.offsetX;
+      const sy = e.nativeEvent.offsetY;
+      const wx = (sx - viewPosRef.current.x) / scaleRef.current;
+      const wy = (sy - viewPosRef.current.y) / scaleRef.current;
+
+      // 이미지 모드에서 리사이즈 핸들 또는 이미지 영역 클릭 감지
+      if (
+        imageMode &&
+        !isImageFixed &&
+        imageCanvasRef.current &&
+        e.button === 0
+      ) {
+        const handle = getResizeHandle(wx, wy);
+
+        if (handle) {
+          // 리사이즈 핸들 클릭
+          setIsResizing(true);
+          setResizeHandle(handle);
+          setResizeStart({
+            x: wx,
+            y: wy,
+            width: imageSize.width,
+            height: imageSize.height,
+          });
+          return;
+        } else if (
+          wx >= imagePosition.x &&
+          wx <= imagePosition.x + imageSize.width &&
+          wy >= imagePosition.y &&
+          wy <= imagePosition.y + imageSize.height
+        ) {
+          // 이미지 드래그
+          setIsDraggingImage(true);
+          setDragStart({ x: wx - imagePosition.x, y: wy - imagePosition.y });
+          return;
+        }
+      }
+
+      // 우클릭 드래그 (이미지가 없거나 캔버스 모드이거나 이미지 확정 후)
       if (e.button === 2) {
-        // 기본 브라우저 동작 방지 코드 추가
         e.preventDefault();
-        isPanningRef.current = true;
-        startPosRef.current = {
-          x: e.nativeEvent.offsetX - viewPosRef.current.x,
-          y: e.nativeEvent.offsetY - viewPosRef.current.y,
-        };
+        if (!imageCanvasRef.current || !imageMode || isImageFixed) {
+          isPanningRef.current = true;
+          startPosRef.current = {
+            x: e.nativeEvent.offsetX - viewPosRef.current.x,
+            y: e.nativeEvent.offsetY - viewPosRef.current.y,
+          };
+        }
         return;
       }
-      if (e.button === 0) {
-        const sx = e.nativeEvent.offsetX;
-        const sy = e.nativeEvent.offsetY;
-        const wx = Math.floor((sx - viewPosRef.current.x) / scaleRef.current);
-        const wy = Math.floor((sy - viewPosRef.current.y) / scaleRef.current);
+
+      // 좌클릭 픽셀 선택 (이미지가 없거나 이미지 확정 후)
+      if (e.button === 0 && (!imageCanvasRef.current || isImageFixed)) {
+        const pixelX = Math.floor(wx);
+        const pixelY = Math.floor(wy);
         if (
-          wx >= 0 &&
-          wx < canvasSize.width &&
-          wy >= 0 &&
-          wy < canvasSize.height
+          pixelX >= 0 &&
+          pixelX < canvasSize.width &&
+          pixelY >= 0 &&
+          pixelY < canvasSize.height
         ) {
-          fixedPosRef.current = { x: wx, y: wy, color: 'transparent' };
+          fixedPosRef.current = { x: pixelX, y: pixelY, color: 'transparent' };
           setShowPalette(true);
           centerOnPixel(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
         }
       }
     },
-    [centerOnPixel, canvasSize]
+    [
+      centerOnPixel,
+      canvasSize,
+      imageMode,
+      isImageFixed,
+      imagePosition,
+      imageSize,
+      getResizeHandle,
+      setIsResizing,
+      setResizeHandle,
+      setResizeStart,
+      setIsDraggingImage,
+      setDragStart,
+    ]
   );
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
       const { offsetX, offsetY } = e.nativeEvent;
 
+      // 이미지 리사이즈 중
+      if (isResizing && resizeHandle) {
+        const wx = (offsetX - viewPosRef.current.x) / scaleRef.current;
+        const wy = (offsetY - viewPosRef.current.y) / scaleRef.current;
+
+        let newWidth = imageSize.width;
+        let newHeight = imageSize.height;
+
+        if (resizeHandle === 'se') {
+          // 대각선 리사이즈
+          newWidth = resizeStart.width + (wx - resizeStart.x);
+          newHeight = resizeStart.height + (wy - resizeStart.y);
+        } else if (resizeHandle === 'e') {
+          // 가로만 리사이즈
+          newWidth = resizeStart.width + (wx - resizeStart.x);
+        } else if (resizeHandle === 's') {
+          // 세로만 리사이즈
+          newHeight = resizeStart.height + (wy - resizeStart.y);
+        }
+
+        if (
+          newWidth > 10 &&
+          newHeight > 10 &&
+          newWidth < canvasSize.width * 2 &&
+          newHeight < canvasSize.height * 2
+        ) {
+          setImageSize({ width: newWidth, height: newHeight });
+          draw();
+        }
+        return;
+      }
+
+      // 이미지 드래그 중
+      if (isDraggingImage && !isImageFixed) {
+        const wx = (offsetX - viewPosRef.current.x) / scaleRef.current;
+        const wy = (offsetY - viewPosRef.current.y) / scaleRef.current;
+        setImagePosition({
+          x: wx - dragStart.x,
+          y: wy - dragStart.y,
+        });
+        draw();
+        return;
+      }
+
+      // 캔버스 팬닝 중
       if (isPanningRef.current) {
         viewPosRef.current = {
           x: offsetX - startPosRef.current.x,
@@ -342,11 +711,27 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
       }
       updateOverlay(offsetX, offsetY);
     },
-    [draw, updateOverlay]
+    [
+      draw,
+      updateOverlay,
+      isDraggingImage,
+      isImageFixed,
+      dragStart,
+      isResizing,
+      resizeHandle,
+      resizeStart,
+      imageSize,
+      canvasSize,
+      setImagePosition,
+      setImageSize,
+    ]
   );
 
   const handleMouseUp = useCallback(() => {
     isPanningRef.current = false;
+    setIsDraggingImage(false);
+    setIsResizing(false);
+    setResizeHandle(null);
   }, []);
 
   const handleMouseLeave = useCallback(() => {
@@ -380,9 +765,6 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
         canvasSize: fetchedCanvasSize,
       } = json.data;
 
-      console.log(`fetchedID : ${fetchedId}`);
-      console.log(`pixels : ${pixels.length}`);
-
       setCanvasId(fetchedId);
       setCanvasSize(fetchedCanvasSize);
 
@@ -395,11 +777,12 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
         ctx.fillStyle = INITIAL_BACKGROUND_COLOR;
         ctx.fillRect(0, 0, fetchedCanvasSize.width, fetchedCanvasSize.height);
 
-        if (!Array.isArray(pixels)) throw new Error('픽셀 데이터 형식 오류');
-        pixels.forEach(({ x, y, color }) => {
-          ctx.fillStyle = color;
-          ctx.fillRect(x, y, 1, 1);
-        });
+        if (Array.isArray(pixels)) {
+          pixels.forEach(({ x, y, color }) => {
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, 1, 1);
+          });
+        }
       }
       sourceCanvasRef.current = source;
     } catch (err) {
@@ -407,13 +790,32 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
       setHasError(true);
     } finally {
       setIsLoading(false);
+      onLoadingChange?.(false);
+      setTimeout(() => setShowCanvas(true), 100);
     }
   }, []);
 
   useEffect(() => {
-    // 최초 마운트 시 props로 받은 id로만 fetch
     fetchCanvasData(initialCanvasId);
   }, [initialCanvasId, fetchCanvasData]);
+
+  // 투명도 상태가 변경될 때 ref 값만 업데이트하고 draw 함수 직접 호출
+  const handleTransparencyChange = useCallback(
+    (value: number) => {
+      imageTransparencyRef.current = value;
+      setImageTransparency(value);
+      // 투명도가 변경되면 즉시 화면에 반영 (draw 함수 직접 호출)
+      if (imageCanvasRef.current) {
+        draw();
+      }
+    },
+    [draw]
+  );
+
+  // ref 값 초기화
+  useEffect(() => {
+    imageTransparencyRef.current = imageTransparency;
+  }, []);
 
   useEffect(() => {
     const rootElement = rootRef.current;
@@ -454,6 +856,16 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
       const { offsetX, offsetY } = e;
+
+      // 이미지 모드에서 이미지만 확대축소
+      if (imageMode && !isImageFixed && imageCanvasRef.current) {
+        const delta = -e.deltaY;
+        const scaleFactor = delta > 0 ? 1.1 : 0.9;
+        handleImageScale(scaleFactor);
+        return;
+      }
+
+      // 캔버스 모드 또는 이미지 확정 후 전체 확대축소
       const xs = (offsetX - viewPosRef.current.x) / scaleRef.current;
       const ys = (offsetY - viewPosRef.current.y) / scaleRef.current;
       const delta = -e.deltaY;
@@ -473,52 +885,165 @@ function PixelCanvas({ canvas_id: initialCanvasId }: PixelCanvasProps) {
       passive: false,
     });
     return () => interactionCanvas.removeEventListener('wheel', handleWheel);
-  }, [draw, updateOverlay]);
+  }, [draw, updateOverlay, handleImageScale, imageMode, isImageFixed]);
 
   return (
     <div
       ref={rootRef}
-      className='relative h-full w-full'
+      className='relative h-full w-full transition-all duration-300'
       style={{
         backgroundImage: `url('/Creatives.png')`,
         backgroundSize: 'cover',
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'center center',
         backgroundColor: VIEWPORT_BACKGROUND_COLOR,
+        boxShadow: cooldown
+          ? 'inset 0 0 50px rgba(239, 68, 68, 0.3), 0 0 100px rgba(239, 68, 68, 0.2)'
+          : 'none',
       }}
     >
-      <canvas
-        ref={renderCanvasRef}
-        className='pointer-events-none absolute top-0 left-0'
-      />
-      <canvas
-        ref={previewCanvasRef}
-        className='pointer-events-none absolute top-0 left-0'
-      />
-      <canvas
-        ref={interactionCanvasRef}
-        className='absolute top-0 left-0'
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseLeave}
-        onContextMenu={(e) => e.preventDefault()}
-      />
+      {cooldown && (
+        <>
+          <div className='pointer-events-none absolute inset-0 border-4 border-red-500/30' />
+          <div className='pointer-events-none absolute inset-2 border-2 border-red-400/20' />
+          <div className='pointer-events-none absolute inset-4 border border-red-300/10' />
+        </>
+      )}
+      <div
+        className={`transition-all duration-1000 ease-out ${
+          showCanvas
+            ? 'scale-100 transform opacity-100'
+            : 'scale-50 transform opacity-0'
+        }`}
+      >
+        <canvas
+          ref={renderCanvasRef}
+          className='pointer-events-none absolute top-0 left-0'
+        />
+        <canvas
+          ref={previewCanvasRef}
+          className='pointer-events-none absolute top-0 left-0'
+        />
+        <canvas
+          ref={interactionCanvasRef}
+          className='absolute top-0 left-0'
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseLeave}
+          onContextMenu={(e) => e.preventDefault()}
+        />
+      </div>
 
-      {isLoading && <Preloader />}
+      {isLoading ? (
+        <Preloader />
+      ) : (
+        <CanvasUI
+          color={color}
+          setColor={setColor}
+          hoverPos={hoverPos}
+          colors={colors}
+          onConfirm={handleConfirm}
+          onSelectColor={handleSelectColor}
+          cooldown={cooldown}
+          timeLeft={timeLeft}
+          showPalette={showPalette}
+          setShowPalette={setShowPalette}
+          onImageAttach={handleImageAttach}
+          onImageDelete={cancelImage}
+          hasImage={!!imageCanvasRef.current}
+          imageTransparency={imageTransparency}
+          setImageTransparency={handleTransparencyChange}
+        />
+      )}
 
-      <CanvasUI
-        color={color}
-        setColor={setColor}
-        hoverPos={hoverPos}
-        colors={colors}
-        onConfirm={handleConfirm}
-        onSelectColor={handleSelectColor}
-        cooldown={cooldown}
-        timeLeft={timeLeft}
-        showPalette={showPalette}
-        setShowPalette={setShowPalette}
-      />
+      {showImageControls && !isImageFixed && (
+        <div className='pointer-events-auto fixed top-1/2 right-5 z-[10000] -translate-y-1/2'>
+          <div className='max-w-xs rounded-xl border border-gray-700/50 bg-gray-900/95 p-4 shadow-2xl backdrop-blur-sm'>
+            {/* 제목 */}
+            <div className='mb-4 flex items-center gap-2'>
+              <div className='h-3 w-3 animate-pulse rounded-full bg-blue-500'></div>
+              <h3 className='text-sm font-semibold text-white'>
+                이미지 편집 모드
+              </h3>
+            </div>
+
+            {/* 모드 선택 */}
+            <div className='mb-4'>
+              <div className='flex gap-1 rounded-lg bg-gray-800 p-1'>
+                <button
+                  onClick={() => setImageMode(true)}
+                  className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
+                    imageMode
+                      ? 'bg-blue-500 text-white shadow-md'
+                      : 'text-gray-400 hover:bg-gray-700 hover:text-white'
+                  }`}
+                >
+                  🖼️ 이미지
+                </button>
+                <button
+                  onClick={() => setImageMode(false)}
+                  className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
+                    !imageMode
+                      ? 'bg-blue-500 text-white shadow-md'
+                      : 'text-gray-400 hover:bg-gray-700 hover:text-white'
+                  }`}
+                >
+                  🎨 캔버스
+                </button>
+              </div>
+            </div>
+
+            {/* 사용법 안내 */}
+            <div className='mb-4 space-y-2 text-xs text-gray-300'>
+              {imageMode ? (
+                <div className='rounded-lg border border-blue-500/20 bg-blue-500/10 p-3'>
+                  <div className='mb-2 font-medium text-blue-300'>
+                    🖼️ 이미지 모드
+                  </div>
+                  <div className='space-y-1'>
+                    <div>• 좌클릭 드래그: 이미지 이동</div>
+                    <div>• 마우스 휠: 이미지 크기 조절</div>
+                    <div>• 핸들 드래그: 정밀 크기 조절</div>
+                  </div>
+                </div>
+              ) : (
+                <div className='rounded-lg border border-purple-500/20 bg-purple-500/10 p-3'>
+                  <div className='mb-2 font-medium text-purple-300'>
+                    🎨 캔버스 모드
+                  </div>
+                  <div className='space-y-1'>
+                    <div>• 우클릭 드래그: 캔버스 이동</div>
+                    <div>• 마우스 휠: 캔버스 확대/축소</div>
+                    <div>• 이미지는 고정된 상태</div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 액션 버튼 */}
+            <div className='flex gap-2'>
+              <button
+                onClick={confirmImage}
+                className='flex-1 transform rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-all hover:scale-105 hover:from-green-600 hover:to-emerald-600 active:scale-95'
+              >
+                ✓ 확정
+              </button>
+              <button
+                onClick={cancelImage}
+                className='flex-1 transform rounded-lg bg-gradient-to-r from-red-500 to-rose-500 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-all hover:scale-105 hover:from-red-600 hover:to-rose-600 active:scale-95'
+              >
+                ✕ 취소
+              </button>
+            </div>
+
+            {/* 하단 안내 */}
+            <div className='mt-3 border-t border-gray-700/50 pt-3 text-center text-xs text-gray-400'>
+              확정하면 픽셀 그리기가 가능합니다
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
