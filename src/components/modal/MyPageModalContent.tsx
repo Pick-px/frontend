@@ -65,8 +65,8 @@ export default function MyPageModalContent() {
       {isLoggedIn && userInfo ? (
         <>
           {/* Profile Header */}
-          <div className='flex flex-col items-center p-6 bg-black/20'>
-            <div className='w-24 h-24 rounded-full bg-gray-700 mb-4 flex items-center justify-center'>
+          <div className='flex flex-col items-center bg-black/20 p-6'>
+            <div className='mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-gray-700'>
               {/* Placeholder for an avatar */}
               <span className='text-4xl'>🎨</span>
             </div>
@@ -78,7 +78,7 @@ export default function MyPageModalContent() {
 
           {/* Canvases Section */}
           <div className='flex-grow overflow-y-auto p-6'>
-            <h3 className='text-lg font-semibold mb-4'>내 캔버스 목록</h3>
+            <h3 className='mb-4 text-lg font-semibold'>내 캔버스 목록</h3>
             {userInfo.canvases && userInfo.canvases.length > 0 ? (
               <ul className='space-y-4'>
                 {userInfo.canvases.map((canvas, index) => (
@@ -89,23 +89,25 @@ export default function MyPageModalContent() {
                     <div>
                       <p className='font-semibold text-white'>{canvas.title}</p>
                       <p className='text-xs text-gray-400'>
-                        {canvas.size_x}x{canvas.size_y} - 생성일: {' '}
+                        {canvas.size_x}x{canvas.size_y} - 생성일:{' '}
                         {new Date(canvas.created_at).toLocaleDateString()}
                       </p>
                     </div>
-                    <button className='px-4 py-2 text-sm rounded-md bg-blue-600 hover:bg-blue-500 transition-colors'>
+                    {/* <button className='px-4 py-2 text-sm rounded-md bg-blue-600 hover:bg-blue-500 transition-colors'>
                       이동
-                    </button>
+                    </button> */}
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className='text-center text-gray-500'>아직 생성된 캔버스가 없습니다.</p>
+              <p className='text-center text-gray-500'>
+                아직 생성된 캔버스가 없습니다.
+              </p>
             )}
           </div>
 
           {/* Footer */}
-          <div className='flex-shrink-0 p-4 border-t border-white/10'>
+          <div className='flex-shrink-0 border-t border-white/10 p-4'>
             <button
               onClick={handleLogout}
               className='w-full rounded-md bg-gray-700 py-2 text-white transition-colors hover:bg-gray-600'
@@ -115,7 +117,7 @@ export default function MyPageModalContent() {
           </div>
         </>
       ) : (
-        <div className='flex h-full flex-col items-center justify-center text-center p-6'>
+        <div className='flex h-full flex-col items-center justify-center p-6 text-center'>
           <p className='mb-4 text-lg'>로그인이 필요한 서비스입니다.</p>
           <button
             onClick={() => {

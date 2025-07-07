@@ -92,7 +92,7 @@ function Chat() {
   const requestAdditionalMsg = () => {
     console.log('요청 보내기');
   };
-  
+
   // 모달 열림 또는 로그아웃 시 채팅창 닫기
   useEffect(() => {
     if (isOpen && (isGroupModalOpen || !isLoggedIn)) {
@@ -129,7 +129,7 @@ function Chat() {
   }, [isOpen, canvas_id]);
 
   return (
-    <div className='fixed bottom-5 left-5 z-50 flex flex-col items-start'>
+    <div className='fixed bottom-4 left-2 z-50 flex flex-col items-start'>
       {/* 채팅창 UI */}
       <div
         className={`mb-2 flex h-[500px] w-80 flex-col rounded-xl border border-white/30 bg-black/30 shadow-2xl backdrop-blur-md transition-all duration-300 ease-in-out ${isOpen ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'}`}
@@ -192,7 +192,7 @@ function Chat() {
           }
           setIsOpen(!isOpen);
         }}
-        className='flex h-14 w-14 items-center justify-center rounded-full bg-blue-500 text-white shadow-xl transition-transform hover:bg-blue-600 active:scale-90'
+        className='flex h-10 w-10 items-center justify-center rounded-full bg-blue-500 text-white shadow-xl transition-transform hover:bg-blue-600 active:scale-90'
       >
         {isOpen ? (
           // 닫기 아이콘 (X)

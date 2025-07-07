@@ -6,7 +6,7 @@ import { useCanvasStore } from '../store/canvasStore';
 import { toast } from 'react-toastify';
 
 const INITIAL_POSITION = { x: 0, y: 0 };
-const MIN_SCALE = 0.1;
+const MIN_SCALE = 0.5;
 const MAX_SCALE = 30;
 const INITIAL_BACKGROUND_COLOR = '#000000';
 const VIEWPORT_BACKGROUND_COLOR = '#2d3748';
