@@ -1,6 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuthStore } from '../store/authStrore';
 import { useModalStore } from '../store/modalStore';
+import { ToastContainer, toast } from 'react-toastify';
+import { showInstructionsToast } from './toast/InstructionsToast';
+import 'react-toastify/dist/ReactToastify.css';
 
 type HoverPos = { x: number; y: number } | null;
 
@@ -46,6 +49,10 @@ export default function CanvasUI({
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    showInstructionsToast();
+  }, []);
+
+  useEffect(() => {
     if (!isMenuOpen) return;
 
     function handleClickOutside(event: MouseEvent) {
@@ -63,6 +70,7 @@ export default function CanvasUI({
 
   return (
     <>
+      <ToastContainer />
       {/* 컬러 피커 */}
       <div className='pointer-events-auto fixed top-[10px] left-[10px] z-[9999]'>
         <input

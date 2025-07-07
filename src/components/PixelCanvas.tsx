@@ -161,7 +161,7 @@ function PixelCanvas({
     canvas_id,
     onCooldownReceived: (cooldownData) => {
       console.log('쿨다운 정보 수신:', cooldownData);
-      console.log('쿨다운 체크:', cooldownData.cooldown === 'true');
+      // console.log('쿨다운 체크:', cooldownData.cooldown === 'true');
 
       if (cooldownData.cooldown) {
         console.log(`쿨다운 시작: ${cooldownData.remaining}초`);
