@@ -2,7 +2,7 @@ import { type UserInfoResponse } from '../services/myPageService';
 
 export const dummyUserInfo: UserInfoResponse = {
   email: 'user@example.com',
-  user_name: 'nickname123',
+  nickName: 'nickname123',
   canvases: [
     {
       title: 'My First Canvas',

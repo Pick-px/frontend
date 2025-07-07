@@ -6,11 +6,16 @@ import { chatService } from './ChatAPI';
 import { useCanvasStore } from '../../store/canvasStore';
 import { useChatSocket } from '../SocketIntegration';
 import { useAuthStore } from '../../store/authStrore';
-import { DUMMY_RESPONSE, type Group } from '../../data/dummyChatData';
+import { useModalStore } from '../../store/modalStore';
 
 // 임시로 사용할 가짜 메시지 데이터
 
-export default function Chat() {
+export type Group = {
+  group_id: string;
+  group_title: string;
+};
+
+function Chat() {
   console.log('Chat 컴포넌트 시작');
 
   const [isOpen, setIsOpen] = useState(false);
@@ -18,9 +23,11 @@ export default function Chat() {
 
   const [groups, setGroups] = useState<Group[]>([]);
   const [currentGroupId, setCurrentGroupId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false); // 로딩 상태 추가
 
   const canvas_id = useCanvasStore((state) => state.canvas_id);
-  const user = useAuthStore((state) => state.user);
+  const { user, isLoggedIn } = useAuthStore();
+  const { openLoginModal, isGroupModalOpen } = useModalStore();
 
   // 채팅 소켓 연결 - 유효한 group_id가 있을 때만
   const { sendMessage: sendSocketMessage, leaveChat } = useChatSocket({
@@ -50,6 +57,7 @@ export default function Chat() {
 
     try {
       setCurrentGroupId(groupId);
+      setIsLoading(true); // 로딩 시작
       const newMessages = await chatService.getChatMessages(groupId);
       setMessages(newMessages); // 메시지 상태 업데이트
     } catch (error) {
@@ -57,6 +65,8 @@ export default function Chat() {
         `${groupId} 그룹의 메시지를 불러오는 데 실패했습니다.`,
         error
       );
+    } finally {
+      setIsLoading(false); // 로딩 종료
     }
   };
 
@@ -83,12 +93,20 @@ export default function Chat() {
     console.log('요청 보내기');
   };
 
+  // 모달 열림 또는 로그아웃 시 채팅창 닫기
+  useEffect(() => {
+    if (isOpen && (isGroupModalOpen || !isLoggedIn)) {
+      setIsOpen(false);
+    }
+  }, [isGroupModalOpen, isLoggedIn, isOpen]);
+
   // isOpen True 시, canvasId 변경시
   useEffect(() => {
     console.log(`modal open, ${canvas_id}`);
     if (isOpen && canvas_id) {
       const fetchInitialData = async () => {
         console.log(`start fetch, ${canvas_id}`);
+        setIsLoading(true); // 로딩 시작
         try {
           const {
             defaultGroupId,
@@ -101,6 +119,8 @@ export default function Chat() {
           setMessages(initialMessages);
         } catch (error) {
           console.error('초기 채팅 데이터를 불러오는 데 실패했습니다.', error);
+        } finally {
+          setIsLoading(false); // 로딩 종료
         }
       };
 
@@ -109,7 +129,7 @@ export default function Chat() {
   }, [isOpen, canvas_id]);
 
   return (
-    <div className='fixed bottom-5 left-5 z-50 flex flex-col items-start'>
+    <div className='fixed bottom-4 left-2 z-50 flex flex-col items-start'>
       {/* 채팅창 UI */}
       <div
         className={`mb-2 flex h-[500px] w-80 flex-col rounded-xl border border-white/30 bg-black/30 shadow-2xl backdrop-blur-md transition-all duration-300 ease-in-out ${isOpen ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'}`}
@@ -141,8 +161,17 @@ export default function Chat() {
             ))}
           </div>
 
-          {/* 메시지 목록 */}
-          <MessageList messages={messages} />
+          {/* 메시지 목록 또는 스피너 */}
+          {isLoading ? (
+            <div className='flex flex-grow items-center justify-center'>
+              <div
+                className='h-12 w-12 animate-spin rounded-full border-4 border-solid border-current border-r-transparent text-blue-500 motion-reduce:animate-[spin_1.5s_linear_infinite]'
+                role='status'
+              />
+            </div>
+          ) : (
+            <MessageList messages={messages} />
+          )}
 
           {/* 메시지 입력창 */}
           <MessageInput onSendMessage={handleSendMessage} />
@@ -152,12 +181,18 @@ export default function Chat() {
       {/* 채팅창 여닫기 버튼 */}
       <button
         onClick={() => {
+          // 로그인 상태 확인
+          if (!isLoggedIn) {
+            openLoginModal();
+            return;
+          }
+
           if (isOpen) {
             leaveChat();
           }
           setIsOpen(!isOpen);
         }}
-        className='flex h-14 w-14 items-center justify-center rounded-full bg-blue-500 text-white shadow-xl transition-transform hover:bg-blue-600 active:scale-90'
+        className='flex h-10 w-10 items-center justify-center rounded-full bg-blue-500 text-white shadow-xl transition-transform hover:bg-blue-600 active:scale-90'
       >
         {isOpen ? (
           // 닫기 아이콘 (X)
@@ -196,3 +231,5 @@ export default function Chat() {
     </div>
   );
 }
+
+export default React.memo(Chat);

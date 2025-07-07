@@ -10,20 +10,21 @@ type Canvas = {
 
 export type UserInfoResponse = {
   email: string;
-  user_name: string;
+  nickName: string;
   canvases: Canvas[];
 };
 
 export const myPageService = {
   async fetchUserInfo(): Promise<UserInfoResponse> {
     try {
-      // const response = await apiClient.get<UserInfoResponse>('/user/info');
-      // return response.data;
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve(dummyUserInfo);
-        }, 500);
-      });
+      const response = await apiClient.get<UserInfoResponse>('/user/info');
+      console.log(response);
+      return response.data;
+      // return new Promise((resolve) => {
+      //   setTimeout(() => {
+      //     resolve(dummyUserInfo);
+      //   }, 500);
+      // });
     } catch (error) {
       console.error('Failed to fetch user info:', error);
       throw error;
