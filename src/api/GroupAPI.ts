@@ -60,14 +60,12 @@ export const groupServices = {
   /**
    * 선택한 그룹에 참여를 신청합니다.
    * @param groupId 참여할 그룹 ID
-   * @param canvasId 현재 캔버스의 아이디
    * @returns
    */
-  async joinGroup(groupId: string, canvasId: string) {
+  async joinGroup(groupId: string) {
     try {
       const response = await apiClient.post(`/group/join`, {
         group_id: groupId,
-        canvas_id: canvasId,
       });
       console.log(response);
       return response.data;

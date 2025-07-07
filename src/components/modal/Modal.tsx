@@ -4,33 +4,31 @@ import ReactDOM from 'react-dom';
 type ModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  children: React.ReactNode;
+  children: React.ReactNode; // ✨ 모달 안에 들어올 내용물
 };
 
 export default function Modal({ isOpen, onClose, children }: ModalProps) {
   if (!isOpen) return null;
 
+  // Portal을 사용하여 modal-root에 렌더링
   return ReactDOM.createPortal(
     <div
-      className='fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-lg p-4'
+      className='fixed inset-0 z-50 flex items-center justify-center bg-black/20 p-4 backdrop-blur-lg'
       onClick={onClose}
     >
       <div
-        className='relative w-full max-w-lg max-h-[80vh] rounded-xl border border-white/30 shadow-2xl backdrop-blur-md text-white bg-black/50 transition-all duration-300 ease-out'
+        className='relative max-h-[80vh] w-full max-w-lg rounded-xl border border-white/30 bg-black/50 text-white shadow-2xl backdrop-blur-md transition-all duration-300 ease-out'
         onClick={(e) => e.stopPropagation()}
-        style={{
-          transitionProperty: 'height, min-height, max-height, transform',
-          transformOrigin: 'top center', // 상단을 기준으로 애니메이션
-        }}
       >
-        {/* 닫기 버튼 */}
+        {/* 3. 닫기 버튼 */}
         <button
           onClick={onClose}
-          className='absolute top-3 right-3 z-10 rounded-full p-2 text-white/70 hover:text-white hover:bg-white/20 transition-all duration-200'
+          className='absolute top-2 right-2 rounded-full p-1 text-white hover:bg-white/20'
         >
+          {/* SVG로 만든 X 아이콘 */}
           <svg
             xmlns='http://www.w3.org/2000/svg'
-            className='h-5 w-5'
+            className='h-6 w-6'
             fill='none'
             viewBox='0 0 24 24'
             stroke='currentColor'
@@ -43,13 +41,9 @@ export default function Modal({ isOpen, onClose, children }: ModalProps) {
             />
           </svg>
         </button>
-        
-        {/* 모달 콘텐츠 - 자동 높이 조절 */}
-        <div className='flex flex-col min-h-0'>
-          {children}
-        </div>
+        {children}
       </div>
     </div>,
-    document.getElementById('modal-root')!
+    document.getElementById('modal-root')! // public/index.html에 이 div가 있어야 함
   );
 }
