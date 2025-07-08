@@ -6,47 +6,44 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useAuthStore } from '../../store/authStrore';
 import { useModalStore } from '../../store/modalStore';
 import { showInstructionsToast } from '../toast/InstructionsToast';
+import { useCanvasUiStore } from '../../store/canvasUiStore';
 
-type HoverPos = { x: number; y: number } | null;
+// type HoverPos = { x: number; y: number } | null;
 
 type CanvasUIProps = {
-  color: string;
-  setColor: (color: string) => void;
-  hoverPos: HoverPos;
-  colors: string[];
-  onSelectColor: (color: string) => void;
   onConfirm: () => void;
-  cooldown: boolean;
-  timeLeft: number;
-  showPalette: boolean;
-  setShowPalette: (show: boolean) => void;
-  onImageAttach?: (file: File) => void;
-  onImageDelete?: () => void;
-  hasImage?: boolean;
-  imageTransparency?: number;
-  setImageTransparency?: (value: number) => void;
+  onSelectColor: (color: string) => void;
+  onImageAttach: (file: File) => void;
+  onImageDelete: () => void;
+  hasImage: boolean;
+  colors: string[];
 };
 
 export default function CanvasUI({
-  color,
-  setColor,
-  hoverPos,
-  colors,
   onConfirm,
   onSelectColor,
-  cooldown,
-  timeLeft,
-  showPalette,
-  setShowPalette,
   onImageAttach,
   onImageDelete,
-  hasImage = false,
-  imageTransparency = 0.3,
-  setImageTransparency,
+  hasImage,
+  colors,
 }: CanvasUIProps) {
   const [isPressed, setIsPressed] = useState(false);
   const [showConfirmEffect, setShowConfirmEffect] = useState(false);
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+  // Zustand 스토어에서 상태를 개별적으로 가져옵니다.
+  const color = useCanvasUiStore((state) => state.color);
+  const setColor = useCanvasUiStore((state) => state.setColor);
+  const cooldown = useCanvasUiStore((state) => state.cooldown);
+  const timeLeft = useCanvasUiStore((state) => state.timeLeft);
+  const showPalette = useCanvasUiStore((state) => state.showPalette);
+  const setShowPalette = useCanvasUiStore((state) => state.setShowPalette);
+  const imageTransparency = useCanvasUiStore(
+    (state) => state.imageTransparency
+  );
+  const setImageTransparency = useCanvasUiStore(
+    (state) => state.setImageTransparency
+  );
+  const hoverPos = useCanvasUiStore((state) => state.hoverPos);
 
   const {
     openLoginModal,
