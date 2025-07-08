@@ -35,6 +35,7 @@ interface CanvasUiState {
   cooldown: boolean;
   setCooldown: (cooldown: boolean) => void;
   startCooldown: (seconds: number) => void;
+  clearSelectedPixel: () => void;
 }
 
 export const useCanvasUiStore = create<CanvasUiState>((set, get) => ({
@@ -84,4 +85,5 @@ export const useCanvasUiStore = create<CanvasUiState>((set, get) => ({
       }
     }, 1000);
   },
+  clearSelectedPixel: () => set({ showPalette: false }),
 }));
