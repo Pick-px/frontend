@@ -1,17 +1,22 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
-import { usePixelSocket } from './SocketIntegration';
+import { useCanvasUiStore } from '../../store/canvasUiStore';
+import { shallow } from 'zustand/shallow';
+import { usePixelSocket } from '../SocketIntegration';
 import CanvasUI from './CanvasUI';
-import Preloader from './Preloader';
-import { useCanvasStore } from '../store/canvasStore';
+import Preloader from '../Preloader';
+import { useCanvasStore } from '../../store/canvasStore';
 import { toast } from 'react-toastify';
+import { fetchCanvasData as fetchCanvasDataUtil } from '../../api/canvasFetch';
 
-const INITIAL_POSITION = { x: 0, y: 0 };
-const MIN_SCALE = 0.5;
-const MAX_SCALE = 30;
-const INITIAL_BACKGROUND_COLOR = '#000000';
-const VIEWPORT_BACKGROUND_COLOR = '#2d3748';
+import {
+  INITIAL_POSITION,
+  MIN_SCALE,
+  MAX_SCALE,
+  INITIAL_BACKGROUND_COLOR,
+  VIEWPORT_BACKGROUND_COLOR,
+  COLORS,
+} from './canvasConstants';
 
-type HoverPos = { x: number; y: number } | null;
 type PixelCanvasProps = {
   canvas_id: string;
   onLoadingChange?: (loading: boolean) => void;
@@ -26,6 +31,7 @@ function PixelCanvas({
   useEffect(() => {
     if (initialCanvasId && initialCanvasId !== canvas_id) {
       setCanvasId(initialCanvasId);
+      console.log('Canvas ID changed:', initialCanvasId);
     }
   }, [initialCanvasId, canvas_id, setCanvasId]);
 
@@ -40,6 +46,10 @@ function PixelCanvas({
   const startPosRef = useRef<{ x: number; y: number }>(INITIAL_POSITION);
   const isPanningRef = useRef<boolean>(false);
 
+  const pinchDistanceRef = useRef<number>(0);
+  const dragStartInfoRef = useRef<{ x: number; y: number } | null>(null);
+  const DRAG_THRESHOLD = 5; // 5px 이상 움직이면 드래그로 간주
+
   const fixedPosRef = useRef<{ x: number; y: number; color: string } | null>(
     null
   );
@@ -49,29 +59,55 @@ function PixelCanvas({
     color: string;
   } | null>(null);
 
+  // state를 각각 가져오도록 하여 불필요한 리렌더링을 방지합니다.
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
-  const [cooldown, setCooldown] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(0);
-  const [color, setColor] = useState('#ffffff');
-  const [hoverPos, setHoverPos] = useState<HoverPos>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-  const [showPalette, setShowPalette] = useState(false);
-  const [showCanvas, setShowCanvas] = useState(false);
-  const [imageTransparency, setImageTransparency] = useState(0.5);
-  const imageTransparencyRef = useRef(0.5);
 
-  // 이미지 관련 상태
+  const color = useCanvasUiStore((state) => state.color);
+  const setColor = useCanvasUiStore((state) => state.setColor);
+  const hoverPos = useCanvasUiStore((state) => state.hoverPos);
+  const setHoverPos = useCanvasUiStore((state) => state.setHoverPos);
+  const cooldown = useCanvasUiStore((state) => state.cooldown);
+  const setCooldown = useCanvasUiStore((state) => state.setCooldown);
+  const timeLeft = useCanvasUiStore((state) => state.timeLeft);
+  const setTimeLeft = useCanvasUiStore((state) => state.setTimeLeft);
+  const showPalette = useCanvasUiStore((state) => state.showPalette);
+  const setShowPalette = useCanvasUiStore((state) => state.setShowPalette);
+  const showImageControls = useCanvasUiStore(
+    (state) => state.showImageControls
+  );
+  const setShowImageControls = useCanvasUiStore(
+    (state) => state.setShowImageControls
+  );
+  const isImageFixed = useCanvasUiStore((state) => state.isImageFixed);
+  const setIsImageFixed = useCanvasUiStore((state) => state.setIsImageFixed);
+  const imageMode = useCanvasUiStore((state) => state.imageMode);
+  const setImageMode = useCanvasUiStore((state) => state.setImageMode);
+  const imageTransparency = useCanvasUiStore(
+    (state) => state.imageTransparency
+  );
+  const setImageTransparency = useCanvasUiStore(
+    (state) => state.setImageTransparency
+  );
+  const isLoading = useCanvasUiStore((state) => state.isLoading);
+  const setIsLoading = useCanvasUiStore((state) => state.setIsLoading);
+  const hasError = useCanvasUiStore((state) => state.hasError);
+  const setHasError = useCanvasUiStore((state) => state.setHasError);
+  const showCanvas = useCanvasUiStore((state) => state.showCanvas);
+  const setShowCanvas = useCanvasUiStore((state) => state.setShowCanvas);
+
+  const startCooldown = useCanvasUiStore((state) => state.startCooldown);
+
+  const imageTransparencyRef = useRef(0.5);
+  const lastTouchPosRef = useRef<{ x: number; y: number } | null>(null);
+
+  // 이미지 관련 상태 (Zustand로 이동하지 않는 부분)
   const imageCanvasRef = useRef<HTMLCanvasElement>(null);
   const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
   const [isDraggingImage, setIsDraggingImage] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [showImageControls, setShowImageControls] = useState(false);
-  const [isImageFixed, setIsImageFixed] = useState(false);
-  const [imageMode, setImageMode] = useState(true);
 
-  // 이미지 리사이즈 핸들 상태
+  // 이미지 리사이즈 핸들 상태 (Zustand로 이동하지 않는 부분)
   const [isResizing, setIsResizing] = useState(false);
   const [resizeHandle, setResizeHandle] = useState<'se' | 'e' | 's' | null>(
     null
@@ -124,29 +160,6 @@ function PixelCanvas({
     [imagePosition, imageSize, isImageFixed]
   );
 
-  const colors = [
-    '#ffffff',
-    '#c0c0c0',
-    '#808080',
-    '#000000',
-    '#ff0000',
-    '#ff8000',
-    '#ffff00',
-    '#80ff00',
-    '#00ff00',
-    '#00ff80',
-    '#00ffff',
-    '#0080ff',
-    '#0000ff',
-    '#8000ff',
-    '#ff00ff',
-    '#ff0080',
-    '#ffa07a',
-    '#f08080',
-    '#ffd700',
-    '#87cefa',
-  ];
-
   const draw = useCallback(() => {
     const src = sourceCanvasRef.current;
     if (!src) return;
@@ -174,11 +187,11 @@ function PixelCanvas({
       gradient.addColorStop(1, 'rgba(34, 197, 94, 0.8)');
 
       ctx.strokeStyle = gradient;
-      ctx.lineWidth = 1;
+      ctx.lineWidth = 3 / scaleRef.current;
       ctx.strokeRect(-1, -1, canvasSize.width + 2, canvasSize.height + 2);
 
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-      ctx.lineWidth = 0.5;
+      ctx.lineWidth = 1 / scaleRef.current;
       ctx.strokeRect(0, 0, canvasSize.width, canvasSize.height);
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(src, 0, 0);
@@ -461,11 +474,24 @@ function PixelCanvas({
     const canvas = renderCanvasRef.current;
     if (!canvas || canvas.clientWidth === 0 || canvasSize.width === 0) return;
 
-    scaleRef.current = 2;
+    // 화면 크기에 맞게 스케일 계산
+    const viewportWidth = canvas.clientWidth;
+    const viewportHeight = canvas.clientHeight;
+    const isMobile = window.innerWidth < 768;
+
+    const scaleFactor = 0.7;
+    const scaleX = (viewportWidth / canvasSize.width) * scaleFactor;
+    const scaleY = (viewportHeight / canvasSize.height) * scaleFactor;
+    scaleRef.current = Math.max(Math.min(scaleX, scaleY), MIN_SCALE);
+    scaleRef.current = Math.min(scaleRef.current, MAX_SCALE);
+    scaleRef.current = Math.min(scaleX, scaleY);
+    scaleRef.current = Math.min(scaleRef.current, MAX_SCALE);
+
+    // 캔버스를 화면 중앙에 배치
     viewPosRef.current.x =
-      (canvas.clientWidth - canvasSize.width * scaleRef.current) / 2;
+      (viewportWidth - canvasSize.width * scaleRef.current) / 2;
     viewPosRef.current.y =
-      (canvas.clientHeight - canvasSize.height * scaleRef.current) / 2;
+      (viewportHeight - canvasSize.height * scaleRef.current) / 2;
 
     draw();
     clearOverlay();
@@ -523,22 +549,6 @@ function PixelCanvas({
     },
     [draw, updateOverlay, canvasSize]
   );
-
-  const startCooldown = useCallback((seconds: number) => {
-    setCooldown(true);
-    setTimeLeft(seconds);
-
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          setCooldown(false);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  }, []);
 
   const handleCooltime = useCallback(() => {
     startCooldown(10);
@@ -608,38 +618,11 @@ function PixelCanvas({
         }
       }
 
-      // 우클릭 드래그 (이미지가 없거나 캔버스 모드이거나 이미지 확정 후)
-      if (e.button === 2) {
-        e.preventDefault();
-        if (!imageCanvasRef.current || !imageMode || isImageFixed) {
-          isPanningRef.current = true;
-          startPosRef.current = {
-            x: e.nativeEvent.offsetX - viewPosRef.current.x,
-            y: e.nativeEvent.offsetY - viewPosRef.current.y,
-          };
-        }
-        return;
-      }
-
-      // 좌클릭 픽셀 선택 (이미지가 없거나 이미지 확정 후)
-      if (e.button === 0 && (!imageCanvasRef.current || isImageFixed)) {
-        const pixelX = Math.floor(wx);
-        const pixelY = Math.floor(wy);
-        if (
-          pixelX >= 0 &&
-          pixelX < canvasSize.width &&
-          pixelY >= 0 &&
-          pixelY < canvasSize.height
-        ) {
-          fixedPosRef.current = { x: pixelX, y: pixelY, color: 'transparent' };
-          setShowPalette(true);
-          centerOnPixel(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
-        }
+      if (e.button === 0) {
+        dragStartInfoRef.current = { x: sx, y: sy };
       }
     },
     [
-      centerOnPixel,
-      canvasSize,
       imageMode,
       isImageFixed,
       imagePosition,
@@ -656,6 +639,20 @@ function PixelCanvas({
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
       const { offsetX, offsetY } = e.nativeEvent;
+
+      if (dragStartInfoRef.current && !isPanningRef.current) {
+        const dx = offsetX - dragStartInfoRef.current.x;
+        const dy = offsetY - dragStartInfoRef.current.y;
+        if (Math.sqrt(dx * dx + dy * dy) > DRAG_THRESHOLD) {
+          isPanningRef.current = true;
+          startPosRef.current = {
+            // 패닝 시작 위치 설정
+            x: offsetX - viewPosRef.current.x,
+            y: offsetY - viewPosRef.current.y,
+          };
+          dragStartInfoRef.current = null; // 대기 상태 해제
+        }
+      }
 
       // 이미지 리사이즈 중
       if (isResizing && resizeHandle) {
@@ -727,77 +724,80 @@ function PixelCanvas({
     ]
   );
 
-  const handleMouseUp = useCallback(() => {
-    isPanningRef.current = false;
-    setIsDraggingImage(false);
-    setIsResizing(false);
-    setResizeHandle(null);
-  }, []);
+  const handleMouseUp = useCallback(
+    (e: React.MouseEvent<HTMLCanvasElement>) => {
+      // If it was a click (not a drag/pan)
+      if (dragStartInfoRef.current) {
+        const dx = e.nativeEvent.offsetX - dragStartInfoRef.current.x;
+        const dy = e.nativeEvent.offsetY - dragStartInfoRef.current.y;
+        if (Math.sqrt(dx * dx + dy * dy) <= DRAG_THRESHOLD) {
+          // This was a click, not a drag
+          const sx = e.nativeEvent.offsetX;
+          const sy = e.nativeEvent.offsetY;
+          const wx = (sx - viewPosRef.current.x) / scaleRef.current;
+          const wy = (sy - viewPosRef.current.y) / scaleRef.current;
 
-  const handleMouseLeave = useCallback(() => {
-    handleMouseUp();
-    clearOverlay();
-  }, [handleMouseUp, clearOverlay]);
+          const pixelX = Math.floor(wx);
+          const pixelY = Math.floor(wy);
 
-  const fetchCanvasData = useCallback(async (id: string | null) => {
-    setIsLoading(true);
-    setHasError(false);
-    const API_URL = import.meta.env.VITE_API_URL || 'https://pick-px.com/api';
-    const url = id
-      ? `${API_URL}/canvas/pixels?canvas_id=${id}`
-      : `${API_URL}/canvas/pixels`;
-
-    try {
-      const res = await fetch(url, {
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-      });
-
-      if (!res.ok) throw new Error('잘못된 응답');
-      const json = await res.json();
-      if (!json.success) throw new Error('실패 응답');
-
-      const {
-        canvas_id: fetchedId,
-        pixels,
-        canvasSize: fetchedCanvasSize,
-      } = json.data;
-
-      setCanvasId(fetchedId);
-      setCanvasSize(fetchedCanvasSize);
-
-      const source = document.createElement('canvas');
-      source.width = fetchedCanvasSize.width;
-      source.height = fetchedCanvasSize.height;
-      const ctx = source.getContext('2d');
-
-      if (ctx) {
-        ctx.fillStyle = INITIAL_BACKGROUND_COLOR;
-        ctx.fillRect(0, 0, fetchedCanvasSize.width, fetchedCanvasSize.height);
-
-        if (Array.isArray(pixels)) {
-          pixels.forEach(({ x, y, color }) => {
-            ctx.fillStyle = color;
-            ctx.fillRect(x, y, 1, 1);
-          });
+          if (
+            pixelX >= 0 &&
+            pixelX < canvasSize.width &&
+            pixelY >= 0 &&
+            pixelY < canvasSize.height &&
+            (!imageCanvasRef.current || isImageFixed) // Only allow pixel selection if no image or image is fixed
+          ) {
+            fixedPosRef.current = {
+              x: pixelX,
+              y: pixelY,
+              color: 'transparent',
+            };
+            setShowPalette(true);
+            centerOnPixel(sx, sy); // Call centerOnPixel here
+          }
         }
       }
-      sourceCanvasRef.current = source;
-    } catch (err) {
-      console.error('캔버스 로딩 실패', err);
-      setHasError(true);
-    } finally {
-      setIsLoading(false);
-      onLoadingChange?.(false);
-      setTimeout(() => setShowCanvas(true), 100);
-    }
-  }, []);
 
+      isPanningRef.current = false;
+      setIsDraggingImage(false);
+      setIsResizing(false);
+      setResizeHandle(null);
+      dragStartInfoRef.current = null; // Reset drag start info
+    },
+    [canvasSize, isImageFixed, setShowPalette, centerOnPixel]
+  );
+
+  const handleMouseLeave = useCallback(
+    (e: React.MouseEvent<HTMLCanvasElement>) => {
+      handleMouseUp(e);
+      clearOverlay();
+      dragStartInfoRef.current = null; // Reset drag start info on mouse leave
+    },
+    [handleMouseUp, clearOverlay]
+  );
+
+  // fetchCanvasData 분리
   useEffect(() => {
-    fetchCanvasData(initialCanvasId);
-  }, [initialCanvasId, fetchCanvasData]);
+    fetchCanvasDataUtil({
+      id: initialCanvasId,
+      setIsLoading,
+      setHasError,
+      setCanvasId,
+      setCanvasSize,
+      sourceCanvasRef,
+      onLoadingChange,
+      setShowCanvas,
+      INITIAL_BACKGROUND_COLOR,
+    });
+  }, [
+    initialCanvasId,
+    setCanvasId,
+    setCanvasSize,
+    setIsLoading,
+    setHasError,
+    onLoadingChange,
+    setShowCanvas,
+  ]);
 
   // 투명도 상태가 변경될 때 ref 값만 업데이트하고 draw 함수 직접 호출
   const handleTransparencyChange = useCallback(
@@ -809,13 +809,134 @@ function PixelCanvas({
         draw();
       }
     },
-    [draw]
+    [draw, setImageTransparency]
   );
 
-  // ref 값 초기화
+  // PixelCanvas.tsx 내부에 아래 함수들을 추가합니다.
+
+  // --- 터치 이벤트 핸들러 ---
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent<HTMLCanvasElement>) => {
+      e.preventDefault();
+      const touches = e.touches;
+
+      // 두 손가락 터치: 핀치 줌 시작
+      if (touches.length === 2) {
+        const dx = touches[0].clientX - touches[1].clientX;
+        const dy = touches[0].clientY - touches[1].clientY;
+        pinchDistanceRef.current = Math.sqrt(dx * dx + dy * dy);
+        isPanningRef.current = false; // 줌 할때는 패닝 방지
+        dragStartInfoRef.current = null; // 두 손가락 터치 시 드래그 시작 정보 초기화
+        return;
+      }
+
+      // 한 손가락 터치: 이동 또는 픽셀 선택 시작
+      if (touches.length === 1) {
+        const touch = touches[0];
+        const rect = interactionCanvasRef.current!.getBoundingClientRect();
+        const sx = touch.clientX - rect.left;
+        const sy = touch.clientY - rect.top;
+
+        dragStartInfoRef.current = { x: sx, y: sy };
+        lastTouchPosRef.current = { x: sx, y: sy };
+      }
+    },
+    []
+  );
+
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent<HTMLCanvasElement>) => {
+      e.preventDefault();
+      const touches = e.touches;
+      const rect = interactionCanvasRef.current!.getBoundingClientRect();
+
+      // 두 손가락 터치: 핀치 줌 로직
+      if (touches.length === 2) {
+        const dx = touches[0].clientX - touches[1].clientX;
+        const dy = touches[0].clientY - touches[1].clientY;
+        const newDistance = Math.sqrt(dx * dx + dy * dy);
+        const oldDistance = pinchDistanceRef.current;
+
+        if (oldDistance > 0) {
+          const scaleFactor = newDistance / oldDistance;
+          const newScale = Math.max(
+            MIN_SCALE,
+            Math.min(MAX_SCALE, scaleRef.current * scaleFactor)
+          );
+          const centerX =
+            (touches[0].clientX + touches[1].clientX) / 2 - rect.left;
+          const centerY =
+            (touches[0].clientY + touches[1].clientY) / 2 - rect.top;
+
+          const xs = (centerX - viewPosRef.current.x) / scaleRef.current;
+          const ys = (centerY - viewPosRef.current.y) / scaleRef.current;
+
+          viewPosRef.current.x = centerX - xs * newScale;
+          viewPosRef.current.y = centerY - ys * newScale;
+          scaleRef.current = newScale;
+
+          draw();
+          updateOverlay(centerX, centerY);
+        }
+        pinchDistanceRef.current = newDistance;
+        return;
+      }
+
+      // 한 손가락 터치: 이동 로직
+      if (touches.length === 1) {
+        const touch = touches[0];
+        const sx = touch.clientX - rect.left;
+        const sy = touch.clientY - rect.top;
+
+        if (dragStartInfoRef.current && !isPanningRef.current) {
+          const dx = sx - dragStartInfoRef.current.x;
+          const dy = sy - dragStartInfoRef.current.y;
+          if (Math.sqrt(dx * dx + dy * dy) > DRAG_THRESHOLD) {
+            isPanningRef.current = true;
+            startPosRef.current = {
+              x: sx - viewPosRef.current.x,
+              y: sy - viewPosRef.current.y,
+            };
+            dragStartInfoRef.current = null;
+          }
+        }
+
+        if (isPanningRef.current) {
+          viewPosRef.current = {
+            x: sx - startPosRef.current.x,
+            y: sy - startPosRef.current.y,
+          };
+          draw();
+        }
+        updateOverlay(sx, sy);
+        lastTouchPosRef.current = { x: sx, y: sy };
+      }
+    },
+    [draw, updateOverlay]
+  );
+
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent<HTMLCanvasElement>) => {
+      // 모든 제스처 상태 초기화
+      pinchDistanceRef.current = 0;
+      // handleMouseUp에 마지막 터치 위치를 전달하여 클릭/드래그 판단에 사용
+      handleMouseUp({
+        nativeEvent: {
+          offsetX: lastTouchPosRef.current?.x || 0,
+          offsetY: lastTouchPosRef.current?.y || 0,
+        },
+      } as React.MouseEvent<HTMLCanvasElement>);
+      lastTouchPosRef.current = null; // 터치 종료 시 초기화
+    },
+    [handleMouseUp]
+  );
+  // 투명도 상태가 변경될 때 ref 값 업데이트 및 draw 함수 호출
   useEffect(() => {
     imageTransparencyRef.current = imageTransparency;
-  }, []);
+    if (imageCanvasRef.current) {
+      draw();
+    }
+  }, [imageTransparency, draw]);
 
   useEffect(() => {
     const rootElement = rootRef.current;
@@ -932,6 +1053,10 @@ function PixelCanvas({
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseLeave}
           onContextMenu={(e) => e.preventDefault()}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchEnd}
         />
       </div>
 
@@ -939,24 +1064,14 @@ function PixelCanvas({
         <Preloader />
       ) : (
         <CanvasUI
-          color={color}
-          setColor={setColor}
-          hoverPos={hoverPos}
-          colors={colors}
+          colors={COLORS}
           onConfirm={handleConfirm}
           onSelectColor={handleSelectColor}
-          cooldown={cooldown}
-          timeLeft={timeLeft}
-          showPalette={showPalette}
-          setShowPalette={setShowPalette}
           onImageAttach={handleImageAttach}
           onImageDelete={cancelImage}
           hasImage={!!imageCanvasRef.current}
-          imageTransparency={imageTransparency}
-          setImageTransparency={handleTransparencyChange}
         />
       )}
-
       {showImageControls && !isImageFixed && (
         <div className='pointer-events-auto fixed top-1/2 right-5 z-[10000] -translate-y-1/2'>
           <div className='max-w-xs rounded-xl border border-gray-700/50 bg-gray-900/95 p-4 shadow-2xl backdrop-blur-sm'>
@@ -1036,7 +1151,6 @@ function PixelCanvas({
                 ✕ 취소
               </button>
             </div>
-
             {/* 하단 안내 */}
             <div className='mt-3 border-t border-gray-700/50 pt-3 text-center text-xs text-gray-400'>
               확정하면 픽셀 그리기가 가능합니다

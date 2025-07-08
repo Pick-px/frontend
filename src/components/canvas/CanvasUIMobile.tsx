@@ -1,50 +1,52 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useAuthStore } from '../store/authStrore';
-import { useModalStore } from '../store/modalStore';
-import { ToastContainer, toast } from 'react-toastify';
-import { showInstructionsToast } from './toast/InstructionsToast';
-import 'react-toastify/dist/ReactToastify.css';
 
-type HoverPos = { x: number; y: number } | null;
+import { ToastContainer, toast } from 'react-toastify';
+
+import 'react-toastify/dist/ReactToastify.css';
+import { useAuthStore } from '../../store/authStrore';
+import { useModalStore } from '../../store/modalStore';
+import { showInstructionsToast } from '../toast/InstructionsToast';
+import { useCanvasUiStore } from '../../store/canvasUiStore';
+
+// type HoverPos = { x: number; y: number } | null;
 
 type CanvasUIProps = {
-  color: string;
-  setColor: React.Dispatch<React.SetStateAction<string>>;
-  hoverPos: HoverPos;
-  colors: string[];
-  onSelectColor: (color: string) => void;
   onConfirm: () => void;
-  cooldown: boolean;
-  timeLeft: number;
-  showPalette: boolean;
-  setShowPalette: React.Dispatch<React.SetStateAction<boolean>>;
-  onImageAttach?: (file: File) => void;
-  onImageDelete?: () => void;
-  hasImage?: boolean;
-  imageTransparency?: number;
-  setImageTransparency?: (value: number) => void;
+  onSelectColor: (color: string) => void;
+  onImageAttach: (file: File) => void;
+  onImageDelete: () => void;
+  hasImage: boolean;
+  colors: string[];
 };
 
-export default function CanvasUI({
-  color,
-  setColor,
-  hoverPos,
-  colors,
+export default function CanvasUIMobile({
   onConfirm,
   onSelectColor,
-  cooldown,
-  timeLeft,
-  showPalette,
-  setShowPalette,
   onImageAttach,
   onImageDelete,
-  hasImage = false,
-  imageTransparency = 0.3,
-  setImageTransparency,
+  hasImage,
+  colors,
 }: CanvasUIProps) {
   const [isPressed, setIsPressed] = useState(false);
   const [showConfirmEffect, setShowConfirmEffect] = useState(false);
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+  // Zustand 스토어에서 상태를 개별적으로 가져옵니다.
+  const color = useCanvasUiStore((state) => state.color);
+  const setColor = useCanvasUiStore((state) => state.setColor);
+  const cooldown = useCanvasUiStore((state) => state.cooldown);
+  const timeLeft = useCanvasUiStore((state) => state.timeLeft);
+  const showPalette = useCanvasUiStore((state) => state.showPalette);
+  const setShowPalette = useCanvasUiStore((state) => state.setShowPalette);
+  const imageTransparency = useCanvasUiStore(
+    (state) => state.imageTransparency
+  );
+  const setImageTransparency = useCanvasUiStore(
+    (state) => state.setImageTransparency
+  );
+  const hoverPos = useCanvasUiStore((state) => state.hoverPos);
+  const clearSelectedPixel = useCanvasUiStore(
+    (state) => state.clearSelectedPixel
+  );
 
   const {
     openLoginModal,
@@ -94,7 +96,7 @@ export default function CanvasUI({
           className='h-[40px] w-[40px] cursor-pointer rounded-[4px] border-2 border-solid border-white p-0'
           title='색상 선택'
         />
-        {onImageAttach && (
+        {/* {onImageAttach && (
           <div className='flex flex-col gap-1'>
             <div className='flex items-center gap-2'>
               <label
@@ -179,7 +181,7 @@ export default function CanvasUI({
               )}
             </div>
           </div>
-        )}
+        )} */}
       </div>
       <div
         ref={menuRef}
@@ -323,14 +325,14 @@ export default function CanvasUI({
 
       {/* 팔레트 */}
       <div
-        className={`pointer-events-auto fixed top-[100px] z-[9999] rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-900/90 to-black/80 p-5 shadow-2xl backdrop-blur-xl transition-all duration-500 ease-out ${
+        className={`pointer-events-auto fixed z-[9999] rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-900/90 to-black/80 p-3 shadow-2xl backdrop-blur-xl transition-all duration-500 ease-out ${
           showPalette
-            ? 'right-[20px] scale-100 opacity-100'
-            : 'right-[-300px] scale-95 opacity-0'
+            ? 'top-[60px] right-1/2 translate-x-1/2 scale-100 opacity-100'
+            : 'top-[60px] right-[-300px] scale-95 opacity-0'
         }`}
       >
-        <div className='mb-5 grid grid-cols-2 gap-3'>
-          {colors.map((c, index) => (
+        <div className='mb-4 grid grid-cols-5 gap-2'>
+          {colors.slice(0, 10).map((c, index) => (
             <button
               key={index}
               onClick={() => {
@@ -338,7 +340,7 @@ export default function CanvasUI({
                 onSelectColor(c);
               }}
               style={{ backgroundColor: c }}
-              className={`h-8 w-8 cursor-pointer rounded-full transition-all duration-300 hover:scale-125 hover:rotate-12 ${
+              className={`h-6 w-6 cursor-pointer rounded-full transition-all duration-300 hover:scale-125 hover:rotate-12 ${
                 color === c
                   ? 'scale-110 shadow-lg ring-2 shadow-cyan-400/60 ring-cyan-300 ring-offset-2 ring-offset-slate-800'
                   : 'border border-white/30 hover:border-cyan-300/50 hover:shadow-md hover:shadow-white/20'
@@ -347,64 +349,85 @@ export default function CanvasUI({
           ))}
         </div>
 
-        {/*확정 버튼 */}
-        <button
-          disabled={cooldown}
-          onMouseDown={() => !cooldown && setIsPressed(true)}
-          onMouseUp={() => {
-            setIsPressed(false);
-            if (cooldown) return;
-            if (isLoggedIn) {
-              setShowConfirmEffect(true);
-              setTimeout(() => setShowConfirmEffect(false), 2000);
-              onConfirm();
-            } else {
-              openLoginModal();
-            }
-          }}
-          onMouseLeave={() => setIsPressed(false)}
-          className={`flex h-12 w-full items-center justify-center rounded-full transition-all duration-300 ${
-            cooldown
-              ? 'cursor-not-allowed border border-red-500/30 bg-red-500/20 text-red-400'
-              : 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-lg hover:scale-105 hover:from-emerald-400 hover:to-cyan-400 hover:shadow-emerald-400/30'
-          } ${isPressed ? 'scale-95' : 'scale-100'}`}
-        >
-          {cooldown ? (
-            <svg
-              className='h-6 w-6 animate-spin'
-              fill='none'
-              viewBox='0 0 24 24'
-            >
-              <circle
-                className='opacity-25'
-                cx='12'
-                cy='12'
-                r='10'
+        <div className='mt-4 flex gap-2'>
+          {/*확정 버튼 */}
+          <button
+            disabled={cooldown}
+            onMouseDown={() => !cooldown && setIsPressed(true)}
+            onMouseUp={() => {
+              setIsPressed(false);
+              if (cooldown) return;
+              if (isLoggedIn) {
+                setShowConfirmEffect(true);
+                setTimeout(() => setShowConfirmEffect(false), 2000);
+                onConfirm();
+              } else {
+                openLoginModal();
+              }
+            }}
+            onMouseLeave={() => setIsPressed(false)}
+            className={`flex h-10 w-full items-center justify-center rounded-full transition-all duration-300 ${
+              cooldown
+                ? 'cursor-not-allowed border border-red-500/30 bg-red-500/20 text-red-400'
+                : 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-lg hover:scale-105 hover:from-emerald-400 hover:to-cyan-400 hover:shadow-emerald-400/30'
+            } ${isPressed ? 'scale-95' : 'scale-100'}`}
+          >
+            {cooldown ? (
+              <svg
+                className='h-6 w-6 animate-spin'
+                fill='none'
+                viewBox='0 0 24 24'
+              >
+                <circle
+                  className='opacity-25'
+                  cx='12'
+                  cy='12'
+                  r='10'
+                  stroke='currentColor'
+                  strokeWidth='4'
+                ></circle>
+                <path
+                  className='opacity-75'
+                  fill='currentColor'
+                  d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
+                ></path>
+              </svg>
+            ) : (
+              <svg
+                className='h-6 w-6'
+                fill='none'
                 stroke='currentColor'
-                strokeWidth='4'
-              ></circle>
-              <path
-                className='opacity-75'
-                fill='currentColor'
-                d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
-              ></path>
-            </svg>
-          ) : (
+                viewBox='0 0 24 24'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={3}
+                  d='M13 10V3L4 14h7v7l9-11h-7z'
+                />
+              </svg>
+            )}
+          </button>
+          <button
+            onClick={clearSelectedPixel}
+            className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
+            title='닫기'
+          >
             <svg
               className='h-6 w-6'
               fill='none'
-              stroke='currentColor'
               viewBox='0 0 24 24'
+              stroke='currentColor'
             >
               <path
                 strokeLinecap='round'
                 strokeLinejoin='round'
-                strokeWidth={3}
-                d='M13 10V3L4 14h7v7l9-11h-7z'
+                strokeWidth={2}
+                d='M6 18L18 6M6 6l12 12'
               />
             </svg>
-          )}
-        </button>
+          </button>
+        </div>
       </div>
 
       {/* 쿨타임 창 : 쿨타임 중에만 표시*/}

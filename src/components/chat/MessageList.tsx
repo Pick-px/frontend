@@ -13,7 +13,7 @@ export default function MessageList({ messages }: MessageListProps) {
   }, [messages]);
 
   return (
-    <div className='flex-grow overflow-y-auto p-3 rounded-lg'>
+    <div className='flex-grow overflow-y-auto rounded-lg p-3'>
       {messages.map((msg) => (
         <MessageItem key={msg.messageId} message={msg} />
       ))}
