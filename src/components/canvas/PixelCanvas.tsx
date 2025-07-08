@@ -90,6 +90,8 @@ function PixelCanvas({
   const showCanvas = useCanvasUiStore((state) => state.showCanvas);
   const setShowCanvas = useCanvasUiStore((state) => state.setShowCanvas);
 
+  const startCooldown = useCanvasUiStore((state) => state.startCooldown);
+
   const imageTransparencyRef = useRef(0.5);
 
   // 이미지 관련 상태 (Zustand로 이동하지 않는 부분)
@@ -528,22 +530,6 @@ function PixelCanvas({
     },
     [draw, updateOverlay, canvasSize]
   );
-
-  const startCooldown = useCallback((seconds: number) => {
-    setCooldown(true);
-    setTimeLeft(seconds);
-
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          setCooldown(false);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  }, []);
 
   const handleCooltime = useCallback(() => {
     startCooldown(10);
