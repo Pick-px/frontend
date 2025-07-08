@@ -20,7 +20,7 @@ export const useSocket = (
   canvas_id: string | undefined,
   onCooldownReceived?: (cooldown: CooldownData) => void
 ) => {
-  const { accessToken } = useAuthStore();
+  const { accessToken, user } = useAuthStore();
   const pixelCallbackRef = useRef(onPixelReceived);
   const cooldownCallbackRef = useRef(onCooldownReceived);
   const [isConnected, setIsConnected] = useState(false);
@@ -78,7 +78,7 @@ export const useSocket = (
       socketService.disconnect();
       setIsConnected(false);
     };
-  }, [canvas_id, accessToken]);
+  }, [canvas_id, accessToken, user]);
 
   const sendPixel = (pixel: PixelData) => {
     if (!canvas_id) return;
