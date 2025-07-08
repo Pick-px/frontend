@@ -1,5 +1,5 @@
 export const INITIAL_POSITION = { x: 0, y: 0 };
-export const MIN_SCALE = 0.5;
+export const MIN_SCALE = 0.2;
 export const MAX_SCALE = 30;
 export const INITIAL_BACKGROUND_COLOR = '#000000';
 export const VIEWPORT_BACKGROUND_COLOR = '#2d3748';
