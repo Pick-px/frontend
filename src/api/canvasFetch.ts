@@ -5,7 +5,9 @@ interface FetchCanvasDataParams {
   setIsLoading: (loading: boolean) => void;
   setHasError: (error: boolean) => void;
   setCanvasId: (id: string) => void;
-  setCanvasSize: React.Dispatch<React.SetStateAction<{ width: number; height: number }>>;
+  setCanvasSize: React.Dispatch<
+    React.SetStateAction<{ width: number; height: number }>
+  >;
   sourceCanvasRef: React.MutableRefObject<HTMLCanvasElement>;
   onLoadingChange?: (loading: boolean) => void;
   setShowCanvas: (show: boolean) => void;
@@ -48,6 +50,8 @@ export const fetchCanvasData = async ({
       canvasSize: fetchedCanvasSize,
     } = json.data;
 
+    // console.log('Fetched pixels:', pixels);
+
     setCanvasId(fetchedId);
     setCanvasSize(fetchedCanvasSize);
 
@@ -61,10 +65,12 @@ export const fetchCanvasData = async ({
       ctx.fillRect(0, 0, fetchedCanvasSize.width, fetchedCanvasSize.height);
 
       if (Array.isArray(pixels)) {
-        pixels.forEach(({ x, y, color }: { x: number; y: number; color: string }) => {
-          ctx.fillStyle = color;
-          ctx.fillRect(x, y, 1, 1);
-        });
+        pixels.forEach(
+          ({ x, y, color }: { x: number; y: number; color: string }) => {
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, 1, 1);
+          }
+        );
       }
     }
     sourceCanvasRef.current = source;

@@ -55,11 +55,24 @@ export const showInstructionsToast = () => {
         >
           <rect x='7' y='4' width='10' height='16' rx='5' ry='5'></rect>
           <line x1='12' y1='4' x2='12' y2='10'></line>
-          <circle cx='14.5' cy='7' r='1.5' fill='currentColor'></circle>
+          <circle cx='9.5' cy='7' r='1.5' fill='currentColor'></circle>
         </svg>
+        {/* <svg
+          className='h-6 w-6 text-cyan-400'
+          viewBox='0 0 24 24'
+          fill='none'
+          stroke='currentColor'
+          strokeWidth='2'
+          strokeLinecap='round'
+          strokeLinejoin='round'
+        >
+          <rect x='7' y='4' width='10' height='16' rx='5' ry='5'></rect>
+          <line x1='12' y1='4' x2='12' y2='10'></line>
+          <circle cx='14.5' cy='7' r='1.5' fill='currentColor'></circle>
+        </svg> */}
         <p className='text-gray-300'>
           <span className='text-sm font-bold text-white'>
-            마우스 우클릭 후 드래그:
+            마우스 좌클릭 후 드래그:
           </span>{' '}
           <span className='text-sm'>캔버스 이동</span>
         </p>

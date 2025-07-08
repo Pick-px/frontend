@@ -181,7 +181,7 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
 
       // 실제 API 호출
       const data = await canvasService.getActiveCanvases();
-      console.log('Fetched canvases:', data.canvases); // 디버깅용
+      // console.log('Fetched canvases:', data.canvases); // 디버깅용
       setCanvases(data.canvases);
     } catch (err) {
       setError(

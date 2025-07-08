@@ -31,6 +31,7 @@ function PixelCanvas({
   useEffect(() => {
     if (initialCanvasId && initialCanvasId !== canvas_id) {
       setCanvasId(initialCanvasId);
+      console.log('Canvas ID changed:', initialCanvasId);
     }
   }, [initialCanvasId, canvas_id, setCanvasId]);
 
@@ -46,6 +47,8 @@ function PixelCanvas({
   const isPanningRef = useRef<boolean>(false);
 
   const pinchDistanceRef = useRef<number>(0);
+  const dragStartInfoRef = useRef<{ x: number; y: number } | null>(null);
+  const DRAG_THRESHOLD = 5; // 5px 이상 움직이면 드래그로 간주
 
   const fixedPosRef = useRef<{ x: number; y: number; color: string } | null>(
     null
@@ -95,6 +98,7 @@ function PixelCanvas({
   const startCooldown = useCanvasUiStore((state) => state.startCooldown);
 
   const imageTransparencyRef = useRef(0.5);
+  const lastTouchPosRef = useRef<{ x: number; y: number } | null>(null);
 
   // 이미지 관련 상태 (Zustand로 이동하지 않는 부분)
   const imageCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -627,38 +631,11 @@ function PixelCanvas({
         }
       }
 
-      // 우클릭 드래그 (이미지가 없거나 캔버스 모드이거나 이미지 확정 후)
-      if (e.button === 2) {
-        e.preventDefault();
-        if (!imageCanvasRef.current || !imageMode || isImageFixed) {
-          isPanningRef.current = true;
-          startPosRef.current = {
-            x: e.nativeEvent.offsetX - viewPosRef.current.x,
-            y: e.nativeEvent.offsetY - viewPosRef.current.y,
-          };
-        }
-        return;
-      }
-
-      // 좌클릭 픽셀 선택 (이미지가 없거나 이미지 확정 후)
-      if (e.button === 0 && (!imageCanvasRef.current || isImageFixed)) {
-        const pixelX = Math.floor(wx);
-        const pixelY = Math.floor(wy);
-        if (
-          pixelX >= 0 &&
-          pixelX < canvasSize.width &&
-          pixelY >= 0 &&
-          pixelY < canvasSize.height
-        ) {
-          fixedPosRef.current = { x: pixelX, y: pixelY, color: 'transparent' };
-          setShowPalette(true);
-          centerOnPixel(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
-        }
+      if (e.button === 0) {
+        dragStartInfoRef.current = { x: sx, y: sy };
       }
     },
     [
-      centerOnPixel,
-      canvasSize,
       imageMode,
       isImageFixed,
       imagePosition,
@@ -675,6 +652,20 @@ function PixelCanvas({
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
       const { offsetX, offsetY } = e.nativeEvent;
+
+      if (dragStartInfoRef.current && !isPanningRef.current) {
+        const dx = offsetX - dragStartInfoRef.current.x;
+        const dy = offsetY - dragStartInfoRef.current.y;
+        if (Math.sqrt(dx * dx + dy * dy) > DRAG_THRESHOLD) {
+          isPanningRef.current = true;
+          startPosRef.current = {
+            // 패닝 시작 위치 설정
+            x: offsetX - viewPosRef.current.x,
+            y: offsetY - viewPosRef.current.y,
+          };
+          dragStartInfoRef.current = null; // 대기 상태 해제
+        }
+      }
 
       // 이미지 리사이즈 중
       if (isResizing && resizeHandle) {
@@ -746,17 +737,57 @@ function PixelCanvas({
     ]
   );
 
-  const handleMouseUp = useCallback(() => {
-    isPanningRef.current = false;
-    setIsDraggingImage(false);
-    setIsResizing(false);
-    setResizeHandle(null);
-  }, []);
+  const handleMouseUp = useCallback(
+    (e: React.MouseEvent<HTMLCanvasElement>) => {
+      // If it was a click (not a drag/pan)
+      if (dragStartInfoRef.current) {
+        const dx = e.nativeEvent.offsetX - dragStartInfoRef.current.x;
+        const dy = e.nativeEvent.offsetY - dragStartInfoRef.current.y;
+        if (Math.sqrt(dx * dx + dy * dy) <= DRAG_THRESHOLD) {
+          // This was a click, not a drag
+          const sx = e.nativeEvent.offsetX;
+          const sy = e.nativeEvent.offsetY;
+          const wx = (sx - viewPosRef.current.x) / scaleRef.current;
+          const wy = (sy - viewPosRef.current.y) / scaleRef.current;
 
-  const handleMouseLeave = useCallback(() => {
-    handleMouseUp();
-    clearOverlay();
-  }, [handleMouseUp, clearOverlay]);
+          const pixelX = Math.floor(wx);
+          const pixelY = Math.floor(wy);
+
+          if (
+            pixelX >= 0 &&
+            pixelX < canvasSize.width &&
+            pixelY >= 0 &&
+            pixelY < canvasSize.height &&
+            (!imageCanvasRef.current || isImageFixed) // Only allow pixel selection if no image or image is fixed
+          ) {
+            fixedPosRef.current = {
+              x: pixelX,
+              y: pixelY,
+              color: 'transparent',
+            };
+            setShowPalette(true);
+            centerOnPixel(sx, sy); // Call centerOnPixel here
+          }
+        }
+      }
+
+      isPanningRef.current = false;
+      setIsDraggingImage(false);
+      setIsResizing(false);
+      setResizeHandle(null);
+      dragStartInfoRef.current = null; // Reset drag start info
+    },
+    [canvasSize, isImageFixed, setShowPalette, centerOnPixel]
+  );
+
+  const handleMouseLeave = useCallback(
+    (e: React.MouseEvent<HTMLCanvasElement>) => {
+      handleMouseUp(e);
+      clearOverlay();
+      dragStartInfoRef.current = null; // Reset drag start info on mouse leave
+    },
+    [handleMouseUp, clearOverlay]
+  );
 
   // fetchCanvasData 분리
   useEffect(() => {
@@ -808,6 +839,7 @@ function PixelCanvas({
         const dy = touches[0].clientY - touches[1].clientY;
         pinchDistanceRef.current = Math.sqrt(dx * dx + dy * dy);
         isPanningRef.current = false; // 줌 할때는 패닝 방지
+        dragStartInfoRef.current = null; // 두 손가락 터치 시 드래그 시작 정보 초기화
         return;
       }
 
@@ -879,16 +911,27 @@ function PixelCanvas({
         handleMouseMove({
           nativeEvent: { offsetX: sx, offsetY: sy },
         } as React.MouseEvent<HTMLCanvasElement>);
+        lastTouchPosRef.current = { x: sx, y: sy }; // 마지막 터치 위치 저장
       }
     },
     [handleMouseMove, draw, updateOverlay]
   );
 
-  const handleTouchEnd = useCallback(() => {
-    // 모든 제스처 상태 초기화
-    pinchDistanceRef.current = 0;
-    handleMouseUp();
-  }, [handleMouseUp]);
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent<HTMLCanvasElement>) => {
+      // 모든 제스처 상태 초기화
+      pinchDistanceRef.current = 0;
+      // handleMouseUp에 마지막 터치 위치를 전달하여 클릭/드래그 판단에 사용
+      handleMouseUp({
+        nativeEvent: {
+          offsetX: lastTouchPosRef.current?.x || 0,
+          offsetY: lastTouchPosRef.current?.y || 0,
+        },
+      } as React.MouseEvent<HTMLCanvasElement>);
+      lastTouchPosRef.current = null; // 터치 종료 시 초기화
+    },
+    [handleMouseUp]
+  );
   // 투명도 상태가 변경될 때 ref 값 업데이트 및 draw 함수 호출
   useEffect(() => {
     imageTransparencyRef.current = imageTransparency;

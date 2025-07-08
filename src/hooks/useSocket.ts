@@ -33,7 +33,7 @@ export const useSocket = (
     if (!canvas_id) return;
 
     // 이미 연결된 경우 중복 연결 방지
-    if (isConnected) return;
+    // if (isConnected) return;
 
     // 토큰이나 user 정보가 변경되면 소켓 재연결
     socketService.disconnect();
