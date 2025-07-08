@@ -1,8 +1,8 @@
 // App.tsx
 
-import PixelCanvas from './components/PixelCanvas';
+import PixelCanvas from './components/canvas/PixelCanvas';
 
-import React, { useState, useEffect } from 'react'; // UI 상태 관리를 위해 import
+import React, { useRef, useEffect, useCallback, useState } from 'react'; // UI 상태 관리를 위해 import
 import { useLocation } from 'react-router-dom';
 
 import { useModalStore } from './store/modalStore';
