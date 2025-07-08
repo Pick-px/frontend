@@ -181,11 +181,11 @@ function PixelCanvas({
       gradient.addColorStop(1, 'rgba(34, 197, 94, 0.8)');
 
       ctx.strokeStyle = gradient;
-      ctx.lineWidth = 1;
+      ctx.lineWidth = 3 / scaleRef.current;
       ctx.strokeRect(-1, -1, canvasSize.width + 2, canvasSize.height + 2);
 
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-      ctx.lineWidth = 0.5;
+      ctx.lineWidth = 1 / scaleRef.current;
       ctx.strokeRect(0, 0, canvasSize.width, canvasSize.height);
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(src, 0, 0);
@@ -468,11 +468,25 @@ function PixelCanvas({
     const canvas = renderCanvasRef.current;
     if (!canvas || canvas.clientWidth === 0 || canvasSize.width === 0) return;
 
-    scaleRef.current = 2;
+    // 화면 크기에 맞게 스케일 계산
+    const viewportWidth = canvas.clientWidth;
+    const viewportHeight = canvas.clientHeight;
+
+    // 가로, 세로 비율 중 더 작은 값을 기준으로 스케일 계산 (여백 확보를 위해 0.85 곱함)
+    const scaleX = (viewportWidth / canvasSize.width) * 0.7;
+    const scaleY = (viewportHeight / canvasSize.height) * 0.7;
+
+    // 더 작은 값을 선택하여 캔버스가 화면에 완전히 표시되도록 함
+    scaleRef.current = Math.max(Math.min(scaleX, scaleY), MIN_SCALE);
+
+    // 스케일이 너무 크면 제한
+    scaleRef.current = Math.min(scaleRef.current, MAX_SCALE);
+
+    // 캔버스를 화면 중앙에 배치
     viewPosRef.current.x =
-      (canvas.clientWidth - canvasSize.width * scaleRef.current) / 2;
+      (viewportWidth - canvasSize.width * scaleRef.current) / 2;
     viewPosRef.current.y =
-      (canvas.clientHeight - canvasSize.height * scaleRef.current) / 2;
+      (viewportHeight - canvasSize.height * scaleRef.current) / 2;
 
     draw();
     clearOverlay();
