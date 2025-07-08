@@ -4,31 +4,33 @@ import ReactDOM from 'react-dom';
 type ModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  children: React.ReactNode; // ✨ 모달 안에 들어올 내용물
+  children: React.ReactNode;
 };
 
 export default function Modal({ isOpen, onClose, children }: ModalProps) {
   if (!isOpen) return null;
 
-  // Portal을 사용하여 modal-root에 렌더링
   return ReactDOM.createPortal(
     <div
-      className='fixed inset-0 z-50 flex items-center justify-center bg-black/60'
+      className='fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm'
       onClick={onClose}
     >
       <div
         className='relative w-full max-w-md rounded-xl border border-white/30 text-white shadow-2xl backdrop-blur-md'
         onClick={(e) => e.stopPropagation()}
+        style={{
+          transitionProperty: 'height, min-height, max-height, transform',
+          transformOrigin: 'top center', // 상단을 기준으로 애니메이션
+        }}
       >
-        {/* 3. 닫기 버튼 */}
+        {/* 닫기 버튼 */}
         <button
           onClick={onClose}
-          className='absolute top-2 right-2 rounded-full p-1 text-white hover:bg-white/20'
+          className='absolute top-3 right-3 z-10 rounded-full p-2 text-white/70 transition-all duration-200 hover:bg-white/20 hover:text-white'
         >
-          {/* SVG로 만든 X 아이콘 */}
           <svg
             xmlns='http://www.w3.org/2000/svg'
-            className='h-6 w-6'
+            className='h-5 w-5'
             fill='none'
             viewBox='0 0 24 24'
             stroke='currentColor'
@@ -41,9 +43,11 @@ export default function Modal({ isOpen, onClose, children }: ModalProps) {
             />
           </svg>
         </button>
-        {children}
+
+        {/* 모달 콘텐츠 - 자동 높이 조절 */}
+        <div className='flex min-h-0 flex-col'>{children}</div>
       </div>
     </div>,
-    document.getElementById('modal-root')! // public/index.html에 이 div가 있어야 함
+    document.getElementById('modal-root')!
   );
 }
