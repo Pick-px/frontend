@@ -10,6 +10,8 @@ type CanvasUIProps = {
   onImageDelete: () => void;
   hasImage: boolean;
   colors: string[];
+  onZoomIn: () => void;
+  onZoomOut: () => void;
 };
 
 export default function CanvasUI(props: CanvasUIProps) {

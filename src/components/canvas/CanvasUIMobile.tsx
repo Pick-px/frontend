@@ -17,6 +17,8 @@ type CanvasUIProps = {
   onImageDelete: () => void;
   hasImage: boolean;
   colors: string[];
+  onZoomIn: () => void;
+  onZoomOut: () => void;
 };
 
 export default function CanvasUIMobile({
@@ -26,6 +28,8 @@ export default function CanvasUIMobile({
   onImageDelete,
   hasImage,
   colors,
+  onZoomIn,
+  onZoomOut,
 }: CanvasUIProps) {
   const [isPressed, setIsPressed] = useState(false);
   const [showConfirmEffect, setShowConfirmEffect] = useState(false);
@@ -319,8 +323,50 @@ export default function CanvasUIMobile({
         )}
       </div>
       {/* 좌표 표시창 */}
-      <div className='pointer-events-none fixed right-[20px] bottom-[20px] z-[9999] rounded-[8px] bg-[rgba(0,0,0,0.8)] p-[10px] text-white'>
+      <div className='pointer-events-none fixed right-[20px] bottom-[80px] z-[9999] rounded-[8px] bg-[rgba(0,0,0,0.8)] p-[10px] text-white'>
         {hoverPos ? `(${hoverPos.x}, ${hoverPos.y})` : 'OutSide'}
+      </div>
+
+      {/* 확대/축소 버튼 */}
+      <div className='pointer-events-auto fixed bottom-[20px] right-[20px] z-[9999] flex flex-row gap-2'>
+        <button
+          onClick={onZoomIn}
+          className='flex h-12 w-12 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
+          title='확대'
+        >
+          <svg
+            className='h-6 w-6'
+            fill='none'
+            stroke='currentColor'
+            viewBox='0 0 24 24'
+          >
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeWidth={2}
+              d='M12 4v16m8-8H4'
+            />
+          </svg>
+        </button>
+        <button
+          onClick={onZoomOut}
+          className='flex h-12 w-12 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
+          title='축소'
+        >
+          <svg
+            className='h-6 w-6'
+            fill='none'
+            stroke='currentColor'
+            viewBox='0 0 24 24'
+          >
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeWidth={2}
+              d='M20 12H4'
+            />
+          </svg>
+        </button>
       </div>
 
       {/* 팔레트 */}

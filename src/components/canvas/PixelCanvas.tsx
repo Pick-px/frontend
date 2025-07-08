@@ -550,6 +550,40 @@ function PixelCanvas({
     [draw, updateOverlay, canvasSize]
   );
 
+  const zoomCanvas = useCallback(
+    (scaleChange: number) => {
+      const canvas = renderCanvasRef.current;
+      if (!canvas) return;
+
+      const centerX = canvas.clientWidth / 2;
+      const centerY = canvas.clientHeight / 2;
+
+      const xs = (centerX - viewPosRef.current.x) / scaleRef.current;
+      const ys = (centerY - viewPosRef.current.y) / scaleRef.current;
+
+      const newScale = Math.max(
+        MIN_SCALE,
+        Math.min(MAX_SCALE, scaleRef.current * scaleChange)
+      );
+
+      scaleRef.current = newScale;
+      viewPosRef.current.x = centerX - xs * scaleRef.current;
+      viewPosRef.current.y = centerY - ys * scaleRef.current;
+
+      draw();
+      updateOverlay(centerX, centerY);
+    },
+    [draw, updateOverlay]
+  );
+
+  const handleZoomIn = useCallback(() => {
+    zoomCanvas(1.2);
+  }, [zoomCanvas]);
+
+  const handleZoomOut = useCallback(() => {
+    zoomCanvas(1 / 1.2);
+  }, [zoomCanvas]);
+
   const handleCooltime = useCallback(() => {
     startCooldown(10);
   }, [startCooldown]);
@@ -1070,6 +1104,8 @@ function PixelCanvas({
           onImageAttach={handleImageAttach}
           onImageDelete={cancelImage}
           hasImage={!!imageCanvasRef.current}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
         />
       )}
       {showImageControls && !isImageFixed && (
