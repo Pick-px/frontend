@@ -12,11 +12,11 @@ export default function Modal({ isOpen, onClose, children }: ModalProps) {
 
   return ReactDOM.createPortal(
     <div
-      className='fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-lg p-4'
+      className='fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm'
       onClick={onClose}
     >
       <div
-        className='relative w-full max-w-lg max-h-[80vh] rounded-xl border border-white/30 shadow-2xl backdrop-blur-md text-white bg-black/50 transition-all duration-300 ease-out'
+        className='relative w-full max-w-md rounded-xl border border-white/30 text-white shadow-2xl backdrop-blur-md'
         onClick={(e) => e.stopPropagation()}
         style={{
           transitionProperty: 'height, min-height, max-height, transform',
@@ -26,7 +26,7 @@ export default function Modal({ isOpen, onClose, children }: ModalProps) {
         {/* 닫기 버튼 */}
         <button
           onClick={onClose}
-          className='absolute top-3 right-3 z-10 rounded-full p-2 text-white/70 hover:text-white hover:bg-white/20 transition-all duration-200'
+          className='absolute top-3 right-3 z-10 rounded-full p-2 text-white/70 transition-all duration-200 hover:bg-white/20 hover:text-white'
         >
           <svg
             xmlns='http://www.w3.org/2000/svg'
@@ -43,11 +43,9 @@ export default function Modal({ isOpen, onClose, children }: ModalProps) {
             />
           </svg>
         </button>
-        
+
         {/* 모달 콘텐츠 - 자동 높이 조절 */}
-        <div className='flex flex-col min-h-0'>
-          {children}
-        </div>
+        <div className='flex min-h-0 flex-col'>{children}</div>
       </div>
     </div>,
     document.getElementById('modal-root')!

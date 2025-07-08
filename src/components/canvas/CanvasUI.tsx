@@ -1,15 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useAuthStore } from '../store/authStrore';
-import { useModalStore } from '../store/modalStore';
+
 import { ToastContainer, toast } from 'react-toastify';
-import { showInstructionsToast } from './toast/InstructionsToast';
+
 import 'react-toastify/dist/ReactToastify.css';
+import { useAuthStore } from '../../store/authStrore';
+import { useModalStore } from '../../store/modalStore';
+import { showInstructionsToast } from '../toast/InstructionsToast';
 
 type HoverPos = { x: number; y: number } | null;
 
 type CanvasUIProps = {
   color: string;
-  setColor: React.Dispatch<React.SetStateAction<string>>;
+  setColor: (color: string) => void;
   hoverPos: HoverPos;
   colors: string[];
   onSelectColor: (color: string) => void;
@@ -17,7 +19,7 @@ type CanvasUIProps = {
   cooldown: boolean;
   timeLeft: number;
   showPalette: boolean;
-  setShowPalette: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowPalette: (show: boolean) => void;
   onImageAttach?: (file: File) => void;
   onImageDelete?: () => void;
   hasImage?: boolean;
