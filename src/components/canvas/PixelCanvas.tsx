@@ -474,15 +474,27 @@ function PixelCanvas({
     const viewportWidth = canvas.clientWidth;
     const viewportHeight = canvas.clientHeight;
 
-    // 가로, 세로 비율 중 더 작은 값을 기준으로 스케일 계산 (여백 확보를 위해 0.85 곱함)
-    const scaleX = (viewportWidth / canvasSize.width) * 0.7;
-    const scaleY = (viewportHeight / canvasSize.height) * 0.7;
+    // 모바일 환경 감지 (화면 너비가 768px 미만)
+    const isMobile = window.innerWidth < 768;
 
-    // 더 작은 값을 선택하여 캔버스가 화면에 완전히 표시되도록 함
-    scaleRef.current = Math.max(Math.min(scaleX, scaleY), MIN_SCALE);
-
-    // 스케일이 너무 크면 제한
-    scaleRef.current = Math.min(scaleRef.current, MAX_SCALE);
+    // 모바일에서는 매우 작은 배율 강제 적용
+    if (isMobile) {
+      // 1024x1024 캔버스를 위한 특별 처리
+      if (canvasSize.width >= 1000 || canvasSize.height >= 1000) {
+        // 모바일에서 큰 캔버스는 매우 작게 시작 (0.15)
+        scaleRef.current = 0.2;
+      } else {
+        // 작은 캔버스는 0.3 정도로 시작
+        scaleRef.current = 0.7;
+      }
+    } else {
+      // 데스크톱에서는 기존 로직 유지
+      const scaleFactor = 0.7;
+      const scaleX = (viewportWidth / canvasSize.width) * scaleFactor;
+      const scaleY = (viewportHeight / canvasSize.height) * scaleFactor;
+      scaleRef.current = Math.max(Math.min(scaleX, scaleY), MIN_SCALE);
+      scaleRef.current = Math.min(scaleRef.current, MAX_SCALE);
+    }
 
     // 캔버스를 화면 중앙에 배치
     viewPosRef.current.x =
