@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { useCanvasUiStore } from '../../store/canvasUiStore';
+import { shallow } from 'zustand/shallow';
 import { usePixelSocket } from '../SocketIntegration';
 import CanvasUI from './CanvasUI';
 import Preloader from '../Preloader';
@@ -53,33 +54,41 @@ function PixelCanvas({
     color: string;
   } | null>(null);
 
+  // state를 각각 가져오도록 하여 불필요한 리렌더링을 방지합니다.
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
-  const {
-    color,
-    setColor,
-    hoverPos,
-    setHoverPos,
-    cooldown,
-    setCooldown,
-    timeLeft,
-    setTimeLeft,
-    showPalette,
-    setShowPalette,
-    showImageControls,
-    setShowImageControls,
-    isImageFixed,
-    setIsImageFixed,
-    imageMode,
-    setImageMode,
-    imageTransparency,
-    setImageTransparency,
-    isLoading,
-    setIsLoading,
-    hasError,
-    setHasError,
-    showCanvas,
-    setShowCanvas,
-  } = useCanvasUiStore();
+
+  const color = useCanvasUiStore((state) => state.color);
+  const setColor = useCanvasUiStore((state) => state.setColor);
+  const hoverPos = useCanvasUiStore((state) => state.hoverPos);
+  const setHoverPos = useCanvasUiStore((state) => state.setHoverPos);
+  const cooldown = useCanvasUiStore((state) => state.cooldown);
+  const setCooldown = useCanvasUiStore((state) => state.setCooldown);
+  const timeLeft = useCanvasUiStore((state) => state.timeLeft);
+  const setTimeLeft = useCanvasUiStore((state) => state.setTimeLeft);
+  const showPalette = useCanvasUiStore((state) => state.showPalette);
+  const setShowPalette = useCanvasUiStore((state) => state.setShowPalette);
+  const showImageControls = useCanvasUiStore(
+    (state) => state.showImageControls
+  );
+  const setShowImageControls = useCanvasUiStore(
+    (state) => state.setShowImageControls
+  );
+  const isImageFixed = useCanvasUiStore((state) => state.isImageFixed);
+  const setIsImageFixed = useCanvasUiStore((state) => state.setIsImageFixed);
+  const imageMode = useCanvasUiStore((state) => state.imageMode);
+  const setImageMode = useCanvasUiStore((state) => state.setImageMode);
+  const imageTransparency = useCanvasUiStore(
+    (state) => state.imageTransparency
+  );
+  const setImageTransparency = useCanvasUiStore(
+    (state) => state.setImageTransparency
+  );
+  const isLoading = useCanvasUiStore((state) => state.isLoading);
+  const setIsLoading = useCanvasUiStore((state) => state.setIsLoading);
+  const hasError = useCanvasUiStore((state) => state.hasError);
+  const setHasError = useCanvasUiStore((state) => state.setHasError);
+  const showCanvas = useCanvasUiStore((state) => state.showCanvas);
+  const setShowCanvas = useCanvasUiStore((state) => state.setShowCanvas);
 
   const imageTransparencyRef = useRef(0.5);
 
@@ -995,7 +1004,6 @@ function PixelCanvas({
                 ✕ 취소
               </button>
             </div>
-
             {/* 하단 안내 */}
             <div className='mt-3 border-t border-gray-700/50 pt-3 text-center text-xs text-gray-400'>
               확정하면 픽셀 그리기가 가능합니다

@@ -129,7 +129,7 @@ function Chat() {
   }, [isOpen, canvas_id]);
 
   return (
-    <div className='fixed bottom-4 left-2 z-50 flex flex-col items-start'>
+    <div className={`fixed bottom-4 left-2 z-50 flex flex-col items-start ${!isOpen ? 'pointer-events-none' : ''}`}>
       {/* 채팅창 UI */}
       <div
         className={`mb-2 flex h-[500px] w-80 flex-col rounded-xl border border-white/30 bg-black/30 shadow-2xl backdrop-blur-md transition-all duration-300 ease-in-out ${isOpen ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'}`}
@@ -192,7 +192,7 @@ function Chat() {
           }
           setIsOpen(!isOpen);
         }}
-        className='flex h-10 w-10 items-center justify-center rounded-full bg-blue-500 text-white shadow-xl transition-transform hover:bg-blue-600 active:scale-90'
+        className='flex h-10 w-10 items-center justify-center rounded-full bg-blue-500 text-white shadow-xl transition-transform hover:bg-blue-600 active:scale-90 pointer-events-auto'
       >
         {isOpen ? (
           // 닫기 아이콘 (X)
