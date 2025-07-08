@@ -477,28 +477,15 @@ function PixelCanvas({
     // 화면 크기에 맞게 스케일 계산
     const viewportWidth = canvas.clientWidth;
     const viewportHeight = canvas.clientHeight;
-
-    // 모바일 환경 감지 (화면 너비가 768px 미만)
     const isMobile = window.innerWidth < 768;
 
-    // 모바일에서는 매우 작은 배율 강제 적용
-    if (isMobile) {
-      // 1024x1024 캔버스를 위한 특별 처리
-      if (canvasSize.width >= 1000 || canvasSize.height >= 1000) {
-        // 모바일에서 큰 캔버스는 매우 작게 시작 (0.15)
-        scaleRef.current = 0.2;
-      } else {
-        // 작은 캔버스는 0.3 정도로 시작
-        scaleRef.current = 0.7;
-      }
-    } else {
-      // 데스크톱에서는 기존 로직 유지
-      const scaleFactor = 0.7;
-      const scaleX = (viewportWidth / canvasSize.width) * scaleFactor;
-      const scaleY = (viewportHeight / canvasSize.height) * scaleFactor;
-      scaleRef.current = Math.max(Math.min(scaleX, scaleY), MIN_SCALE);
-      scaleRef.current = Math.min(scaleRef.current, MAX_SCALE);
-    }
+    const scaleFactor = 0.7;
+    const scaleX = (viewportWidth / canvasSize.width) * scaleFactor;
+    const scaleY = (viewportHeight / canvasSize.height) * scaleFactor;
+    scaleRef.current = Math.max(Math.min(scaleX, scaleY), MIN_SCALE);
+    scaleRef.current = Math.min(scaleRef.current, MAX_SCALE);
+    scaleRef.current = Math.min(scaleX, scaleY);
+    scaleRef.current = Math.min(scaleRef.current, MAX_SCALE);
 
     // 캔버스를 화면 중앙에 배치
     viewPosRef.current.x =
@@ -850,14 +837,11 @@ function PixelCanvas({
         const sx = touch.clientX - rect.left;
         const sy = touch.clientY - rect.top;
 
-        // 마우스 이벤트와 동일한 로직을 수행하기 위해 MouseEvent처럼 모방하여 전달
-        handleMouseDown({
-          nativeEvent: { offsetX: sx, offsetY: sy, button: 0 },
-          preventDefault: () => {},
-        } as React.MouseEvent<HTMLCanvasElement>);
+        dragStartInfoRef.current = { x: sx, y: sy };
+        lastTouchPosRef.current = { x: sx, y: sy };
       }
     },
-    [handleMouseDown]
+    []
   );
 
   const handleTouchMove = useCallback(
@@ -875,14 +859,10 @@ function PixelCanvas({
 
         if (oldDistance > 0) {
           const scaleFactor = newDistance / oldDistance;
-          // handleImageScale 또는 캔버스 줌 로직을 여기에 적용
-          // 이 예제에서는 캔버스 줌을 적용합니다.
-
           const newScale = Math.max(
             MIN_SCALE,
             Math.min(MAX_SCALE, scaleRef.current * scaleFactor)
           );
-          // (중요) 줌 중심점을 두 손가락의 중심으로 설정
           const centerX =
             (touches[0].clientX + touches[1].clientX) / 2 - rect.left;
           const centerY =
@@ -898,7 +878,7 @@ function PixelCanvas({
           draw();
           updateOverlay(centerX, centerY);
         }
-        pinchDistanceRef.current = newDistance; // 다음 move 이벤트를 위해 거리 업데이트
+        pinchDistanceRef.current = newDistance;
         return;
       }
 
@@ -908,13 +888,31 @@ function PixelCanvas({
         const sx = touch.clientX - rect.left;
         const sy = touch.clientY - rect.top;
 
-        handleMouseMove({
-          nativeEvent: { offsetX: sx, offsetY: sy },
-        } as React.MouseEvent<HTMLCanvasElement>);
-        lastTouchPosRef.current = { x: sx, y: sy }; // 마지막 터치 위치 저장
+        if (dragStartInfoRef.current && !isPanningRef.current) {
+          const dx = sx - dragStartInfoRef.current.x;
+          const dy = sy - dragStartInfoRef.current.y;
+          if (Math.sqrt(dx * dx + dy * dy) > DRAG_THRESHOLD) {
+            isPanningRef.current = true;
+            startPosRef.current = {
+              x: sx - viewPosRef.current.x,
+              y: sy - viewPosRef.current.y,
+            };
+            dragStartInfoRef.current = null;
+          }
+        }
+
+        if (isPanningRef.current) {
+          viewPosRef.current = {
+            x: sx - startPosRef.current.x,
+            y: sy - startPosRef.current.y,
+          };
+          draw();
+        }
+        updateOverlay(sx, sy);
+        lastTouchPosRef.current = { x: sx, y: sy };
       }
     },
-    [handleMouseMove, draw, updateOverlay]
+    [draw, updateOverlay]
   );
 
   const handleTouchEnd = useCallback(
