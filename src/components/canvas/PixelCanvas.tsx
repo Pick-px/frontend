@@ -45,6 +45,8 @@ function PixelCanvas({
   const startPosRef = useRef<{ x: number; y: number }>(INITIAL_POSITION);
   const isPanningRef = useRef<boolean>(false);
 
+  const pinchDistanceRef = useRef<number>(0);
+
   const fixedPosRef = useRef<{ x: number; y: number; color: string } | null>(
     null
   );
@@ -780,6 +782,101 @@ function PixelCanvas({
     [draw, setImageTransparency]
   );
 
+  // PixelCanvas.tsx 내부에 아래 함수들을 추가합니다.
+
+  // --- 터치 이벤트 핸들러 ---
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent<HTMLCanvasElement>) => {
+      e.preventDefault();
+      const touches = e.touches;
+
+      // 두 손가락 터치: 핀치 줌 시작
+      if (touches.length === 2) {
+        const dx = touches[0].clientX - touches[1].clientX;
+        const dy = touches[0].clientY - touches[1].clientY;
+        pinchDistanceRef.current = Math.sqrt(dx * dx + dy * dy);
+        isPanningRef.current = false; // 줌 할때는 패닝 방지
+        return;
+      }
+
+      // 한 손가락 터치: 이동 또는 픽셀 선택 시작
+      if (touches.length === 1) {
+        const touch = touches[0];
+        const rect = interactionCanvasRef.current!.getBoundingClientRect();
+        const sx = touch.clientX - rect.left;
+        const sy = touch.clientY - rect.top;
+
+        // 마우스 이벤트와 동일한 로직을 수행하기 위해 MouseEvent처럼 모방하여 전달
+        handleMouseDown({
+          nativeEvent: { offsetX: sx, offsetY: sy, button: 0 },
+          preventDefault: () => {},
+        } as React.MouseEvent<HTMLCanvasElement>);
+      }
+    },
+    [handleMouseDown]
+  );
+
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent<HTMLCanvasElement>) => {
+      e.preventDefault();
+      const touches = e.touches;
+      const rect = interactionCanvasRef.current!.getBoundingClientRect();
+
+      // 두 손가락 터치: 핀치 줌 로직
+      if (touches.length === 2) {
+        const dx = touches[0].clientX - touches[1].clientX;
+        const dy = touches[0].clientY - touches[1].clientY;
+        const newDistance = Math.sqrt(dx * dx + dy * dy);
+        const oldDistance = pinchDistanceRef.current;
+
+        if (oldDistance > 0) {
+          const scaleFactor = newDistance / oldDistance;
+          // handleImageScale 또는 캔버스 줌 로직을 여기에 적용
+          // 이 예제에서는 캔버스 줌을 적용합니다.
+
+          const newScale = Math.max(
+            MIN_SCALE,
+            Math.min(MAX_SCALE, scaleRef.current * scaleFactor)
+          );
+          // (중요) 줌 중심점을 두 손가락의 중심으로 설정
+          const centerX =
+            (touches[0].clientX + touches[1].clientX) / 2 - rect.left;
+          const centerY =
+            (touches[0].clientY + touches[1].clientY) / 2 - rect.top;
+
+          const xs = (centerX - viewPosRef.current.x) / scaleRef.current;
+          const ys = (centerY - viewPosRef.current.y) / scaleRef.current;
+
+          viewPosRef.current.x = centerX - xs * newScale;
+          viewPosRef.current.y = centerY - ys * newScale;
+          scaleRef.current = newScale;
+
+          draw();
+          updateOverlay(centerX, centerY);
+        }
+        pinchDistanceRef.current = newDistance; // 다음 move 이벤트를 위해 거리 업데이트
+        return;
+      }
+
+      // 한 손가락 터치: 이동 로직
+      if (touches.length === 1) {
+        const touch = touches[0];
+        const sx = touch.clientX - rect.left;
+        const sy = touch.clientY - rect.top;
+
+        handleMouseMove({
+          nativeEvent: { offsetX: sx, offsetY: sy },
+        } as React.MouseEvent<HTMLCanvasElement>);
+      }
+    },
+    [handleMouseMove, draw, updateOverlay]
+  );
+
+  const handleTouchEnd = useCallback(() => {
+    // 모든 제스처 상태 초기화
+    pinchDistanceRef.current = 0;
+    handleMouseUp();
+  }, [handleMouseUp]);
   // 투명도 상태가 변경될 때 ref 값 업데이트 및 draw 함수 호출
   useEffect(() => {
     imageTransparencyRef.current = imageTransparency;
@@ -903,6 +1000,10 @@ function PixelCanvas({
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseLeave}
           onContextMenu={(e) => e.preventDefault()}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchEnd}
         />
       </div>
 
