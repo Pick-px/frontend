@@ -766,10 +766,13 @@ function PixelCanvas({
     [draw, setImageTransparency]
   );
 
-  // ref 값 초기화
+  // 투명도 상태가 변경될 때 ref 값 업데이트 및 draw 함수 호출
   useEffect(() => {
     imageTransparencyRef.current = imageTransparency;
-  }, []);
+    if (imageCanvasRef.current) {
+      draw();
+    }
+  }, [imageTransparency, draw]);
 
   useEffect(() => {
     const rootElement = rootRef.current;
@@ -893,24 +896,14 @@ function PixelCanvas({
         <Preloader />
       ) : (
         <CanvasUI
-          color={color}
-          setColor={setColor}
-          hoverPos={hoverPos}
           colors={COLORS}
           onConfirm={handleConfirm}
           onSelectColor={handleSelectColor}
-          cooldown={cooldown}
-          timeLeft={timeLeft}
-          showPalette={showPalette}
-          setShowPalette={setShowPalette}
           onImageAttach={handleImageAttach}
           onImageDelete={cancelImage}
           hasImage={!!imageCanvasRef.current}
-          imageTransparency={imageTransparency}
-          setImageTransparency={handleTransparencyChange}
         />
       )}
-
       {showImageControls && !isImageFixed && (
         <div className='pointer-events-auto fixed top-1/2 right-5 z-[10000] -translate-y-1/2'>
           <div className='max-w-xs rounded-xl border border-gray-700/50 bg-gray-900/95 p-4 shadow-2xl backdrop-blur-sm'>
