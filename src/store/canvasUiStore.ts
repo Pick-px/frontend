@@ -9,6 +9,9 @@ interface CanvasUiState {
   // 캔버스 내 좌표 값
   hoverPos: HoverPos;
   setHoverPos: (pos: HoverPos) => void;
+  // 채팅에서 클릭된 좌표
+  targetPixel: { x: number; y: number } | null;
+  setTargetPixel: (pos: { x: number; y: number } | null) => void;
   // 잔여 쿨다운 시간
   timeLeft: number;
   setTimeLeft: (timeLeft: number | ((prev: number) => number)) => void;
@@ -43,6 +46,9 @@ export const useCanvasUiStore = create<CanvasUiState>((set, get) => ({
   setColor: (color) => set({ color }),
   hoverPos: null,
   setHoverPos: (hoverPos) => set({ hoverPos }),
+
+  targetPixel: null,
+  setTargetPixel: (targetPixel) => set({ targetPixel }),
 
   timeLeft: 0,
   setTimeLeft: (newTimeLeft) =>

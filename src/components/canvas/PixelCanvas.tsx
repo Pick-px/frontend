@@ -94,6 +94,8 @@ function PixelCanvas({
   const setHasError = useCanvasUiStore((state) => state.setHasError);
   const showCanvas = useCanvasUiStore((state) => state.showCanvas);
   const setShowCanvas = useCanvasUiStore((state) => state.setShowCanvas);
+  const targetPixel = useCanvasUiStore((state) => state.targetPixel);
+  const setTargetPixel = useCanvasUiStore((state) => state.setTargetPixel);
 
   const startCooldown = useCanvasUiStore((state) => state.startCooldown);
 
@@ -584,6 +586,71 @@ function PixelCanvas({
     zoomCanvas(1 / 1.2);
   }, [zoomCanvas]);
 
+  const centerOnWorldPixel = useCallback(
+    (worldX: number, worldY: number) => {
+      const canvas = renderCanvasRef.current;
+      if (!canvas) return;
+
+      // Check if the target pixel is within canvas bounds
+      if (
+        worldX < 0 ||
+        worldX >= canvasSize.width ||
+        worldY < 0 ||
+        worldY >= canvasSize.height
+      ) {
+        console.warn(
+          `Target pixel (${worldX}, ${worldY}) is out of canvas bounds.`
+        );
+        return;
+      }
+
+      const viewportCenterX = canvas.clientWidth / 2;
+      const viewportCenterY = canvas.clientHeight / 2;
+
+      // Calculate the target view position to center the world pixel
+      // (worldX + 0.5) to center on the pixel, not its top-left corner
+      const targetX = viewportCenterX - (worldX + 0.5) * scaleRef.current;
+      const targetY = viewportCenterY - (worldY + 0.5) * scaleRef.current;
+
+      const startX = viewPosRef.current.x;
+      const startY = viewPosRef.current.y;
+      const duration = 1000; // Animation duration in ms
+      const startTime = performance.now();
+
+      const animate = (currentTime: number) => {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        // Ease-out cubic function
+        const eased = 1 - Math.pow(1 - progress, 3);
+
+        viewPosRef.current.x = startX + (targetX - startX) * eased;
+        viewPosRef.current.y = startY + (targetY - startY) * eased;
+
+        draw();
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          // Ensure final position is exact
+          viewPosRef.current.x = targetX;
+          viewPosRef.current.y = targetY;
+          draw();
+
+          // Set fixedPosRef to highlight the target pixel
+          fixedPosRef.current = { x: worldX, y: worldY, color: 'transparent' }; // Use transparent or a default color
+          draw(); // Redraw to show the fixedPosRef
+
+          // Optionally, update overlay for the centered pixel
+          const screenX = worldX * scaleRef.current + viewPosRef.current.x;
+          const screenY = worldY * scaleRef.current + viewPosRef.current.y;
+          updateOverlay(screenX, screenY);
+        }
+      };
+      requestAnimationFrame(animate);
+    },
+    [draw, canvasSize, updateOverlay]
+  );
+
   const handleCooltime = useCallback(() => {
     startCooldown(10);
   }, [startCooldown]);
@@ -971,6 +1038,15 @@ function PixelCanvas({
       draw();
     }
   }, [imageTransparency, draw]);
+
+  // Listen for targetPixel changes from chat and center the canvas
+  useEffect(() => {
+    if (targetPixel) {
+      centerOnWorldPixel(targetPixel.x, targetPixel.y);
+      // Reset targetPixel to null after processing to prevent re-triggering
+      setTargetPixel(null);
+    }
+  }, [targetPixel, centerOnWorldPixel, setTargetPixel]);
 
   useEffect(() => {
     const rootElement = rootRef.current;
