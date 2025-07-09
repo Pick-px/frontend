@@ -137,7 +137,7 @@ class SocketService {
   // 인증 에러 리스너 제거
   offAuthError(callback: (error: { message: string }) => void) {
     if (this.socket) {
-      this.socket.off('autherror', callback);
+      this.socket.off('auth_error', callback);
     }
   }
 }
