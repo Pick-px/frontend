@@ -230,8 +230,8 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
       onClose();
     }
 
-    // 2. 페이지 이동 (새로고침 없음)
-    navigate(getCanvasUrl(canvasId));
+    // 2. 페이지 이동 (새로고침 포함)
+    window.location.href = getCanvasUrl(canvasId);
   };
 
   // URL 생성 함수 (Query parameter 방식 사용)
