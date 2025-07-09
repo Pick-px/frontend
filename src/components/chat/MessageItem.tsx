@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuthStore } from '../../store/authStrore';
+import { useCanvasUiStore } from '../../store/canvasUiStore';
 
 export type Message = {
   messageId: string;
@@ -13,7 +14,49 @@ export type Message = {
 
 const MessageItem = React.memo(({ message }: { message: Message }) => {
   const currentUser = useAuthStore((state) => state.user);
+  const setTargetPixel = useCanvasUiStore((state) => state.setTargetPixel);
   const isMyMessage = message.user.userId === currentUser?.userId;
+
+  const handleCoordinateClick = (x: number, y: number) => {
+    setTargetPixel({ x, y });
+  };
+
+  const renderMessageContent = (content: string) => {
+    const parts: React.ReactNode[] = [];
+    const regex = /\((\d+),(\d+)\)/g;
+    let lastIndex = 0;
+    let match;
+
+    while ((match = regex.exec(content)) !== null) {
+      const [fullMatch, xStr, yStr] = match;
+      const x = parseInt(xStr, 10);
+      const y = parseInt(yStr, 10);
+
+      // Add the text before the coordinate
+      if (match.index > lastIndex) {
+        parts.push(content.substring(lastIndex, match.index));
+      }
+
+      // Add the clickable coordinate
+      parts.push(
+        <span
+          key={match.index}
+          className="text-blue-400 hover:underline cursor-pointer"
+          onClick={() => handleCoordinateClick(x, y)}
+        >
+          {fullMatch}
+        </span>
+      );
+      lastIndex = regex.lastIndex;
+    }
+
+    // Add any remaining text after the last coordinate
+    if (lastIndex < content.length) {
+      parts.push(content.substring(lastIndex));
+    }
+
+    return parts;
+  };
 
   console.log(message.user.userId);
   const messageBubbleClasses = isMyMessage
@@ -32,7 +75,7 @@ const MessageItem = React.memo(({ message }: { message: Message }) => {
         </div>
       )}
       <div className={messageBubbleClasses}>
-        <div>{message.content}</div>
+        <div>{renderMessageContent(message.content)}</div>
         {message.timestamp && (
           <div
             className={`mt-1 text-right text-xs ${isMyMessage ? 'text-blue-200' : 'text-gray-400'}`}
