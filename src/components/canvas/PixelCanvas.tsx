@@ -175,6 +175,22 @@ function PixelCanvas({
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(src, 0, 0);
 
+      // 이미지 편집 모드일 때만 격자 그리기
+      if (!isImageFixed && imageCanvasRef.current) {
+        ctx.strokeStyle = 'rgba(255,255,255, 0.12)';
+        ctx.lineWidth = 1 / scaleRef.current;
+        ctx.beginPath();
+        for (let x = 0; x <= canvasSize.width; x++) {
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, canvasSize.height);
+        }
+        for (let y = 0; y <= canvasSize.height; y++) {
+          ctx.moveTo(0, y);
+          ctx.lineTo(canvasSize.width, y);
+        }
+        ctx.stroke();
+      }
+
       // 이미지 렌더링
       if (imageCanvasRef.current) {
         ctx.globalAlpha = imageTransparencyRef.current;
@@ -273,7 +289,7 @@ function PixelCanvas({
 
       pctx.restore();
     }
-  }, [canvasSize, imagePosition, imageSize, isImageFixed]);
+  }, [canvasSize, imagePosition, imageSize, isImageFixed, imageMode]);
 
   // 이미지 첨부 핸들러
   const handleImageAttach = useCallback(
