@@ -92,7 +92,7 @@ function App() {
   }, [setAuth, clearAuth]);
 
   return (
-    <main className='flex h-screen w-screen items-center justify-center bg-[#2d3748]'>
+    <main className='touch-action-none flex h-screen w-screen items-center justify-center bg-[#2d3748]'>
       <PixelCanvas
         canvas_id={canvas_id}
         key={canvas_id}
