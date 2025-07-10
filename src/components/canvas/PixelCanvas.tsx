@@ -452,7 +452,10 @@ function PixelCanvas({
   const resetAndCenter = useCallback(() => {
     const canvas = renderCanvasRef.current;
     if (!canvas || canvas.clientWidth === 0 || canvasSize.width === 0) return;
-
+    if (imageMode && !isImageFixed && imageCanvasRef.current) {
+      draw();
+      return;
+    }
     // 화면 크기에 맞게 스케일 계산
     const viewportWidth = canvas.clientWidth;
     const viewportHeight = canvas.clientHeight;
