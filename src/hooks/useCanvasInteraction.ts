@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import { MIN_SCALE, MAX_SCALE } from '../components/canvas/canvasConstants';
 import { INITIAL_POSITION } from '../components/canvas/canvasConstants';
+import { useModalStore } from '../store/modalStore';
 
 interface UseCanvasInteractionProps {
   // Refs from parent
@@ -94,6 +95,7 @@ export const useCanvasInteraction = ({
   const dragStartInfoRef = useRef<{ x: number; y: number } | null>(null);
   const pinchDistanceRef = useRef<number>(0);
   const lastTouchPosRef = useRef<{ x: number; y: number } | null>(null);
+  const { isChatOpen } = useModalStore();
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -441,7 +443,9 @@ export const useCanvasInteraction = ({
           moved = true;
           break;
         case 'Enter':
-          handleConfirm();
+          if (!isChatOpen) {
+            handleConfirm();
+          }
           break;
       }
 
@@ -463,7 +467,7 @@ export const useCanvasInteraction = ({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [draw, handleConfirm, canvasSize]);
+  }, [draw, handleConfirm, canvasSize, isChatOpen]);
 
   useEffect(() => {
     const interactionCanvas = interactionCanvasRef.current;

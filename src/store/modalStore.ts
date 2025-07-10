@@ -22,6 +22,10 @@ type ModalState = {
   isGroupModalOpen: boolean;
   openGroupModal: () => void;
   closeGroupModal: () => void;
+
+  isChatOpen: boolean;
+  openChat: () => void;
+  closeChat: () => void;
 };
 
 export const useModalStore = create<ModalState>((set) => ({
@@ -34,6 +38,7 @@ export const useModalStore = create<ModalState>((set) => ({
       isAlbumModalOpen: false,
       isMyPageModalOpen: false,
       isGroupModalOpen: false,
+      isChatOpen: false,
     }),
   closeLoginModal: () => set({ isLoginModalOpen: false }),
 
@@ -45,6 +50,7 @@ export const useModalStore = create<ModalState>((set) => ({
       isAlbumModalOpen: false,
       isMyPageModalOpen: false,
       isGroupModalOpen: false,
+      isChatOpen: false,
     }),
   closeCanvasModal: () => set({ isCanvasModalOpen: false }),
 
@@ -56,6 +62,7 @@ export const useModalStore = create<ModalState>((set) => ({
       isAlbumModalOpen: true,
       isMyPageModalOpen: false,
       isGroupModalOpen: false,
+      isChatOpen: false,
     }),
   closeAlbumModal: () => set({ isAlbumModalOpen: false }),
 
@@ -67,6 +74,7 @@ export const useModalStore = create<ModalState>((set) => ({
       isAlbumModalOpen: false,
       isMyPageModalOpen: true,
       isGroupModalOpen: false,
+      isChatOpen: false,
     }),
   closeMyPageModal: () => set({ isMyPageModalOpen: false }),
 
@@ -78,6 +86,20 @@ export const useModalStore = create<ModalState>((set) => ({
       isAlbumModalOpen: false,
       isMyPageModalOpen: false,
       isGroupModalOpen: true,
+      isChatOpen: false,
     }),
   closeGroupModal: () => set({ isGroupModalOpen: false }),
+
+  // 채팅 모달 상태 추가
+  isChatOpen: false,
+  openChat: () =>
+    set({
+      isLoginModalOpen: false,
+      isCanvasModalOpen: false,
+      isAlbumModalOpen: false,
+      isMyPageModalOpen: false,
+      isGroupModalOpen: false,
+      isChatOpen: true,
+    }),
+  closeChat: () => set({ isChatOpen: false }),
 }));
