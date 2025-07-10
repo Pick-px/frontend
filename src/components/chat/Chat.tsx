@@ -27,7 +27,7 @@ function Chat() {
 
   const canvas_id = useCanvasStore((state) => state.canvas_id);
   const { user, isLoggedIn } = useAuthStore();
-  const { openLoginModal, isGroupModalOpen } = useModalStore();
+  const { openLoginModal, isGroupModalOpen, openChat, closeChat } = useModalStore();
 
   // 채팅 소켓 연결 - 유효한 group_id가 있을 때만
   const { sendMessage: sendSocketMessage, leaveChat } = useChatSocket({
@@ -97,8 +97,9 @@ function Chat() {
   useEffect(() => {
     if (isOpen && (isGroupModalOpen || !isLoggedIn)) {
       setIsOpen(false);
+      closeChat();
     }
-  }, [isGroupModalOpen, isLoggedIn, isOpen]);
+  }, [isGroupModalOpen, isLoggedIn, isOpen, closeChat]);
 
   // isOpen True 시, canvasId 변경시
   useEffect(() => {
@@ -189,8 +190,12 @@ function Chat() {
 
           if (isOpen) {
             leaveChat();
+            setIsOpen(false);
+            closeChat(); // Synchronize with modal store
+          } else {
+            setIsOpen(true);
+            openChat(); // Synchronize with modal store
           }
-          setIsOpen(!isOpen);
         }}
         className='flex h-10 w-10 items-center justify-center rounded-full bg-blue-500 text-white shadow-xl transition-transform hover:bg-blue-600 active:scale-90 pointer-events-auto'
       >
