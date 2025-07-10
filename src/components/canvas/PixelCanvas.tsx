@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
+import StarfieldCanvas from './StarfieldCanvas';
 import { useCanvasUiStore } from '../../store/canvasUiStore';
 import { usePixelSocket } from '../SocketIntegration';
 import CanvasUI from './CanvasUI';
@@ -470,7 +471,7 @@ function PixelCanvas({
   const resetAndCenter = useCallback(() => {
     const canvas = renderCanvasRef.current;
     if (!canvas || canvas.clientWidth === 0 || canvasSize.width === 0) return;
-    if (imageMode && !isImageFixed && imageCanvasRef.current) {
+    if (!isImageFixed && imageCanvasRef.current) {
       draw();
       return;
     }
@@ -804,16 +805,13 @@ function PixelCanvas({
       ref={rootRef}
       className='relative h-full w-full transition-all duration-300'
       style={{
-        backgroundImage: `url('/Creatives.png')`,
-        backgroundSize: 'cover',
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'center center',
         backgroundColor: VIEWPORT_BACKGROUND_COLOR,
         boxShadow: cooldown
           ? 'inset 0 0 50px rgba(239, 68, 68, 0.3), 0 0 100px rgba(239, 68, 68, 0.2)'
           : 'none',
       }}
     >
+      <StarfieldCanvas viewPosRef={viewPosRef} />
       {cooldown && (
         <>
           <div className='pointer-events-none absolute inset-0 border-4 border-red-500/30' />
@@ -921,7 +919,7 @@ function PixelCanvas({
                     🎨 캔버스 모드
                   </div>
                   <div className='space-y-1'>
-                    <div>• 우클릭 드래그: 캔버스 이동</div>
+                    <div>• 좌클릭 드래그: 캔버스 이동</div>
                     <div>• 마우스 휠: 캔버스 확대/축소</div>
                     <div>• 이미지는 고정된 상태</div>
                   </div>
