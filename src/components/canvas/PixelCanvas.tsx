@@ -6,6 +6,7 @@ import Preloader from '../Preloader';
 import { useCanvasStore } from '../../store/canvasStore';
 import { toast } from 'react-toastify';
 import { fetchCanvasData as fetchCanvasDataUtil } from '../../api/canvasFetch';
+import NotFoundPage from '../../pages/NotFoundPage';
 import { useCanvasInteraction } from '../../hooks/useCanvasInteraction';
 
 import {
@@ -49,6 +50,7 @@ function PixelCanvas({
 
   // state를 각각 가져오도록 하여 불필요한 리렌더링을 방지합니다.
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
+  const [hasError, setHasError] = useState(false);
 
   const color = useCanvasUiStore((state) => state.color);
   const setHoverPos = useCanvasUiStore((state) => state.setHoverPos);
@@ -719,7 +721,7 @@ function PixelCanvas({
     fetchCanvasDataUtil({
       id: initialCanvasId,
       setIsLoading,
-      setHasError: (value: boolean) => {},
+      setHasError,
       setCanvasId,
       setCanvasSize,
       sourceCanvasRef,
@@ -734,28 +736,7 @@ function PixelCanvas({
     setIsLoading,
     onLoadingChange,
     setShowCanvas,
-  ]);
-
-  // fetchCanvasData 분리
-  useEffect(() => {
-    fetchCanvasDataUtil({
-      id: initialCanvasId,
-      setIsLoading,
-      setHasError: (value: boolean) => {},
-      setCanvasId,
-      setCanvasSize,
-      sourceCanvasRef,
-      onLoadingChange,
-      setShowCanvas,
-      INITIAL_BACKGROUND_COLOR,
-    });
-  }, [
-    initialCanvasId,
-    setCanvasId,
-    setCanvasSize,
-    setIsLoading,
-    onLoadingChange,
-    setShowCanvas,
+    setHasError,
   ]);
 
   useEffect(() => {
@@ -813,6 +794,10 @@ function PixelCanvas({
     observer.observe(rootElement);
     return () => observer.disconnect();
   }, [resetAndCenter]);
+
+  if (hasError) {
+    return <NotFoundPage />;
+  }
 
   return (
     <div
