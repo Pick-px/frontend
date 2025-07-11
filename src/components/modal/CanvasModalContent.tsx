@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { canvasService } from '../../api/CanvasAPI';
 import type { Canvas } from '../../api/CanvasAPI';
 import { useCanvasStore } from '../../store/canvasStore';
@@ -80,7 +81,34 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
   }, []);
 
   // 캔버스가 종료되었는지 확인하는 함수
-  const isCanvasExpired = (endedAt: string) => {
+  const isCanvasExpired = (endedAt: string, startedAt?: string) => {
+    const now = currentTime;
+
+    // startedAt이 존재하고 현재 시간이 startedAt보다 이전이면 아직 만료되지 않음 (시작 전)
+    if (startedAt && startedAt !== 'null' && startedAt !== 'undefined') {
+      try {
+        let startTime: Date;
+        if (startedAt.includes('T')) {
+          startTime = startedAt.endsWith('Z')
+            ? new Date(startedAt)
+            : new Date(startedAt + 'Z');
+        } else {
+          startTime = new Date(startedAt);
+        }
+
+        if (
+          !isNaN(startTime.getTime()) &&
+          now.getTime() < startTime.getTime()
+        ) {
+          return false; // 아직 시작 전이므로 만료되지 않음
+        }
+      } catch (error) {
+        console.error('Error checking canvas start time:', error);
+        // 에러 발생 시 endedAt 로직으로 폴백
+      }
+    }
+
+    // startedAt이 지났거나 없으면 endedAt으로 만료 여부 판단
     if (!endedAt || endedAt === 'null' || endedAt === 'undefined') {
       return false;
     }
@@ -100,42 +128,63 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
         return false;
       }
 
-      return endTime.getTime() <= currentTime.getTime();
+      return endTime.getTime() <= now.getTime();
     } catch (error) {
       console.error('Error checking canvas expiration:', error);
       return false;
     }
   };
-  const getTimeRemaining = (endedAt: string) => {
+  const getTimeRemaining = (endedAt: string, startedAt?: string) => {
     try {
-      // 다양한 날짜 형식 처리
-      let endTime: Date;
-
-      if (!endedAt || endedAt === 'null' || endedAt === 'undefined') {
-        return { text: '종료 시간 없음', isExpired: false, isUrgent: false };
-      }
-
-      if (endedAt.includes('T')) {
-        // ISO 형식인 경우 (2024-12-31T23:59:59 또는 2024-12-31T23:59:59Z)
-        endTime = endedAt.endsWith('Z')
-          ? new Date(endedAt)
-          : new Date(endedAt + 'Z');
-      } else {
-        // 다른 형식인 경우
-        endTime = new Date(endedAt);
-      }
-
-      // 날짜가 유효하지 않은 경우
-      if (isNaN(endTime.getTime())) {
-        console.warn('Invalid ended_at date:', endedAt);
-        return { text: '날짜 오류', isExpired: false, isUrgent: false };
-      }
-
       const now = currentTime;
-      const timeDiff = endTime.getTime() - now.getTime();
+      let targetTime: Date | null = null;
+      let prefix: string = '';
+      let isUpcomingCanvas = false; // To track if it's an upcoming canvas (startedAt in future)
+
+      // 1. Check if startedAt is valid and in the future
+      if (startedAt && startedAt !== 'null' && startedAt !== 'undefined') {
+        let startTime: Date;
+        if (startedAt.includes('T')) {
+          startTime = startedAt.endsWith('Z')
+            ? new Date(startedAt)
+            : new Date(startedAt + 'Z');
+        } else {
+          startTime = new Date(startedAt);
+        }
+
+        if (!isNaN(startTime.getTime()) && startTime.getTime() > now.getTime()) {
+          targetTime = startTime;
+          prefix = '시작까지';
+          isUpcomingCanvas = true;
+        }
+      }
+
+      // 2. If not an upcoming canvas (startedAt not provided, or in the past/invalid), use endedAt
+      if (!targetTime) { // If targetTime was not set by startedAt logic
+        if (!endedAt || endedAt === 'null' || endedAt === 'undefined') {
+          return { text: '종료 시간 없음', isExpired: false, isUrgent: false, isUpcoming: false, targetDate: undefined };
+        }
+
+        if (endedAt.includes('T')) {
+          targetTime = endedAt.endsWith('Z')
+            ? new Date(endedAt)
+            : new Date(endedAt + 'Z');
+        } else {
+          targetTime = new Date(endedAt);
+        }
+        prefix = '종료까지';
+      }
+
+      // Handle invalid targetTime after all attempts
+      if (!targetTime || isNaN(targetTime.getTime())) {
+        console.warn('Invalid date:', endedAt, startedAt);
+        return { text: '날짜 오류', isExpired: false, isUrgent: false, isUpcoming: false, targetDate: undefined };
+      }
+
+      const timeDiff = targetTime.getTime() - now.getTime();
 
       if (timeDiff <= 0) {
-        return { text: '종료됨', isExpired: true };
+        return { text: isUpcomingCanvas ? '시작됨' : '종료됨', isExpired: true, isUpcoming: false, targetDate: targetTime };
       }
 
       const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
@@ -149,27 +198,29 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
       let isUrgent = false;
 
       if (days > 0) {
-        text = `${days}일 ${hours}시간 남음`;
+        text = `${prefix} ${days}일 ${hours}시간 남음`;
       } else if (hours > 0) {
-        text = `${hours}시간 ${minutes}분 남음`;
+        text = `${prefix} ${hours}시간 ${minutes}분 남음`;
         isUrgent = hours < 1; // 1시간 미만일 때 긴급
       } else if (minutes > 0) {
-        text = `${minutes}분 ${seconds}초 남음`;
+        text = `${prefix} ${minutes}분 ${seconds}초 남음`;
         isUrgent = true;
       } else {
-        text = `${seconds}초 남음`;
+        text = `${prefix} ${seconds}초 남음`;
         isUrgent = true;
       }
 
-      return { text, isExpired: false, isUrgent };
+      return { text, isExpired: false, isUrgent, isUpcoming: isUpcomingCanvas, targetDate: targetTime };
     } catch (error) {
       console.error(
         'Error calculating time remaining:',
         error,
         'endedAt:',
-        endedAt
+        endedAt,
+        'startedAt:',
+        startedAt
       );
-      return { text: '계산 오류', isExpired: false, isUrgent: false };
+      return { text: '계산 오류', isExpired: false, isUrgent: false, isUpcoming: false, targetDate: undefined };
     }
   };
 
@@ -223,6 +274,60 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
     // 현재 캔버스와 같은 캔버스라면 이동안함.
     if (canvasId === Number(canvas_id)) {
       return;
+    }
+
+    // 선택된 캔버스 찾기
+    const selectedCanvas = canvases.find((c) => c.canvasId === canvasId);
+
+    if (selectedCanvas && selectedCanvas.type !== 'public') {
+      // 이벤트 캔버스인 경우에만 체크
+      const now = currentTime;
+      if (selectedCanvas.started_at) {
+        let startTime: Date;
+        try {
+          if (selectedCanvas.started_at.includes('T')) {
+            startTime = selectedCanvas.started_at.endsWith('Z')
+              ? new Date(selectedCanvas.started_at)
+              : new Date(selectedCanvas.started_at + 'Z');
+          } else {
+            startTime = new Date(selectedCanvas.started_at);
+          }
+
+          if (
+            !isNaN(startTime.getTime()) &&
+            now.getTime() < startTime.getTime()
+          ) {
+            // 아직 시작 전
+            toast.error('아직 시작되지 않은 캔버스입니다.', {
+              position: 'top-center',
+              autoClose: 2000,
+              hideProgressBar: true,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              progress: undefined,
+              theme: 'dark',
+              style: { backgroundColor: '#dc2626', color: 'white' }, // Tailwind red-600
+            });
+            return; // 페이지 이동 막기
+          }
+        } catch (error) {
+          console.error('Error parsing started_at for toast:', error);
+          // 에러 발생 시에도 페이지 이동 막고 메시지 표시
+          toast.error('캔버스 정보를 처리하는 중 오류가 발생했습니다.', {
+            position: 'top-center',
+            autoClose: 2000,
+            hideProgressBar: true,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: 'dark',
+            style: { backgroundColor: '#dc2626', color: 'white' },
+          });
+          return;
+        }
+      }
     }
 
     // 1. 모달 먼저 닫기
@@ -485,8 +590,10 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
                 {
                   canvases
                     .filter((canvas) => canvas.type !== 'public')
-                    .filter((canvas) => !isCanvasExpired(canvas.ended_at))
-                    .length
+                    .filter(
+                      (canvas) =>
+                        !isCanvasExpired(canvas.ended_at, canvas.started_at)
+                    ).length
                 }
                 개)
               </h3>
@@ -543,16 +650,38 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
             >
               {canvases
                 .filter((canvas) => canvas.type !== 'public')
-                .filter((canvas) => !isCanvasExpired(canvas.ended_at)) // 종료된 캔버스 제외
+                .filter((canvas) => !isCanvasExpired(canvas.ended_at, canvas.started_at)) // 종료된 캔버스 제외
                 .map((canvas) => {
                   const timeInfo = canvas.ended_at
-                    ? getTimeRemaining(canvas.ended_at)
+                    ? getTimeRemaining(canvas.ended_at, canvas.started_at)
                     : null;
+                  return { canvas, timeInfo }; // Return an object with canvas and timeInfo
+                })
+                .sort((a, b) => {
+                  // Sort logic
+                  const aIsUpcoming = a.timeInfo?.isUpcoming || false;
+                  const bIsUpcoming = b.timeInfo?.isUpcoming || false;
+
+                  // If one is upcoming and the other is not, the non-upcoming comes first
+                  if (aIsUpcoming && !bIsUpcoming) return 1; // a is upcoming, b is not -> b comes first
+                  if (!aIsUpcoming && bIsUpcoming) return -1; // a is not upcoming, b is -> a comes first
+
+                  // If both are upcoming or both are not upcoming, sort by targetDate
+                  if (a.timeInfo?.targetDate && b.timeInfo?.targetDate) {
+                    return a.timeInfo.targetDate.getTime() - b.timeInfo.targetDate.getTime();
+                  }
+                  return 0; // Should not happen if targetDate is always present when timeInfo is not null
+                })
+                .map(({ canvas, timeInfo }) => {
                   return (
                     <div
                       key={canvas.canvasId}
                       onClick={(e) => handleCanvasSelect(e, canvas.canvasId)}
-                      className='group canvas-rainbow-border block min-w-[200px] cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-gray-900/20'
+                      className={`group block min-w-[200px] cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-gray-900/20 ${
+                        timeInfo?.isUpcoming
+                          ? 'grayscale opacity-50 cursor-not-allowed'
+                          : 'canvas-rainbow-border'
+                      }`}
                     >
                       <div className='canvas-content flex flex-col p-3'>
                         <h3 className='mb-1 truncate font-medium text-white group-hover:text-gray-200'>
