@@ -328,7 +328,7 @@ export default function CanvasUIMobile({
       </div>
 
       {/* 확대/축소 버튼 */}
-      <div className='pointer-events-auto fixed bottom-[20px] right-[20px] z-[9999] flex flex-row gap-2'>
+      <div className='pointer-events-auto fixed right-[20px] bottom-[20px] z-[9999] flex flex-row gap-2'>
         <button
           onClick={onZoomIn}
           className='flex h-12 w-12 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
@@ -373,7 +373,7 @@ export default function CanvasUIMobile({
       <div
         className={`pointer-events-auto fixed z-[9999] rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-900/90 to-black/80 p-3 shadow-2xl backdrop-blur-xl transition-all duration-500 ease-out ${
           showPalette
-            ? 'top-[60px] right-1/2 translate-x-1/2 scale-100 opacity-100'
+            ? 'top-[80px] right-1/2 translate-x-1/2 scale-100 opacity-100'
             : 'top-[60px] right-[-300px] scale-95 opacity-0'
         }`}
       >

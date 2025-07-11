@@ -836,6 +836,7 @@ function PixelCanvas({
           );
         } else {
           setTimeLeft('캔버스 종료');
+          // 종료시 로직 추후 추가
           clearInterval(timerInterval);
         }
       } else {
@@ -898,7 +899,10 @@ function PixelCanvas({
     >
       <StarfieldCanvas viewPosRef={viewPosRef} />
       {timeLeft && (
-        <div className='bg-opacity-50 absolute top-4 left-1/2 z-10 -translate-x-1/2 rounded-lg bg-black px-4 py-2 text-lg font-bold text-white'>
+        <div
+          className='bg-opacity-50 sm:text-md absolute top-4 left-1/2 z-10 -translate-x-1/2 rounded-lg bg-black px-4 py-2 text-base font-bold text-white'
+          style={{ fontFamily: '"Press Start 2P", cursive' }}
+        >
           {timeLeft}
         </div>
       )}
