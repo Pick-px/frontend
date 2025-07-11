@@ -7,12 +7,14 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { useChatSocket } from '../SocketIntegration';
 import { useAuthStore } from '../../store/authStrore';
 import { useModalStore } from '../../store/modalStore';
+import { useChatStore } from '../../store/chatStore';
 
 // 임시로 사용할 가짜 메시지 데이터
 
 export type Group = {
   group_id: string;
   group_title: string;
+  made_by: string;
 };
 
 function Chat() {
@@ -24,10 +26,11 @@ function Chat() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [currentGroupId, setCurrentGroupId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false); // 로딩 상태 추가
-
   const canvas_id = useCanvasStore((state) => state.canvas_id);
+  const { leader, setLeader } = useChatStore();
   const { user, isLoggedIn } = useAuthStore();
-  const { openLoginModal, isGroupModalOpen, openChat, closeChat } = useModalStore();
+  const { openLoginModal, isGroupModalOpen, openChat, closeChat } =
+    useModalStore();
 
   // 채팅 소켓 연결 - 유효한 group_id가 있을 때만
   const { sendMessage: sendSocketMessage, leaveChat } = useChatSocket({
@@ -58,7 +61,9 @@ function Chat() {
     try {
       setCurrentGroupId(groupId);
       setIsLoading(true); // 로딩 시작
-      const newMessages = await chatService.getChatMessages(groupId);
+      const { newMessages, madeBy } =
+        await chatService.getChatMessages(groupId);
+      setLeader(madeBy);
       setMessages(newMessages); // 메시지 상태 업데이트
     } catch (error) {
       console.error(
@@ -114,7 +119,6 @@ function Chat() {
             groups: fetchedGroups,
             messages: initialMessages,
           } = await chatService.getChatInitMessages(canvas_id);
-
           setGroups(fetchedGroups);
           setCurrentGroupId(defaultGroupId);
           setMessages(initialMessages);
@@ -130,7 +134,9 @@ function Chat() {
   }, [isOpen, canvas_id]);
 
   return (
-    <div className={`fixed bottom-4 left-2 z-50 flex flex-col items-start ${!isOpen ? 'pointer-events-none' : ''}`}>
+    <div
+      className={`fixed bottom-4 left-2 z-50 flex flex-col items-start ${!isOpen ? 'pointer-events-none' : ''}`}
+    >
       {/* 채팅창 UI */}
       <div
         className={`mb-2 flex h-[500px] w-80 flex-col rounded-xl border border-white/30 bg-black/30 shadow-2xl backdrop-blur-md transition-all duration-300 ease-in-out ${isOpen ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'}`}
@@ -155,9 +161,13 @@ function Chat() {
                     : 'bg-white/10 text-gray-200 hover:bg-white/20'
                 }`}
               >
-                {group.group_title.length > 10
-                  ? `${group.group_title.substring(0, 10)}...`
-                  : group.group_title}
+                {group.made_by === user?.userId
+                  ? group.group_title.length > 5
+                    ? `👑 ${group.group_title.substring(0, 5)}...`
+                    : `👑 ${group.group_title}`
+                  : group.group_title.length > 5
+                    ? `${group.group_title.substring(0, 5)}...`
+                    : group.group_title}
               </button>
             ))}
           </div>
@@ -197,7 +207,7 @@ function Chat() {
             openChat(); // Synchronize with modal store
           }
         }}
-        className='flex h-10 w-10 items-center justify-center rounded-full bg-blue-500 text-white shadow-xl transition-transform hover:bg-blue-600 active:scale-90 pointer-events-auto'
+        className='pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full bg-blue-500 text-white shadow-xl transition-transform hover:bg-blue-600 active:scale-90'
       >
         {isOpen ? (
           // 닫기 아이콘 (X)

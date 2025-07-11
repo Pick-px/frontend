@@ -23,7 +23,11 @@ export const chatService = {
           new Date(a.timestamp || a.created_at).getTime() -
           new Date(b.timestamp || b.created_at).getTime()
       );
-      return { defaultGroupId, groups, messages: sortedMessages };
+      return {
+        defaultGroupId,
+        groups,
+        messages: sortedMessages,
+      };
     } catch (error) {
       console.error(`Failed to fetch message for chat ${canvasId}:`, error);
       throw error;
@@ -41,9 +45,8 @@ export const chatService = {
         params: { group_id: groupId, limit },
       });
       // 실제 API에서는 data.messages 형태로 올 수 있습니다.
-      const messages = response.data.data.messages;
-      // 메시지를 시간순으로 정렬
-      return messages.sort(
+      console.log(response.data.data);
+      const newMessages = response.data.data.messages.sort(
         (
           a: { timestamp: any; created_at: any },
           b: { timestamp: any; created_at: any }
@@ -51,6 +54,10 @@ export const chatService = {
           new Date(a.timestamp || a.created_at).getTime() -
           new Date(b.timestamp || b.created_at).getTime()
       );
+      const madeBy = response.data.data.group.made_by;
+
+      // 메시지를 시간순으로 정렬
+      return { newMessages, madeBy };
     } catch (error) {
       console.error(`Failed to fetch messages for group ${groupId}:`, error);
       throw error;

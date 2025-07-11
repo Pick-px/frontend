@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuthStore } from '../../store/authStrore';
 import { useCanvasUiStore } from '../../store/canvasUiStore';
+import { useChatStore } from '../../store/chatStore';
 
 export type Message = {
   messageId: string;
@@ -16,6 +17,7 @@ const MessageItem = React.memo(({ message }: { message: Message }) => {
   const currentUser = useAuthStore((state) => state.user);
   const setTargetPixel = useCanvasUiStore((state) => state.setTargetPixel);
   const isMyMessage = message.user.userId === currentUser?.userId;
+  const { leader } = useChatStore();
 
   const handleCoordinateClick = (x: number, y: number) => {
     setTargetPixel({ x, y });
@@ -41,7 +43,7 @@ const MessageItem = React.memo(({ message }: { message: Message }) => {
       parts.push(
         <span
           key={match.index}
-          className="text-blue-400 hover:underline cursor-pointer"
+          className='cursor-pointer text-blue-400 hover:underline'
           onClick={() => handleCoordinateClick(x, y)}
         >
           {fullMatch}
@@ -71,7 +73,9 @@ const MessageItem = React.memo(({ message }: { message: Message }) => {
     <div className={`flex flex-col ${messageContainerClasses} my-1`}>
       {!isMyMessage && (
         <div className='mb-1 ml-1 text-xs text-gray-400'>
-          {message.user.name}
+          {leader === message.user.userId
+            ? `👑 ${message.user.name}`
+            : message.user.name}
         </div>
       )}
       <div className={messageBubbleClasses}>
