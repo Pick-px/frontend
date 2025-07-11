@@ -8,6 +8,7 @@ export interface Canvas {
   size_y: number;
   type: string;
   ended_at: string;
+  started_at?: string; // Add started_at field
   status?: 'active' | 'inactive' | 'archived';
   // 향후 이미지 관련 필드 추가 예정
   // thumbnail?: string;        // 썸네일 이미지 URL
