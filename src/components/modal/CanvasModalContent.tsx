@@ -162,7 +162,7 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
       // 2. If not an upcoming canvas (startedAt not provided, or in the past/invalid), use endedAt
       if (!targetTime) { // If targetTime was not set by startedAt logic
         if (!endedAt || endedAt === 'null' || endedAt === 'undefined') {
-          return { text: '종료 시간 없음', isExpired: false, isUrgent: false, isUpcoming: false };
+          return { text: '종료 시간 없음', isExpired: false, isUrgent: false, isUpcoming: false, targetDate: undefined };
         }
 
         if (endedAt.includes('T')) {
@@ -178,13 +178,13 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
       // Handle invalid targetTime after all attempts
       if (!targetTime || isNaN(targetTime.getTime())) {
         console.warn('Invalid date:', endedAt, startedAt);
-        return { text: '날짜 오류', isExpired: false, isUrgent: false, isUpcoming: false };
+        return { text: '날짜 오류', isExpired: false, isUrgent: false, isUpcoming: false, targetDate: undefined };
       }
 
       const timeDiff = targetTime.getTime() - now.getTime();
 
       if (timeDiff <= 0) {
-        return { text: isUpcomingCanvas ? '시작됨' : '종료됨', isExpired: true, isUpcoming: false };
+        return { text: isUpcomingCanvas ? '시작됨' : '종료됨', isExpired: true, isUpcoming: false, targetDate: targetTime };
       }
 
       const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
@@ -210,7 +210,7 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
         isUrgent = true;
       }
 
-      return { text, isExpired: false, isUrgent, isUpcoming: isUpcomingCanvas };
+      return { text, isExpired: false, isUrgent, isUpcoming: isUpcomingCanvas, targetDate: targetTime };
     } catch (error) {
       console.error(
         'Error calculating time remaining:',
@@ -220,7 +220,7 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
         'startedAt:',
         startedAt
       );
-      return { text: '계산 오류', isExpired: false, isUrgent: false, isUpcoming: false };
+      return { text: '계산 오류', isExpired: false, isUrgent: false, isUpcoming: false, targetDate: undefined };
     }
   };
 
@@ -650,11 +650,29 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
             >
               {canvases
                 .filter((canvas) => canvas.type !== 'public')
-                .filter((canvas) => !isCanvasExpired(canvas.ended_at)) // 종료된 캔버스 제외
+                .filter((canvas) => !isCanvasExpired(canvas.ended_at, canvas.started_at)) // 종료된 캔버스 제외
                 .map((canvas) => {
                   const timeInfo = canvas.ended_at
                     ? getTimeRemaining(canvas.ended_at, canvas.started_at)
                     : null;
+                  return { canvas, timeInfo }; // Return an object with canvas and timeInfo
+                })
+                .sort((a, b) => {
+                  // Sort logic
+                  const aIsUpcoming = a.timeInfo?.isUpcoming || false;
+                  const bIsUpcoming = b.timeInfo?.isUpcoming || false;
+
+                  // If one is upcoming and the other is not, the non-upcoming comes first
+                  if (aIsUpcoming && !bIsUpcoming) return 1; // a is upcoming, b is not -> b comes first
+                  if (!aIsUpcoming && bIsUpcoming) return -1; // a is not upcoming, b is -> a comes first
+
+                  // If both are upcoming or both are not upcoming, sort by targetDate
+                  if (a.timeInfo?.targetDate && b.timeInfo?.targetDate) {
+                    return a.timeInfo.targetDate.getTime() - b.timeInfo.targetDate.getTime();
+                  }
+                  return 0; // Should not happen if targetDate is always present when timeInfo is not null
+                })
+                .map(({ canvas, timeInfo }) => {
                   return (
                     <div
                       key={canvas.canvasId}
