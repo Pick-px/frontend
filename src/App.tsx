@@ -1,11 +1,8 @@
-// App.tsx
-
-import PixelCanvas from './components/canvas/PixelCanvas';
-
-import React, { useRef, useEffect, useCallback, useState } from 'react'; // UI 상태 관리를 위해 import
+import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { useModalStore } from './store/modalStore';
+import { useCanvasStore } from './store/canvasStore'; // useCanvasStore import 추가
 
 import Modal from './components/modal/Modal';
 import { useAuthStore } from './store/authStrore';
@@ -15,8 +12,10 @@ import MyPageModalContent from './components/modal/MyPageModalContent';
 import LoginModalContent from './components/modal/LoginModalContent';
 import GroupModalContent from './components/modal/GroupModalContent';
 import CanvasModalContent from './components/modal/CanvasModalContent';
+import CanvasEndedModalContent from './components/modal/CanvasEndedModalContent'; // CanvasEndedModalContent import 추가
 import { toast } from 'react-toastify';
 import { jwtDecode } from 'jwt-decode';
+import PixelCanvas from './components/canvas/PixelCanvas';
 
 type DecodedToken = {
   sub: {
@@ -29,7 +28,6 @@ type DecodedToken = {
 };
 
 function App() {
-  // URL에서 ?canvas_id= 값을 읽어온다
   const { search } = useLocation();
   const canvas_id = new URLSearchParams(search).get('canvas_id') || '';
 
@@ -44,27 +42,23 @@ function App() {
     closeCanvasModal,
   } = useModalStore();
 
-  // if (!canvas_id) {
-  //   return <div className='text-red-500'> canvas_id 쿼리가 필요합니다.</div>;
-  // }
+  const { isCanvasEnded, setIsCanvasEnded } = useCanvasStore(); // isCanvasEnded 상태 가져오기
 
   const { isLoggedIn, setAuth, clearAuth } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
-  const [canvasLoading, setCanvasLoading] = useState(true);
+
+  // 캔버스 종료 모달 닫기 핸들러
+  const closeCanvasEndedModal = () => {
+    setIsCanvasEnded(false);
+  };
 
   useEffect(() => {
-    //=======canvas_id 파싱
-    const { search } = window.location;
-    const newId = new URLSearchParams(search).get('canvas_id') || '';
-    console.log('initial_canvas_id:', canvas_id);
-    //=======로그인========
     const authResultString = sessionStorage.getItem('authResult');
 
     if (authResultString) {
       sessionStorage.removeItem('authResult');
       const { accessToken, user } = JSON.parse(authResultString);
       setAuth(accessToken, user);
-
       setIsLoading(false);
     } else {
       const checkLoginStatus = async () => {
@@ -77,11 +71,8 @@ function App() {
             userId: decodedToken.sub.userId,
             nickname: decodedToken.sub.nickName,
           };
-          console.log(user);
           setAuth(newAccessToken, user);
         } catch (error) {
-          // 실패 시 (유효한 RT 없음) 로그아웃 상태
-
           clearAuth();
         } finally {
           setIsLoading(false);
@@ -93,11 +84,7 @@ function App() {
 
   return (
     <main className='touch-action-none flex h-screen w-screen items-center justify-center bg-[#2d3748]'>
-      <PixelCanvas
-        canvas_id={canvas_id}
-        key={canvas_id}
-        onLoadingChange={setCanvasLoading}
-      />
+      <PixelCanvas canvas_id={canvas_id} key={canvas_id} />
       <Modal isOpen={isLoginModalOpen} onClose={closeLoginModal}>
         <LoginModalContent onClose={closeLoginModal} />
       </Modal>
@@ -110,21 +97,13 @@ function App() {
       <Modal isOpen={isCanvasModalOpen} onClose={closeCanvasModal}>
         <CanvasModalContent onClose={closeCanvasModal} />
       </Modal>
-      {/* 로딩 완료 후 채팅 컴포넌트 표시 */}
-      {!isLoading &&
-        !canvasLoading &&
-        (() => {
-          try {
-            return <Chat />;
-          } catch (error) {
-            console.error('Chat 컴포넌트 에러:', error);
-            return (
-              <div className='fixed bottom-5 left-5 text-red-500'>
-                채팅 로드 실패
-              </div>
-            );
-          }
-        })()}
+      {/* 캔버스 종료 모달 */}
+      <Modal isOpen={isCanvasEnded} onClose={closeCanvasEndedModal} disableOutsideClick={true}>
+        <CanvasEndedModalContent onClose={closeCanvasEndedModal} />
+      </Modal>
+      {!isLoading && (
+        <Chat />
+      )}
     </main>
   );
 }

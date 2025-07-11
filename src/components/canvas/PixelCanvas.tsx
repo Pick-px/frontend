@@ -28,7 +28,7 @@ function PixelCanvas({
   canvas_id: initialCanvasId,
   onLoadingChange,
 }: PixelCanvasProps) {
-  const { canvas_id, setCanvasId } = useCanvasStore();
+  const { canvas_id, setCanvasId, setIsCanvasEnded } = useCanvasStore();
 
   const rootRef = useRef<HTMLDivElement>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -836,7 +836,7 @@ function PixelCanvas({
           );
         } else {
           setTimeLeft('캔버스 종료');
-          // 종료시 로직 추후 추가
+          setIsCanvasEnded(true);
           clearInterval(timerInterval);
         }
       } else {

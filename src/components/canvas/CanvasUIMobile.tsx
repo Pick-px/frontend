@@ -16,7 +16,7 @@ type CanvasUIProps = {
   onImageAttach: (file: File) => void;
   onImageDelete: () => void;
   hasImage: boolean;
-  colors: string[];
+  
   onZoomIn: () => void;
   onZoomOut: () => void;
 };
@@ -27,10 +27,21 @@ export default function CanvasUIMobile({
   onImageAttach,
   onImageDelete,
   hasImage,
-  colors,
   onZoomIn,
   onZoomOut,
 }: CanvasUIProps) {
+  const colors = [
+    '#FF0000', // Red
+    '#FFA500', // Orange
+    '#FFFF00', // Yellow
+    '#008000', // Green
+    '#0000FF', // Blue
+    '#4B0082', // Indigo
+    '#EE82EE', // Violet
+    '#000000', // Black
+    '#FFFFFF', // White
+    '#808080', // Gray
+  ];
   const [isPressed, setIsPressed] = useState(false);
   const [showConfirmEffect, setShowConfirmEffect] = useState(false);
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
