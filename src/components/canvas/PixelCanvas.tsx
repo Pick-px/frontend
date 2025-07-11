@@ -53,6 +53,9 @@ function PixelCanvas({
   // state를 각각 가져오도록 하여 불필요한 리렌더링을 방지합니다.
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
   const [hasError, setHasError] = useState(false);
+  const [canvasType, setCanvasType] = useState<string | null>(null);
+  const [endedAt, setEndedAt] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState<string | null>(null);
 
   const color = useCanvasUiStore((state) => state.color);
   const setHoverPos = useCanvasUiStore((state) => state.setHoverPos);
@@ -752,6 +755,8 @@ function PixelCanvas({
       onLoadingChange,
       setShowCanvas,
       INITIAL_BACKGROUND_COLOR,
+      setCanvasType,
+      setEndedAt,
     });
   }, [
     initialCanvasId,
@@ -761,6 +766,8 @@ function PixelCanvas({
     onLoadingChange,
     setShowCanvas,
     setHasError,
+    setCanvasType,
+    setEndedAt,
   ]);
 
   useEffect(() => {
@@ -805,6 +812,43 @@ function PixelCanvas({
       cancelAnimationFrame(animationFrameId);
     };
   }, [cooldown, draw]);
+
+  // Countdown timer for event canvases
+  useEffect(() => {
+    let timerInterval: number;
+
+    const calculateTimeLeft = () => {
+      if (canvasType === 'event' && endedAt) {
+        const endDate = new Date(endedAt);
+        const now = new Date();
+        const difference = endDate.getTime() - now.getTime();
+
+        if (difference > 0) {
+          const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+          const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
+          const minutes = Math.floor((difference / (1000 * 60)) % 60);
+          const seconds = Math.floor((difference / 1000) % 60);
+
+          setTimeLeft(
+            `D-${days} ${String(hours).padStart(2, '0')}:${String(
+              minutes
+            ).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+          );
+        } else {
+          setTimeLeft('캔버스 종료');
+          // 종료시 로직 추후 추가
+          clearInterval(timerInterval);
+        }
+      } else {
+        setTimeLeft(null);
+      }
+    };
+
+    calculateTimeLeft(); // Initial calculation
+    timerInterval = setInterval(calculateTimeLeft, 1000); // Update every second
+
+    return () => clearInterval(timerInterval);
+  }, [canvasType, endedAt]);
 
   useEffect(() => {
     const rootElement = rootRef.current;
@@ -854,6 +898,14 @@ function PixelCanvas({
       }}
     >
       <StarfieldCanvas viewPosRef={viewPosRef} />
+      {timeLeft && (
+        <div
+          className='bg-opacity-50 sm:text-md absolute top-4 left-1/2 z-10 -translate-x-1/2 rounded-lg bg-black px-4 py-2 text-base font-bold text-white'
+          style={{ fontFamily: '"Press Start 2P", cursive' }}
+        >
+          {timeLeft}
+        </div>
+      )}
       {cooldown && (
         <>
           <div className='pointer-events-none absolute inset-0 border-4 border-red-500/30' />
