@@ -12,6 +12,8 @@ interface FetchCanvasDataParams {
   onLoadingChange?: (loading: boolean) => void;
   setShowCanvas: (show: boolean) => void;
   INITIAL_BACKGROUND_COLOR: string;
+  setCanvasType: (type: string) => void;
+  setEndedAt: (endedAt: string | null) => void;
 }
 
 export const fetchCanvasData = async ({
@@ -24,6 +26,8 @@ export const fetchCanvasData = async ({
   onLoadingChange,
   setShowCanvas,
   INITIAL_BACKGROUND_COLOR,
+  setCanvasType,
+  setEndedAt,
 }: FetchCanvasDataParams) => {
   setIsLoading(true);
   setHasError(false);
@@ -63,6 +67,9 @@ export const fetchCanvasData = async ({
       canvasSize: fetchedCanvasSize,
       endedAt: fetchedEndedAt,
     } = json.data;
+
+    setCanvasType(fetchedType);
+    setEndedAt(fetchedEndedAt);
 
     if (fetchedEndedAt) {
       const endedAt = new Date(fetchedEndedAt);
