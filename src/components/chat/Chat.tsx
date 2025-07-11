@@ -7,6 +7,7 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { useChatSocket } from '../SocketIntegration';
 import { useAuthStore } from '../../store/authStrore';
 import { useModalStore } from '../../store/modalStore';
+import { useChatStore } from '../../store/chatStore';
 
 // 임시로 사용할 가짜 메시지 데이터
 
@@ -25,8 +26,8 @@ function Chat() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [currentGroupId, setCurrentGroupId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false); // 로딩 상태 추가
-  const [leader, setLeader] = useState<string | null>(null); // 그룹 리더 아이디
   const canvas_id = useCanvasStore((state) => state.canvas_id);
+  const { leader, setLeader } = useChatStore();
   const { user, isLoggedIn } = useAuthStore();
   const { openLoginModal, isGroupModalOpen, openChat, closeChat } =
     useModalStore();
@@ -161,11 +162,11 @@ function Chat() {
                 }`}
               >
                 {group.made_by === user?.userId
-                  ? group.group_title.length > 10
-                    ? `👑 ${group.group_title.substring(0, 10)}...`
-                    : group.group_title
-                  : group.group_title.length > 10
-                    ? `${group.group_title.substring(0, 10)}...`
+                  ? group.group_title.length > 5
+                    ? `👑 ${group.group_title.substring(0, 5)}...`
+                    : `👑 ${group.group_title}`
+                  : group.group_title.length > 5
+                    ? `${group.group_title.substring(0, 5)}...`
                     : group.group_title}
               </button>
             ))}
