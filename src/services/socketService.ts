@@ -114,6 +114,34 @@ class SocketService {
       this.socket.off('chat_message', callback);
     }
   }
+
+  //=== 이미지 관련 ===//
+  // 이미지 업로드 메시지 전송
+  sendImageMessage(data: {
+    group_id: string;
+    url: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }) {
+    if (this.socket) {
+      this.socket.emit('upload_img', data);
+    }
+  }
+
+  // 이미지 업로드 알림 수신 (팀원들이 받는 이벤트)
+  onSendImage(callback: (message: any) => void) {
+    if (this.socket) {
+      this.socket.on('send_img', callback);
+    }
+  }
+  // 이미지 업로드 알림 리스너 제거
+  offSendImage(callback: (message: any) => void) {
+    if (this.socket) {
+      this.socket.off('send_img', callback);
+    }
+  }
   // 채팅 에러 수신
   onChatError(callback: (error: { message: string }) => void) {
     if (this.socket) {

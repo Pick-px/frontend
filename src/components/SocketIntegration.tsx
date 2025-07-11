@@ -16,6 +16,7 @@ interface ChatSocketProps {
     message: string;
     created_at: string;
   }) => void;
+  onImageReceived?: (imageData: any) => void;
   group_id: string;
   user_id: string;
 }
@@ -45,6 +46,7 @@ export const usePixelSocket = ({
 
 export const useChatSocket = ({
   onMessageReceived,
+  onImageReceived,
   group_id,
   user_id,
 }: ChatSocketProps) => {
@@ -52,12 +54,13 @@ export const useChatSocket = ({
     console.error('채팅 에러:', error);
   }, []);
 
-  const { sendMessage, leaveChat } = useChatSocketHook(
+  const { sendMessage, sendImageMessage, leaveChat } = useChatSocketHook(
     onMessageReceived,
     handleChatError,
+    onImageReceived,
     group_id,
     user_id
   );
 
-  return { sendMessage, leaveChat };
+  return { sendMessage, sendImageMessage, leaveChat };
 };

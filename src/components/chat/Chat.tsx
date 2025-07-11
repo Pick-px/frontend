@@ -7,7 +7,10 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { useChatSocket } from '../SocketIntegration';
 import { useAuthStore } from '../../store/authStrore';
 import { useModalStore } from '../../store/modalStore';
+import { useCanvasUiStore } from '../../store/canvasUiStore';
 import { useChatStore } from '../../store/chatStore';
+import { toast } from 'react-toastify';
+import socketService from '../../services/socketService';
 
 // 임시로 사용할 가짜 메시지 데이터
 
@@ -33,9 +36,16 @@ function Chat() {
     useModalStore();
 
   // 채팅 소켓 연결 - 유효한 group_id가 있을 때만
-  const { sendMessage: sendSocketMessage, leaveChat } = useChatSocket({
+  const {
+    sendMessage: sendChatMessage,
+    sendImageMessage,
+    leaveChat,
+  } = useChatSocket({
+    // 일반 채팅 메시지 수신
     onMessageReceived: (message) => {
-      console.log('메시지 수신:', message);
+      console.log('채팅 메시지 수신:', message);
+
+      // 일반 메시지 처리
       const newMessage: Message = {
         messageId: message.id.toString(),
         user: {
@@ -46,6 +56,33 @@ function Chat() {
         timestamp: message.created_at,
       };
       setMessages((prev) => [...prev, newMessage]);
+    },
+
+    // 이미지 업로드 알림 수신
+    onImageReceived: (message) => {
+      console.log('이미지 업로드 알림 수신:', message);
+
+      // 이미지 정보 추출
+      const { url, x, y, width, height } = message;
+
+      // 새로운 메시지 추가 - 방장이 이미지를 업로드했음을 알리는 메시지
+      const newMessage: Message = {
+        messageId: Date.now().toString(),
+        user: {
+          userId: '',
+          name: '공지',
+        },
+        content: ` 📣 방장이 새로운 이미지를 업로드했습니다. 화면에 표시됩니다.`,
+        timestamp: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, newMessage]);
+
+      // 이미지 이벤트 바로 발생 - 이미지 로딩은 PixelCanvas에서 처리
+      document.dispatchEvent(
+        new CustomEvent('group-image-received', {
+          detail: { url, x, y, width, height },
+        })
+      );
     },
 
     group_id: currentGroupId || '0', // 유효하지 않은 group_id 사용
@@ -65,6 +102,19 @@ function Chat() {
         await chatService.getChatMessages(groupId);
       setLeader(madeBy);
       setMessages(newMessages); // 메시지 상태 업데이트
+
+      // 그룹 변경 시 소켓 연결 재설정
+      if (isOpen) {
+        // 기존 채팅방 나가기
+        leaveChat();
+
+        // 잠시 후 새 채팅방 입장 (소켓 연결 재설정을 위해)
+        setTimeout(() => {
+          // 새 채팅방 입장
+          socketService.joinChat({ group_id: groupId });
+          console.log(`채팅방 재입장: group_id=${groupId}`);
+        }, 300);
+      }
     } catch (error) {
       console.error(
         `${groupId} 그룹의 메시지를 불러오는 데 실패했습니다.`,
@@ -90,7 +140,7 @@ function Chat() {
       userId: user?.userId,
     });
     if (currentGroupId && user?.userId) {
-      sendSocketMessage(text);
+      sendChatMessage(text);
     }
   };
 
@@ -143,10 +193,133 @@ function Chat() {
       >
         <div className='flex h-full flex-col'>
           {/* 헤더: 동적 제목 표시 */}
-          <div className='flex-shrink-0 border-b border-white/30 p-3'>
+          <div className='flex flex-shrink-0 items-center justify-between border-b border-white/30 p-3'>
             <h3 className='text-md font-semibold text-ellipsis text-white'>
               {chatTitle}
             </h3>
+            {leader === user?.userId && (
+              <div className='flex space-x-2'>
+                <button
+                  className='text-white/70 hover:text-white'
+                  title='이미지 편집'
+                  onClick={() => {
+                    // 이미지 편집 기능 추가 예정
+                  }}
+                >
+                  <svg
+                    xmlns='http://www.w3.org/2000/svg'
+                    className='h-5 w-5'
+                    fill='none'
+                    viewBox='0 0 24 24'
+                    stroke='currentColor'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z'
+                    />
+                  </svg>
+                </button>
+                <label
+                  className='cursor-pointer text-white/70 hover:text-white'
+                  title='이미지 업로드'
+                >
+                  <svg
+                    xmlns='http://www.w3.org/2000/svg'
+                    className='h-5 w-5'
+                    fill='none'
+                    viewBox='0 0 24 24'
+                    stroke='currentColor'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'
+                    />
+                  </svg>
+                  <input
+                    type='file'
+                    accept='image/jpeg,image/jpg,image/png,image/gif,image/webp'
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        // 이미지 첨부 처리
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          const img = new Image();
+                          img.onload = () => {
+                            // 이미지 로드 완료 후 처리
+                            useCanvasUiStore.getState().setShowPalette(false);
+
+                            // 이미지 첨부 이벤트 발생 - 메인 화면과 동일한 기능
+                            document.dispatchEvent(
+                              new CustomEvent('canvas-image-attach', {
+                                detail: {
+                                  file,
+                                  // 그룹 이미지 업로드를 위한 추가 정보
+                                  groupUpload: true,
+                                  groupId: currentGroupId,
+                                  onConfirm: async (imageData: {
+                                    x: number;
+                                    y: number;
+                                    width: number;
+                                    height: number;
+                                  }) => {
+                                    if (!currentGroupId) return;
+
+                                    try {
+                                      // 1. 업로드 URL 요청
+                                      const uploadUrl =
+                                        await chatService.getGroupImageUploadUrl(
+                                          currentGroupId,
+                                          file.type
+                                        );
+
+                                      // 2. 해당 URL에 이미지 업로드
+                                      await fetch(uploadUrl, {
+                                        method: 'PUT',
+                                        body: file,
+                                        headers: {
+                                          'Content-Type': file.type,
+                                        },
+                                      });
+
+                                      // 3. 소켓으로 이미지 정보 전송
+                                      const imageUrl = uploadUrl.split('?')[0]; // URL에서 쿼리 파라미터 제거
+
+                                      // 소켓으로 이미지 정보 전송
+                                      sendImageMessage({
+                                        url: imageUrl,
+                                        group_id: currentGroupId,
+                                        x: imageData.x,
+                                        y: imageData.y,
+                                        width: imageData.width,
+                                        height: imageData.height,
+                                      });
+                                    } catch (error) {
+                                      console.error(
+                                        '그룹 이미지 업로드 실패:',
+                                        error
+                                      );
+                                    }
+                                  },
+                                },
+                              })
+                            );
+                          };
+                          img.src = event.target?.result as string;
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                      e.target.value = '';
+                    }}
+                    className='hidden'
+                  />
+                </label>
+              </div>
+            )}
           </div>
 
           {/* 그룹 목록 탭 */}
