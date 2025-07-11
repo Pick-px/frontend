@@ -46,6 +46,7 @@ function PixelCanvas({
     y: number;
     color: string;
   } | null>(null);
+  const flashingPixelRef = useRef<{ x: number; y: number } | null>(null);
 
   const imageTransparencyRef = useRef(0.5);
 
@@ -291,6 +292,26 @@ function PixelCanvas({
       }
 
       pctx.restore();
+    }
+
+    // Flashing pixel effect
+    if (flashingPixelRef.current) {
+      const { x, y } = flashingPixelRef.current;
+      const currentTime = Date.now();
+      const isVisible = Math.floor(currentTime / 500) % 2 === 0; // Blink every 500ms
+
+      if (isVisible) {
+        const flashCtx = previewCanvasRef.current?.getContext('2d');
+        if (flashCtx) {
+          flashCtx.save();
+          flashCtx.translate(viewPosRef.current.x, viewPosRef.current.y);
+          flashCtx.scale(scaleRef.current, scaleRef.current);
+          flashCtx.strokeStyle = 'rgba(255, 0, 0, 0.9)'; // Red border
+          flashCtx.lineWidth = 4 / scaleRef.current;
+          flashCtx.strokeRect(x, y, 1, 1);
+          flashCtx.restore();
+        }
+      }
     }
   }, [canvasSize, imagePosition, imageSize, isImageFixed, imageMode]);
 
@@ -657,8 +678,10 @@ function PixelCanvas({
 
     handleCooltime();
     previewPixelRef.current = { x: pos.x, y: pos.y, color };
+    flashingPixelRef.current = { x: pos.x, y: pos.y }; // Set flashing pixel
     draw();
     sendPixel({ x: pos.x, y: pos.y, color });
+    // The flashingPixelRef will now be cleared when cooldown ends, not after 1 second.
     setTimeout(() => {
       previewPixelRef.current = null;
       pos.color = 'transparent';
@@ -763,6 +786,25 @@ function PixelCanvas({
       setTargetPixel(null);
     }
   }, [targetPixel, centerOnWorldPixel, setTargetPixel]);
+
+  // Animation loop for flashing pixel
+  useEffect(() => {
+    let animationFrameId: number;
+
+    const animate = () => {
+      draw();
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    // Start animation loop if there's a cooldown or a pixel is flashing
+    if (cooldown || flashingPixelRef.current) {
+      animationFrameId = requestAnimationFrame(animate);
+    }
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [cooldown, draw]);
 
   useEffect(() => {
     const rootElement = rootRef.current;
