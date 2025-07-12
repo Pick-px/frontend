@@ -955,6 +955,7 @@ function PixelCanvas({
           hasImage={!!imageCanvasRef.current}
           onZoomIn={handleZoomIn}
           onZoomOut={handleZoomOut}
+          canvasType={canvasType === 'event' ? 'event' : 'normal'}
         />
       )}
       {showImageControls && !isImageFixed && (
