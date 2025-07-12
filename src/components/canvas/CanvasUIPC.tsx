@@ -364,8 +364,8 @@ export default function CanvasUIPC({
         }`}
       >
         {/* 좌표 표시창 */}
-        <div className='pointer-events-none top-[100px] right-[20px] z-[9999] w-[100px] rounded-[8px] bg-transparent p-[10px] text-center text-xs text-white'>
-          {hoverPos ? `(${hoverPos.x}, ${hoverPos.y})` : 'OutSide'}
+        <div className='pointer-events-none top-[100px] right-[20px] z-[9999] w-20 rounded-[8px] bg-transparent p-[10px] text-center text-xs font-bold text-white'>
+          {hoverPos ? `(${hoverPos.x},${hoverPos.y})` : 'OutSide'}
         </div>
         <input
           type='color'
@@ -376,7 +376,7 @@ export default function CanvasUIPC({
             onSelectColor(newColor);
           }}
           id='color-picker'
-          className='mb-3 h-[40px] w-full cursor-pointer rounded-[4px] border-2 border-solid border-white p-0'
+          className='mb-3 h-[40px] w-20 cursor-pointer rounded-[4px] border-2 border-solid border-white p-0'
           title='색상 선택'
         />
         <button
