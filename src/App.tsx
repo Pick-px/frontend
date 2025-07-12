@@ -17,6 +17,8 @@ import GroupModalContent from './components/modal/GroupModalContent';
 import CanvasModalContent from './components/modal/CanvasModalContent';
 import { toast } from 'react-toastify';
 import { jwtDecode } from 'jwt-decode';
+import AlbumModalContent from './components/modal/AlbumModalContent';
+import HelpModalContent from './components/modal/HelpModalContent';
 
 type DecodedToken = {
   sub: {
@@ -42,6 +44,10 @@ function App() {
     closeGroupModal,
     isCanvasModalOpen,
     closeCanvasModal,
+    isAlbumModalOpen,
+    closeAlbumModal,
+    isHelpModalOpen,
+    closeHelpModal,
   } = useModalStore();
 
   // if (!canvas_id) {
@@ -109,6 +115,12 @@ function App() {
       </Modal>
       <Modal isOpen={isCanvasModalOpen} onClose={closeCanvasModal}>
         <CanvasModalContent onClose={closeCanvasModal} />
+      </Modal>
+      <Modal isOpen={isAlbumModalOpen} onClose={closeAlbumModal}>
+        <AlbumModalContent onClose={closeAlbumModal} />
+      </Modal>
+      <Modal isOpen={isHelpModalOpen} onClose={closeHelpModal}>
+        <HelpModalContent />
       </Modal>
       {/* 로딩 완료 후 채팅 컴포넌트 표시 */}
       {!isLoading &&
