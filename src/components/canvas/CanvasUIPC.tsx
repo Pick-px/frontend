@@ -64,9 +64,9 @@ export default function CanvasUIPC({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    showInstructionsToast();
-  }, []);
+  // useEffect(() => {
+  //   showInstructionsToast();
+  // }, []);
 
   useEffect(() => {
     if (!isMenuOpen) return;
@@ -87,24 +87,13 @@ export default function CanvasUIPC({
   return (
     <>
       <ToastContainer />
-      {/* 컬러 피커 */}
-      <div className='pointer-events-auto fixed top-[10px] left-[10px] z-[9999] flex gap-2'>
-        <input
-          type='color'
-          value={color}
-          onChange={(e) => {
-            const newColor = e.target.value;
-            setColor(newColor);
-            onSelectColor(newColor);
-          }}
-          className='h-[40px] w-[40px] cursor-pointer rounded-[4px] border-2 border-solid border-white p-0'
-          title='색상 선택'
-        />
+      {/* 이미지 업로드 */}
+      <div className='pointer-events-auto fixed bottom-4 left-14 z-[9999] flex gap-2'>
         {onImageAttach && (
           <div className='flex flex-col gap-1'>
             <div className='flex items-center gap-2'>
               <label
-                className='flex h-[40px] w-[40px] cursor-pointer items-center justify-center rounded-[4px] border-2 border-solid border-white bg-gray-700 text-white transition-colors duration-200 hover:bg-gray-600'
+                className='flex h-[40px] w-[40px] cursor-pointer items-center justify-center rounded-full bg-gray-700 text-white transition-colors duration-200 hover:bg-gray-600'
                 title='이미지 첨부 (JPG, PNG, GIF, WebP)'
               >
                 <svg
@@ -189,7 +178,7 @@ export default function CanvasUIPC({
       </div>
       <div
         ref={menuRef}
-        className='pointer-events-auto fixed top-[60px] left-[10px] z-60'
+        className='pointer-events-auto fixed top-[10px] left-[10px] z-60'
       >
         {/* 항상 보이는 메뉴 토글 버튼 (햄버거 아이콘) */}
         <button
@@ -365,19 +354,31 @@ export default function CanvasUIPC({
           </div>
         )}
       </div>
-      {/* 좌표 표시창 */}
-      <div className='pointer-events-none fixed right-[20px] bottom-[20px] z-[9999] rounded-[8px] bg-[rgba(0,0,0,0.8)] p-[10px] text-white'>
-        {hoverPos ? `(${hoverPos.x}, ${hoverPos.y})` : 'OutSide'}
-      </div>
 
       {/* 팔레트 */}
       <div
-        className={`pointer-events-auto fixed top-[100px] z-[9999] rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-900/90 to-black/80 p-5 shadow-2xl backdrop-blur-xl transition-all duration-500 ease-out ${
+        className={`pointer-events-auto fixed top-1/2 z-[9999] -translate-y-1/2 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-900/90 to-black/80 p-5 shadow-2xl backdrop-blur-xl transition-all duration-500 ease-out ${
           showPalette
             ? 'right-[20px] scale-100 opacity-100'
             : 'right-[-300px] scale-95 opacity-0'
         }`}
       >
+        {/* 좌표 표시창 */}
+        <div className='pointer-events-none top-[100px] right-[20px] z-[9999] w-20 rounded-[8px] bg-transparent p-[10px] text-center text-xs font-bold text-white'>
+          {hoverPos ? `(${hoverPos.x},${hoverPos.y})` : 'OutSide'}
+        </div>
+        <input
+          type='color'
+          value={color}
+          onChange={(e) => {
+            const newColor = e.target.value;
+            setColor(newColor);
+            onSelectColor(newColor);
+          }}
+          id='color-picker'
+          className='mb-3 h-[40px] w-20 cursor-pointer rounded-[4px] border-2 border-solid border-white p-0'
+          title='색상 선택'
+        />
         <button
           onClick={clearSelectedPixel}
           className='absolute top-0 right-1 cursor-pointer p-1 text-gray-400 transition-colors hover:text-white'

@@ -39,3 +39,12 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.5);
 }
+
+#color-picker {
+  /* border-radius: 30px; */
+  border: 0.3px solid #1e293b;
+}
+
+#color-picker::-webkit-color-swatch {
+  border: none;
+}
