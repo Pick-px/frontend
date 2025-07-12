@@ -1,4 +1,5 @@
 import apiClient from '../../services/apiClient';
+import { useAuthStore } from '../../store/authStrore';
 
 export const chatService = {
   /**
@@ -60,6 +61,37 @@ export const chatService = {
       return { newMessages, madeBy };
     } catch (error) {
       console.error(`Failed to fetch messages for group ${groupId}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * 그룹 이미지 업로드를 위한 URL 요청
+   * @param groupId - 그룹 ID
+   * @param contentType - 이미지 타입 (예: image/png)
+   */
+  async getGroupImageUploadUrl(groupId: string, contentType: string) {
+    try {
+      // authStore에서 토큰 가져오기
+      const { accessToken } = useAuthStore.getState();
+      const response = await apiClient.post(
+        '/group/upload',
+        {
+          group_id: groupId,
+          contentType: contentType,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      return response.data.url;
+    } catch (error) {
+      console.error(
+        `Failed to get image upload URL for group ${groupId}:`,
+        error
+      );
       throw error;
     }
   },

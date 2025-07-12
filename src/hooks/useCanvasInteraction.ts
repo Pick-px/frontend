@@ -3,6 +3,7 @@ import { MIN_SCALE, MAX_SCALE } from '../components/canvas/canvasConstants';
 import { INITIAL_POSITION } from '../components/canvas/canvasConstants';
 import { useModalStore } from '../store/modalStore';
 import { useCanvasUiStore } from '../store/canvasUiStore';
+import { useAuthStore } from '../store/authStrore';
 
 interface UseCanvasInteractionProps {
   // Refs from parent
@@ -98,6 +99,7 @@ export const useCanvasInteraction = ({
   const lastTouchPosRef = useRef<{ x: number; y: number } | null>(null);
   const { isChatOpen } = useModalStore();
   const cooldown = useCanvasUiStore((state) => state.cooldown);
+  const { isLoggedIn } = useAuthStore();
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -445,7 +447,7 @@ export const useCanvasInteraction = ({
           moved = true;
           break;
         case 'Enter':
-          if (!isChatOpen && !cooldown) {
+          if (!isChatOpen && !cooldown && isLoggedIn) {
             handleConfirm();
           }
           break;
