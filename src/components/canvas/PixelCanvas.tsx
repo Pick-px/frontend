@@ -9,6 +9,7 @@ import { toast } from 'react-toastify';
 import { fetchCanvasData as fetchCanvasDataUtil } from '../../api/canvasFetch';
 import NotFoundPage from '../../pages/NotFoundPage';
 import { useCanvasInteraction } from '../../hooks/useCanvasInteraction';
+import useSound from 'use-sound';
 
 import {
   INITIAL_POSITION,
@@ -53,6 +54,12 @@ function PixelCanvas({
   // state를 각각 가져오도록 하여 불필요한 리렌더링을 방지합니다.
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
   const [hasError, setHasError] = useState(false);
+  const [canvasType, setCanvasType] = useState<string | null>(null);
+  const [endedAt, setEndedAt] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState<string | null>(null);
+  const [playCountDown, { stop: stopCountDown }] = useSound('/count_down.mp3', {
+    volume: 0.3,
+  });
 
   const color = useCanvasUiStore((state) => state.color);
   const setHoverPos = useCanvasUiStore((state) => state.setHoverPos);
@@ -179,8 +186,12 @@ function PixelCanvas({
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(src, 0, 0);
 
-      // 이미지 편집 모드일 때만 격자 그리기
-      if (!isImageFixed && imageCanvasRef.current) {
+      // 이미지 편집 모드일 때만 격자 그리기 (방장 이미지는 제외)
+      if (
+        !isImageFixed &&
+        imageCanvasRef.current &&
+        !(imageCanvasRef.current as any)._isGroupImage
+      ) {
         ctx.strokeStyle = 'rgba(255,255,255, 0.12)';
         ctx.lineWidth = 1 / scaleRef.current;
         ctx.beginPath();
@@ -197,27 +208,37 @@ function PixelCanvas({
 
       // 이미지 렌더링
       if (imageCanvasRef.current) {
-        ctx.globalAlpha = imageTransparencyRef.current;
-        ctx.imageSmoothingEnabled = false;
-        if (!isImageFixed) {
-          // 이미지 경계선
-          ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)';
-          ctx.lineWidth = 2 / scaleRef.current;
-          ctx.strokeRect(
-            imagePosition.x - 1,
-            imagePosition.y - 1,
-            imageSize.width + 2,
-            imageSize.height + 2
+        try {
+          // 투명도 설정
+          ctx.globalAlpha = imageTransparencyRef.current;
+          ctx.imageSmoothingEnabled = false;
+
+          // 편집 모드일 때 경계선 표시 (방장 이미지는 제외)
+          if (!isImageFixed && !(imageCanvasRef.current as any)._isGroupImage) {
+            ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)';
+            ctx.lineWidth = 2 / scaleRef.current;
+            ctx.strokeRect(
+              imagePosition.x - 1,
+              imagePosition.y - 1,
+              imageSize.width + 2,
+              imageSize.height + 2
+            );
+          }
+
+          // 이미지 그리기
+          ctx.drawImage(
+            imageCanvasRef.current,
+            imagePosition.x,
+            imagePosition.y,
+            imageSize.width,
+            imageSize.height
           );
+
+          // 투명도 초기화
+          ctx.globalAlpha = 1.0;
+        } catch (error) {
+          console.error('이미지 그리기 실패:', error);
         }
-        ctx.drawImage(
-          imageCanvasRef.current,
-          imagePosition.x,
-          imagePosition.y,
-          imageSize.width,
-          imageSize.height
-        );
-        ctx.globalAlpha = 1.0;
 
         if (!isImageFixed) {
           // 리사이즈 핸들 (네모) - 이미지 위에 그리기
@@ -317,7 +338,7 @@ function PixelCanvas({
 
   // 이미지 첨부 핸들러
   const handleImageAttach = useCallback(
-    (file: File) => {
+    (file: File, options?: any) => {
       // 팔레트 닫기
       setShowPalette(false);
 
@@ -421,7 +442,19 @@ function PixelCanvas({
     setIsImageFixed(true);
     setShowImageControls(false);
     toast.success('이미지가 고정되었습니다!');
-  }, [setIsImageFixed, setShowImageControls]);
+
+    // 그룹 이미지 업로드 처리를 위한 이벤트 발생
+    document.dispatchEvent(
+      new CustomEvent('group-image-confirmed', {
+        detail: {
+          x: imagePosition.x,
+          y: imagePosition.y,
+          width: imageSize.width,
+          height: imageSize.height,
+        },
+      })
+    );
+  }, [setIsImageFixed, setShowImageControls, imagePosition, imageSize]);
 
   // 이미지 취소
   const cancelImage = useCallback(() => {
@@ -681,13 +714,18 @@ function PixelCanvas({
     flashingPixelRef.current = { x: pos.x, y: pos.y }; // Set flashing pixel
     draw();
     sendPixel({ x: pos.x, y: pos.y, color });
+
+    // 10초 카운트 다운 소리
+    // playCountDown();
+
     // The flashingPixelRef will now be cleared when cooldown ends, not after 1 second.
     setTimeout(() => {
       previewPixelRef.current = null;
       pos.color = 'transparent';
+      stopCountDown();
       draw();
-    }, 1000);
-  }, [color, draw, sendPixel, handleCooltime]);
+    }, 9000);
+  }, [color, draw, sendPixel, handleCooltime, playCountDown, stopCountDown]);
 
   const handleSelectColor = useCallback(
     (newColor: string) => {
@@ -752,6 +790,8 @@ function PixelCanvas({
       onLoadingChange,
       setShowCanvas,
       INITIAL_BACKGROUND_COLOR,
+      setCanvasType,
+      setEndedAt,
     });
   }, [
     initialCanvasId,
@@ -761,6 +801,8 @@ function PixelCanvas({
     onLoadingChange,
     setShowCanvas,
     setHasError,
+    setCanvasType,
+    setEndedAt,
   ]);
 
   useEffect(() => {
@@ -769,6 +811,51 @@ function PixelCanvas({
       console.log('Canvas ID changed:', initialCanvasId);
     }
   }, [initialCanvasId, canvas_id, setCanvasId]);
+
+  // 그룹 이미지 업로드를 위한 이벤트 리스너
+  useEffect(() => {
+    const handleCanvasImageAttach = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { file, groupUpload, onConfirm } = customEvent.detail;
+
+      if (groupUpload && file) {
+        // 그룹 이미지 업로드인 경우 확정 이벤트 리스너 추가
+        const handleGroupImageConfirmed = (confirmEvent: Event) => {
+          const confirmCustomEvent = confirmEvent as CustomEvent;
+          const imageData = confirmCustomEvent.detail;
+
+          // 그룹 이미지 확정 콜백 호출
+          if (onConfirm) {
+            onConfirm(imageData);
+          }
+
+          // 이벤트 리스너 제거
+          document.removeEventListener(
+            'group-image-confirmed',
+            handleGroupImageConfirmed
+          );
+        };
+
+        // 이미지 확정 이벤트 리스너 추가
+        document.addEventListener(
+          'group-image-confirmed',
+          handleGroupImageConfirmed
+        );
+      }
+
+      // 파일 처리
+      handleImageAttach(file, customEvent.detail);
+    };
+
+    document.addEventListener('canvas-image-attach', handleCanvasImageAttach);
+
+    return () => {
+      document.removeEventListener(
+        'canvas-image-attach',
+        handleCanvasImageAttach
+      );
+    };
+  }, [handleImageAttach]);
 
   // 투명도 상태가 변경될 때 ref 값 업데이트 및 draw 함수 호출
   useEffect(() => {
@@ -786,6 +873,81 @@ function PixelCanvas({
       setTargetPixel(null);
     }
   }, [targetPixel, centerOnWorldPixel, setTargetPixel]);
+
+  // 그룹 이미지 수신 이벤트 리스너 - 편집 기능 없이 바로 그리기
+  useEffect(() => {
+    const handleGroupImageReceived = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { url, x, y, width, height } = customEvent.detail;
+
+      console.log('방장 이미지 수신:', { url, x, y, width, height });
+
+      // 이미지 로드
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+
+      img.onload = () => {
+        // 먼저 이미지 고정 상태 설정
+        setIsImageFixed(true);
+        setShowImageControls(false);
+
+        // 이미지 캠버스 생성
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+
+        if (ctx) {
+          // 이미지를 캠버스에 그리기
+          ctx.drawImage(img, 0, 0);
+
+          // 방장 이미지임을 표시
+          const groupCanvas = canvas as any;
+          groupCanvas._isGroupImage = true;
+
+          // 캠버스 설정
+          imageCanvasRef.current = groupCanvas;
+
+          // 이미지 크기와 위치 설정
+          const numX = Number(x);
+          const numY = Number(y);
+          const numWidth = Number(width);
+          const numHeight = Number(height);
+
+          setImageSize({ width: numWidth, height: numHeight });
+          setImagePosition({ x: numX, y: numY });
+
+          // 이미지가 있는 위치로 화면 이동
+          centerOnWorldPixel(numX + numWidth / 2, numY + numHeight / 2);
+
+          // 화면 그리기
+          draw();
+        }
+      };
+
+      img.onerror = () => {
+        toast.error('이미지를 불러오는데 실패했습니다.');
+      };
+
+      img.src = url;
+    };
+
+    document.addEventListener('group-image-received', handleGroupImageReceived);
+
+    return () => {
+      document.removeEventListener(
+        'group-image-received',
+        handleGroupImageReceived
+      );
+    };
+  }, [
+    centerOnWorldPixel,
+    draw,
+    setImagePosition,
+    setImageSize,
+    setIsImageFixed,
+    setShowImageControls,
+  ]);
 
   // Animation loop for flashing pixel
   useEffect(() => {
@@ -805,6 +967,43 @@ function PixelCanvas({
       cancelAnimationFrame(animationFrameId);
     };
   }, [cooldown, draw]);
+
+  // Countdown timer for event canvases
+  useEffect(() => {
+    let timerInterval: number;
+
+    const calculateTimeLeft = () => {
+      if (canvasType === 'event' && endedAt) {
+        const endDate = new Date(endedAt);
+        const now = new Date();
+        const difference = endDate.getTime() - now.getTime();
+
+        if (difference > 0) {
+          const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+          const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
+          const minutes = Math.floor((difference / (1000 * 60)) % 60);
+          const seconds = Math.floor((difference / 1000) % 60);
+
+          setTimeLeft(
+            `D-${days} ${String(hours).padStart(2, '0')}:${String(
+              minutes
+            ).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+          );
+        } else {
+          setTimeLeft('캔버스 종료');
+          // 종료시 로직 추후 추가
+          clearInterval(timerInterval);
+        }
+      } else {
+        setTimeLeft(null);
+      }
+    };
+
+    calculateTimeLeft(); // Initial calculation
+    timerInterval = setInterval(calculateTimeLeft, 1000); // Update every second
+
+    return () => clearInterval(timerInterval);
+  }, [canvasType, endedAt]);
 
   useEffect(() => {
     const rootElement = rootRef.current;
@@ -854,6 +1053,14 @@ function PixelCanvas({
       }}
     >
       <StarfieldCanvas viewPosRef={viewPosRef} />
+      {timeLeft && (
+        <div
+          className='bg-opacity-50 sm:text-md absolute top-4 left-1/2 z-10 -translate-x-1/2 rounded-lg bg-black px-4 py-2 text-base font-bold text-white'
+          style={{ fontFamily: '"Press Start 2P", cursive' }}
+        >
+          {timeLeft}
+        </div>
+      )}
       {cooldown && (
         <>
           <div className='pointer-events-none absolute inset-0 border-4 border-red-500/30' />
@@ -903,6 +1110,7 @@ function PixelCanvas({
           hasImage={!!imageCanvasRef.current}
           onZoomIn={handleZoomIn}
           onZoomOut={handleZoomOut}
+          canvasType={canvasType === 'event' ? 'event' : 'normal'}
         />
       )}
       {showImageControls && !isImageFixed && (
