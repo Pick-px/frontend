@@ -64,9 +64,9 @@ export default function CanvasUIPC({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    showInstructionsToast();
-  }, []);
+  // useEffect(() => {
+  //   showInstructionsToast();
+  // }, []);
 
   useEffect(() => {
     if (!isMenuOpen) return;
