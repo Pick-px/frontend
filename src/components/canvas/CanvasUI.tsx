@@ -22,7 +22,7 @@ export default function CanvasUI(props: CanvasUIProps) {
   const isDesktopOrLaptop = useMediaQuery({ query: '(min-width: 480px)' });
   const { isPlaying, setIsPlaying } = useBgmStore();
   const bgmFile = canvasType === 'event' ? '/event_bgm.mp3' : '/main_bgm.mp3';
-  const [play, { stop }] = useSound(bgmFile, { loop: true, volume: 0.5 });
+  const [play, { stop }] = useSound(bgmFile, { loop: true, volume: 0.1 });
 
   useEffect(() => {
     if (isPlaying) {
