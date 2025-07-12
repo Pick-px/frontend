@@ -49,7 +49,7 @@ export const useChatSocket = (
         socketService.offSendImage(onImageReceived);
       }
     };
-  }, [group_id, user_id, onMessageReceived, onChatError]);
+  }, [group_id, user_id,  onChatError]);
 
   const sendMessage = useCallback(
     (message: string) => {

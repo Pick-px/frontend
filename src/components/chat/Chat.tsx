@@ -30,7 +30,7 @@ function Chat() {
   const [currentGroupId, setCurrentGroupId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false); // 로딩 상태 추가
   const canvas_id = useCanvasStore((state) => state.canvas_id);
-  const { leader, setLeader } = useChatStore();
+  const { leader, setLeader, isSyncEnabled, setIsSyncEnabled } = useChatStore();
   const { user, isLoggedIn } = useAuthStore();
   const { openLoginModal, isGroupModalOpen, openChat, closeChat } =
     useModalStore();
@@ -61,9 +61,10 @@ function Chat() {
     // 이미지 업로드 알림 수신
     onImageReceived: (message) => {
       console.log('이미지 업로드 알림 수신:', message);
-
       // 이미지 정보 추출
       const { url, x, y, width, height } = message;
+      const syncState = useChatStore.getState().isSyncEnabled;
+      console.log('현재 동기화 상태:', syncState);
 
       // 새로운 메시지 추가 - 방장이 이미지를 업로드했음을 알리는 메시지
       const newMessage: Message = {
@@ -72,24 +73,27 @@ function Chat() {
           userId: '',
           name: '공지',
         },
-        content: ` 📣 방장이 새로운 이미지를 업로드했습니다. 화면에 표시됩니다.`,
+        content: syncState
+          ? ` 📣 방장이 새로운 이미지를 업로드했습니다. 화면에 표시됩니다.`
+          : ` 📣 방장이 새로운 이미지를 업로드했습니다. 동기화 버튼을 클릭하여 화면에 표시하세요.`,
         timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, newMessage]);
 
-      // 이미지 이벤트 바로 발생 - 이미지 로딩은 PixelCanvas에서 처리
-      document.dispatchEvent(
-        new CustomEvent('group-image-received', {
-          detail: { url, x, y, width, height },
-        })
-      );
+      // 동기화 상태일 때만 이미지 반영
+      if (syncState) {
+        // 이미지 반영
+        document.dispatchEvent(
+          new CustomEvent('group-image-received', {
+            detail: { url, x, y, width, height },
+          })
+        );
+      }
     },
 
     group_id: currentGroupId || '0', // 유효하지 않은 group_id 사용
     user_id: user?.userId || '',
   });
-
-  // const {getChatMessages} = chatService();
 
   // 그룹 변경 핸들러 함수
   const handleGroupChange = async (groupId: string) => {
@@ -98,23 +102,12 @@ function Chat() {
     try {
       setCurrentGroupId(groupId);
       setIsLoading(true); // 로딩 시작
+      // 그룹 변경 시 동기화 상태 비활성화
+      setIsSyncEnabled(false);
       const { newMessages, madeBy } =
         await chatService.getChatMessages(groupId);
       setLeader(madeBy);
       setMessages(newMessages); // 메시지 상태 업데이트
-
-      // 그룹 변경 시 소켓 연결 재설정
-      if (isOpen) {
-        // 기존 채팅방 나가기
-        leaveChat();
-
-        // 잠시 후 새 채팅방 입장 (소켓 연결 재설정을 위해)
-        setTimeout(() => {
-          // 새 채팅방 입장
-          socketService.joinChat({ group_id: groupId });
-          console.log(`채팅방 재입장: group_id=${groupId}`);
-        }, 300);
-      }
     } catch (error) {
       console.error(
         `${groupId} 그룹의 메시지를 불러오는 데 실패했습니다.`,
@@ -156,6 +149,14 @@ function Chat() {
     }
   }, [isGroupModalOpen, isLoggedIn, isOpen, closeChat]);
 
+  // 컴포넌트 최상단
+  useEffect(() => {
+    if (isSyncEnabled && currentGroupId) {
+      console.log('동기화 시작됨: ', isSyncEnabled);
+      socketService.joinImg({ group_id: currentGroupId });
+    }
+  }, [isSyncEnabled, currentGroupId]);
+
   // isOpen True 시, canvasId 변경시
   useEffect(() => {
     console.log(`modal open, ${canvas_id}`);
@@ -163,12 +164,16 @@ function Chat() {
       const fetchInitialData = async () => {
         console.log(`start fetch, ${canvas_id}`);
         setIsLoading(true); // 로딩 시작
+        // 채팅창 열 때 동기화 상태 초기화
+        setIsSyncEnabled(false);
+        setLeader('');
         try {
           const {
             defaultGroupId,
             groups: fetchedGroups,
             messages: initialMessages,
           } = await chatService.getChatInitMessages(canvas_id);
+          // defaultGroupId 저장
           setGroups(fetchedGroups);
           setCurrentGroupId(defaultGroupId);
           setMessages(initialMessages);
@@ -197,32 +202,11 @@ function Chat() {
             <h3 className='text-md font-semibold text-ellipsis text-white'>
               {chatTitle}
             </h3>
-            {leader === user?.userId && (
-              <div className='flex space-x-2'>
-                <button
-                  className='text-white/70 hover:text-white'
-                  title='이미지 편집'
-                  onClick={() => {
-                    // 이미지 편집 기능 추가 예정
-                  }}
-                >
-                  <svg
-                    xmlns='http://www.w3.org/2000/svg'
-                    className='h-5 w-5'
-                    fill='none'
-                    viewBox='0 0 24 24'
-                    stroke='currentColor'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z'
-                    />
-                  </svg>
-                </button>
+
+            <div className='flex space-x-2'>
+              {leader === user?.userId && (
                 <label
-                  className='cursor-pointer text-white/70 hover:text-white'
+                  className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white/10 text-white/70 transition-all duration-300 hover:bg-white/20 hover:text-white'
                   title='이미지 업로드'
                 >
                   <svg
@@ -318,8 +302,49 @@ function Chat() {
                     className='hidden'
                   />
                 </label>
-              </div>
-            )}
+              )}
+              <button
+                className={`flex h-8 w-8 items-center justify-center rounded-full transition-all duration-300 ${isSyncEnabled ? 'scale-110 animate-pulse bg-green-500 text-white shadow-lg' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white'}`}
+                title='이미지 동기화'
+                onClick={() => {
+                  toast.info('이미지 동기화 중...');
+                  // 동기화 상태 활성화
+                  setIsSyncEnabled(true);
+                }}
+              >
+                {isSyncEnabled ? (
+                  <svg
+                    xmlns='http://www.w3.org/2000/svg'
+                    className='h-5 w-5'
+                    fill='none'
+                    viewBox='0 0 24 24'
+                    stroke='currentColor'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns='http://www.w3.org/2000/svg'
+                    className='h-5 w-5'
+                    fill='none'
+                    viewBox='0 0 24 24'
+                    stroke='currentColor'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'
+                    />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* 그룹 목록 탭 */}
@@ -372,7 +397,6 @@ function Chat() {
           }
 
           if (isOpen) {
-            leaveChat();
             setIsOpen(false);
             closeChat(); // Synchronize with modal store
           } else {

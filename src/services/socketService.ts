@@ -130,6 +130,13 @@ class SocketService {
     }
   }
 
+  // 이미지 동기화 요청
+  joinImg(data: { group_id: string }) {
+    if (this.socket) {
+      this.socket.emit('join_img', data);
+    }
+  }
+
   // 이미지 업로드 알림 수신 (팀원들이 받는 이벤트)
   onSendImage(callback: (message: any) => void) {
     if (this.socket) {

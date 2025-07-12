@@ -187,7 +187,11 @@ function PixelCanvas({
       ctx.drawImage(src, 0, 0);
 
       // 이미지 편집 모드일 때만 격자 그리기 (방장 이미지는 제외)
-      if (!isImageFixed && imageCanvasRef.current && !(imageCanvasRef.current as any)._isGroupImage) {
+      if (
+        !isImageFixed &&
+        imageCanvasRef.current &&
+        !(imageCanvasRef.current as any)._isGroupImage
+      ) {
         ctx.strokeStyle = 'rgba(255,255,255, 0.12)';
         ctx.lineWidth = 1 / scaleRef.current;
         ctx.beginPath();
@@ -881,65 +885,69 @@ function PixelCanvas({
       // 이미지 로드
       const img = new Image();
       img.crossOrigin = 'anonymous';
-      
+
       img.onload = () => {
         // 먼저 이미지 고정 상태 설정
         setIsImageFixed(true);
         setShowImageControls(false);
-        
+
         // 이미지 캠버스 생성
         const canvas = document.createElement('canvas');
         canvas.width = img.width;
         canvas.height = img.height;
         const ctx = canvas.getContext('2d');
-        
+
         if (ctx) {
           // 이미지를 캠버스에 그리기
           ctx.drawImage(img, 0, 0);
-          
+
           // 방장 이미지임을 표시
           const groupCanvas = canvas as any;
           groupCanvas._isGroupImage = true;
-          
+
           // 캠버스 설정
           imageCanvasRef.current = groupCanvas;
-          
+
           // 이미지 크기와 위치 설정
           const numX = Number(x);
           const numY = Number(y);
           const numWidth = Number(width);
           const numHeight = Number(height);
-          
+
           setImageSize({ width: numWidth, height: numHeight });
           setImagePosition({ x: numX, y: numY });
-          
+
           // 이미지가 있는 위치로 화면 이동
-          centerOnWorldPixel(numX + numWidth/2, numY + numHeight/2);
-          
+          centerOnWorldPixel(numX + numWidth / 2, numY + numHeight / 2);
+
           // 화면 그리기
           draw();
-          
-          // 지연 후 한번 더 그리기
-          setTimeout(() => {
-            draw();
-            console.log('방장 이미지 그리기 완료');
-          }, 100);
         }
       };
-      
+
       img.onerror = () => {
         toast.error('이미지를 불러오는데 실패했습니다.');
       };
-      
+
       img.src = url;
     };
-    
+
     document.addEventListener('group-image-received', handleGroupImageReceived);
-    
+
     return () => {
-      document.removeEventListener('group-image-received', handleGroupImageReceived);
+      document.removeEventListener(
+        'group-image-received',
+        handleGroupImageReceived
+      );
     };
-  }, [centerOnWorldPixel, draw, setImagePosition, setImageSize, setIsImageFixed, setShowImageControls]);
+  }, [
+    centerOnWorldPixel,
+    draw,
+    setImagePosition,
+    setImageSize,
+    setIsImageFixed,
+    setShowImageControls,
+  ]);
 
   // Animation loop for flashing pixel
   useEffect(() => {
