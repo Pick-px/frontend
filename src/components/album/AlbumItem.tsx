@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { AlbumItemData } from './types';
+import type { AlbumItemData } from './albumTypes';
 
 interface AlbumItemProps {
   item: AlbumItemData;

@@ -1,6 +1,6 @@
 import React from 'react';
 import AlbumItem from './AlbumItem';
-import type { AlbumItemData } from './types';
+import type { AlbumItemData } from './albumTypes';
 
 interface AlbumListProps {
   albums: AlbumItemData[];

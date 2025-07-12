@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
-import type { AlbumItemData } from '../album/types';
+import type { AlbumItemData } from '../album/albumTypes';
 
 type AlbumModalContentProps = {
   onClose?: () => void;
@@ -19,6 +19,23 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
   const [dragOffset, setDragOffset] = useState(0);
   const carouselRef = useRef<HTMLDivElement>(null);
 
+  // 진행 기간 계산 함수
+  const calculateDuration = (createdAt: string, endedAt: string) => {
+    try {
+      const start = new Date(createdAt);
+      const end = new Date(endedAt);
+      const diffTime = Math.abs(end.getTime() - start.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 1) return '1일';
+      if (diffDays < 7) return `${diffDays}일`;
+      if (diffDays < 30) return `${Math.floor(diffDays / 7)}주`;
+      return `${Math.floor(diffDays / 30)}개월`;
+    } catch (error) {
+      return '기간 오류';
+    }
+  };
+
   // 앨범 목록 가져오기 함수 (고양이 API 사용)
   const fetchAlbums = async () => {
     try {
@@ -29,6 +46,7 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
       const response = await fetch(
         'https://api.thecatapi.com/v1/images/search?limit=12&size=med'
       );
+      // const response = albumServices.getAlbumList(user?.userId, canvas_id);
 
       if (!response.ok) {
         throw new Error('고양이 이미지를 불러오는데 실패했습니다.');
@@ -36,15 +54,15 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
 
       const catImages = await response.json();
 
-      // 고양이 이미지 데이터를 앨범 형태로 변환
+      // 고양이 이미지 데이터를 새로운 앨범 형태로 변환
       const mockAlbums: AlbumItemData[] = catImages.map(
         (cat: any, index: number) => {
           const canvasTypes = [
-            'public',
-            'event',
-            'special',
-            'community',
-            'seasonal',
+            'Battle',
+            'Event',
+            'Special',
+            'Community',
+            'Seasonal',
           ];
           const canvasTitles = [
             '고양이 천국 캔버스',
@@ -72,22 +90,41 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
           ];
           const randomSize = sizes[Math.floor(Math.random() * sizes.length)];
 
-          // 랜덤한 날짜 생성 (최근 6개월 내)
-          const randomDate = new Date();
-          randomDate.setDate(
-            randomDate.getDate() - Math.floor(Math.random() * 180)
+          // 랜덤한 생성/종료 날짜 생성
+          const createdDate = new Date();
+          createdDate.setDate(
+            createdDate.getDate() - Math.floor(Math.random() * 180) - 30
           );
 
+          const endedDate = new Date(createdDate);
+          endedDate.setDate(
+            endedDate.getDate() + Math.floor(Math.random() * 30) + 1
+          );
+
+          // 랜덤한 사용자 이름 생성
+          const userNames = [
+            '김철수',
+            '이영희',
+            '박민수',
+            '최지영',
+            '정다은',
+            '홍길동',
+          ];
+          const mostPaintedUser =
+            userNames[Math.floor(Math.random() * userNames.length)];
+          const topPainter =
+            userNames[Math.floor(Math.random() * userNames.length)];
+
           return {
-            id: index + 1,
             image_url: cat.url,
             title: canvasTitles[index] || `고양이 캔버스 ${index + 1}`,
             type: canvasTypes[Math.floor(Math.random() * canvasTypes.length)],
-            ended_at: randomDate.toISOString(),
+            created_at: createdDate.toISOString(),
+            ended_at: endedDate.toISOString(),
             size_x: randomSize.x,
             size_y: randomSize.y,
-            count:
-              randomSize.x * randomSize.y + Math.floor(Math.random() * 50000),
+            mostPaintedUser: mostPaintedUser,
+            topPainter: topPainter,
           };
         }
       );
@@ -197,7 +234,7 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
         <div className='flex-shrink-0 border-b border-white/20 p-4'>
           <h2 className='text-lg font-semibold text-white'>앨범 갤러리</h2>
           <p className='mt-1 text-sm text-gray-300'>
-            완성된 캔버스 작품들을 확인해보세요. 🐱
+            완성된 캔버스 작품들을 확인해보세요.
           </p>
         </div>
         <div className='flex h-96 items-center justify-center p-6'>
@@ -214,7 +251,7 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
         <div className='flex-shrink-0 border-b border-white/20 p-4'>
           <h2 className='text-lg font-semibold text-white'>앨범 갤러리</h2>
           <p className='mt-1 text-sm text-gray-300'>
-            완성된 캔버스 작품들을 확인해보세요. 🐱
+            완성된 캔버스 작품들을 확인해보세요.
           </p>
         </div>
         <div className='p-6 text-center'>
@@ -251,7 +288,7 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
         <div className='flex-shrink-0 border-b border-white/20 p-4'>
           <h2 className='text-lg font-semibold text-white'>앨범 갤러리</h2>
           <p className='mt-1 text-sm text-gray-300'>
-            완성된 캔버스 작품들을 확인해보세요. 🐱
+            완성된 캔버스 작품들을 확인해보세요.
           </p>
         </div>
         <div className='py-8 text-center'>
@@ -277,24 +314,19 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
   const currentAlbum = albums[currentIndex];
 
   return (
-    <div className='flex max-h-[85vh] flex-col'>
+    <div className='flex max-h-[90vh] min-h-[60vh] flex-col'>
       {/* 헤더 */}
-      <div className='flex-shrink-0 border-b border-white/20 p-4'>
+      <div className='flex-shrink-0 border-b border-white/20 p-3 sm:p-4'>
         <div className='flex items-center justify-between'>
-          <div>
-            <h2 className='text-lg font-semibold text-white'>앨범 갤러리</h2>
-            <p className='mt-1 text-sm text-gray-300'>
-              {currentIndex + 1} / {albums.length}
-            </p>
-          </div>
-          <div className='flex items-center space-x-2'>
+          {/* 왼쪽: 네비게이션 버튼 */}
+          <div className='flex items-center space-x-1 sm:space-x-2'>
             <button
               onClick={goToPrev}
               disabled={currentIndex === 0}
-              className='rounded-full bg-white/10 p-2 text-gray-400 transition-colors hover:bg-white/20 hover:text-gray-300 disabled:cursor-not-allowed disabled:opacity-50'
+              className='rounded-full bg-white/10 p-1.5 text-gray-400 transition-colors hover:bg-white/20 hover:text-gray-300 disabled:cursor-not-allowed disabled:opacity-50 sm:p-2'
             >
               <svg
-                className='h-5 w-5'
+                className='h-4 w-4 sm:h-5 sm:w-5'
                 fill='none'
                 stroke='currentColor'
                 viewBox='0 0 24 24'
@@ -310,10 +342,10 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
             <button
               onClick={goToNext}
               disabled={currentIndex === albums.length - 1}
-              className='rounded-full bg-white/10 p-2 text-gray-400 transition-colors hover:bg-white/20 hover:text-gray-300 disabled:cursor-not-allowed disabled:opacity-50'
+              className='rounded-full bg-white/10 p-1.5 text-gray-400 transition-colors hover:bg-white/20 hover:text-gray-300 disabled:cursor-not-allowed disabled:opacity-50 sm:p-2'
             >
               <svg
-                className='h-5 w-5'
+                className='h-4 w-4 sm:h-5 sm:w-5'
                 fill='none'
                 stroke='currentColor'
                 viewBox='0 0 24 24'
@@ -327,14 +359,27 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
               </svg>
             </button>
           </div>
+          
+          {/* 중앙: 제목과 페이지 정보 */}
+          <div className='flex-1 text-center'>
+            <h2 className='text-base font-semibold text-white sm:text-lg'>
+              앨범 갤러리
+            </h2>
+            <p className='mt-1 text-xs text-gray-300 sm:text-sm'>
+              {currentIndex + 1} / {albums.length}
+            </p>
+          </div>
+          
+          {/* 오른쪽: X버튼을 위한 공간 확보 */}
+          <div className='w-16 sm:w-20'></div>
         </div>
       </div>
 
       {/* 캐러셀 컨테이너 */}
-      <div className='flex-1 overflow-hidden'>
+      <div className='flex flex-1 items-center overflow-hidden'>
         <div
           ref={carouselRef}
-          className='flex h-full transition-transform duration-300 ease-out'
+          className='flex h-full w-full transition-transform duration-300 ease-out'
           style={{
             transform: `translateX(${getCurrentTransform()}%)`,
             cursor: isDragging ? 'grabbing' : 'grab',
@@ -349,14 +394,28 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
         >
           {albums.map((album, index) => (
             <div
-              key={album.id}
-              className='w-full flex-shrink-0 p-4'
+              key={index}
+              className='flex w-full flex-shrink-0 items-center justify-center p-2 sm:p-4'
               style={{ minWidth: '100%' }}
             >
-              {/* 인스타그램 스타일 카드 */}
-              <div className='mx-auto max-w-md rounded-lg bg-gray-800 shadow-xl'>
-                {/* 이미지 */}
-                <div className='aspect-square overflow-hidden rounded-t-lg bg-gray-700'>
+              {/* 반응형 앨범 카드 */}
+              <div
+                className='flex w-full max-w-xs flex-col rounded-lg shadow-xl sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl'
+                style={{
+                  maxHeight: 'calc(100vh - 180px)', // 헤더와 인디케이터 공간 확보
+                  height: 'fit-content',
+                }}
+              >
+                {/* 이미지 - 화면 높이에 따라 동적 크기 조정 */}
+                <div
+                  className='flex-shrink-1 overflow-hidden rounded-t-lg bg-gray-700'
+                  style={{
+                    aspectRatio: '1 / 1',
+                    maxHeight: 'calc(100vh - 350px)', // 정보 영역을 위한 공간 확보
+                    minHeight: '200px', // 최소 이미지 크기
+                    height: 'auto',
+                  }}
+                >
                   <img
                     src={album.image_url}
                     alt={album.title}
@@ -365,11 +424,19 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
                   />
                 </div>
 
-                {/* 정보 영역 */}
-                <div className='p-4'>
+                {/* 정보 영역 - 고정 높이로 항상 표시 */}
+                <div className='flex-shrink-0 p-2 sm:p-3 md:p-4'>
                   {/* 제목과 타입 */}
-                  <div className='mb-3'>
-                    <h3 className='text-lg font-bold text-white'>
+                  <div className='mb-2 sm:mb-3'>
+                    <h3
+                      className='text-sm font-bold text-white sm:text-base md:text-lg'
+                      style={{
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                      }}
+                    >
                       {album.title}
                     </h3>
                     <span className='mt-1 inline-block rounded-full bg-blue-500/20 px-2 py-1 text-xs text-blue-400'>
@@ -377,25 +444,41 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
                     </span>
                   </div>
 
-                  {/* 통계 정보 */}
-                  <div className='mb-4 grid grid-cols-3 gap-4'>
-                    <div className='text-center'>
-                      <div className='text-sm font-semibold text-white'>
+                  {/* 통계 정보 - 세로 나열 */}
+                  <div className='mb-2 space-y-2 sm:mb-3 md:mb-4'>
+                    <div className='flex items-center justify-between'>
+                      <span className='text-xs text-gray-400'>크기</span>
+                      <span className='text-xs font-semibold text-white sm:text-sm'>
                         {album.size_x}×{album.size_y}
-                      </div>
-                      <div className='text-xs text-gray-400'>크기</div>
+                      </span>
                     </div>
-                    <div className='text-center'>
-                      <div className='text-sm font-semibold text-white'>
-                        {(album.count / 1000).toFixed(0)}K
-                      </div>
-                      <div className='text-xs text-gray-400'>픽셀</div>
+                    <div className='flex items-center justify-between'>
+                      <span className='text-xs text-gray-400'>진행 기간</span>
+                      <span className='text-xs font-semibold text-white sm:text-sm'>
+                        {calculateDuration(album.created_at, album.ended_at)}
+                      </span>
                     </div>
-                    <div className='text-center'>
-                      <div className='text-sm font-semibold text-white'>
+                    <div className='flex items-center justify-between'>
+                      <span className='text-xs text-gray-400'>
+                        가장 많이 시도한 유저
+                      </span>
+                      <span className='text-xs font-semibold text-white sm:text-sm'>
+                        {album.mostPaintedUser}
+                      </span>
+                    </div>
+                    <div className='flex items-center justify-between'>
+                      <span className='text-xs text-gray-400'>
+                        가장 많이 칠한 유저
+                      </span>
+                      <span className='text-xs font-semibold text-white sm:text-sm'>
+                        {album.topPainter}
+                      </span>
+                    </div>
+                    <div className='flex items-center justify-between'>
+                      <span className='text-xs text-gray-400'>완성일</span>
+                      <span className='text-xs font-semibold text-white sm:text-sm'>
                         {formatDate(album.ended_at)}
-                      </div>
-                      <div className='text-xs text-gray-400'>완성일</div>
+                      </span>
                     </div>
                   </div>
 
@@ -410,7 +493,7 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
                         link.click();
                         document.body.removeChild(link);
                       }}
-                      className='flex-1 rounded-lg bg-blue-600 px-3 py-2 text-sm text-white transition-colors hover:bg-blue-700'
+                      className='flex-1 rounded-lg bg-blue-600 px-2 py-1.5 text-xs text-white transition-colors hover:bg-blue-700 sm:px-3 sm:py-2 sm:text-sm'
                     >
                       다운로드
                     </button>
@@ -424,7 +507,7 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
                           theme: 'dark',
                         });
                       }}
-                      className='flex-1 rounded-lg bg-gray-700 px-3 py-2 text-sm text-white transition-colors hover:bg-gray-600'
+                      className='flex-1 rounded-lg bg-gray-700 px-2 py-1.5 text-xs text-white transition-colors hover:bg-gray-600 sm:px-3 sm:py-2 sm:text-sm'
                     >
                       공유
                     </button>
@@ -437,13 +520,13 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
       </div>
 
       {/* 인디케이터 */}
-      <div className='flex-shrink-0 p-4'>
-        <div className='flex justify-center space-x-2'>
+      <div className='flex-shrink-0 p-2 sm:p-4'>
+        <div className='flex justify-center space-x-1 sm:space-x-2'>
           {albums.map((_, index) => (
             <button
               key={index}
               onClick={() => goToSlide(index)}
-              className={`h-2 w-2 rounded-full transition-colors ${
+              className={`h-1.5 w-1.5 rounded-full transition-colors sm:h-2 sm:w-2 ${
                 index === currentIndex ? 'bg-blue-500' : 'bg-gray-600'
               }`}
             />
