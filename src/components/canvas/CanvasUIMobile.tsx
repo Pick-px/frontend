@@ -448,8 +448,8 @@ export default function CanvasUIMobile({
                 <path
                   strokeLinecap='round'
                   strokeLinejoin='round'
-                  strokeWidth={3}
-                  d='M13 10V3L4 14h7v7l9-11h-7z'
+                  strokeWidth={2}
+                  d='M5 13L9 17L19 7'
                 />
               </svg>
             )}
