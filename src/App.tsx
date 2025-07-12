@@ -1,6 +1,8 @@
 // App.tsx
 
 import PixelCanvas from './components/canvas/PixelCanvas';
+import GameCanvas from './components/canvas/GameCanvas';
+import { isGameCanvas, isGameCanvasById } from './utils/canvasTypeUtils';
 
 import React, { useRef, useEffect, useCallback, useState } from 'react'; // UI 상태 관리를 위해 import
 import { useLocation } from 'react-router-dom';
@@ -32,6 +34,7 @@ function App() {
   // URL에서 ?canvas_id= 값을 읽어온다
   const { search } = useLocation();
   const canvas_id = new URLSearchParams(search).get('canvas_id') || '';
+  const isGame = isGameCanvasById(canvas_id); // canvas_id로 게임 캔버스 여부 확인
 
   const {
     isLoginModalOpen,
@@ -93,11 +96,19 @@ function App() {
 
   return (
     <main className='touch-action-none flex h-screen w-screen items-center justify-center bg-[#2d3748]'>
-      <PixelCanvas
-        canvas_id={canvas_id}
-        key={canvas_id}
-        onLoadingChange={setCanvasLoading}
-      />
+      {isGame ? (
+        <GameCanvas
+          canvas_id={canvas_id}
+          key={canvas_id}
+          onLoadingChange={setCanvasLoading}
+        />
+      ) : (
+        <PixelCanvas
+          canvas_id={canvas_id}
+          key={canvas_id}
+          onLoadingChange={setCanvasLoading}
+        />
+      )}
       <Modal isOpen={isLoginModalOpen} onClose={closeLoginModal}>
         <LoginModalContent onClose={closeLoginModal} />
       </Modal>
@@ -110,21 +121,19 @@ function App() {
       <Modal isOpen={isCanvasModalOpen} onClose={closeCanvasModal}>
         <CanvasModalContent onClose={closeCanvasModal} />
       </Modal>
-      {/* 로딩 완료 후 채팅 컴포넌트 표시 */}
-      {!isLoading &&
-        !canvasLoading &&
-        (() => {
-          try {
-            return <Chat />;
-          } catch (error) {
-            console.error('Chat 컴포넌트 에러:', error);
-            return (
-              <div className='fixed bottom-5 left-5 text-red-500'>
-                채팅 로드 실패
-              </div>
-            );
-          }
-        })()}
+      {/* 로딩 완료 후 채팅 컴포넌트 표시 - 게임 모드에서는 표시하지 않음 */}
+      {!isLoading && !canvasLoading && !isGame && (() => {
+        try {
+          return <Chat />;
+        } catch (error) {
+          console.error('Chat 컴포넌트 에러:', error);
+          return (
+            <div className='fixed bottom-5 left-5 text-red-500'>
+              채팅 로드 실패
+            </div>
+          );
+        }
+      })()}
     </main>
   );
 }
