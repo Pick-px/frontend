@@ -17,6 +17,8 @@ type CanvasUIProps = {
   onImageDelete: () => void;
   hasImage: boolean;
   colors: string[];
+  isBgmPlaying: boolean;
+  toggleBgm: () => void;
 };
 
 export default function CanvasUIPC({
@@ -26,6 +28,8 @@ export default function CanvasUIPC({
   onImageDelete,
   hasImage,
   colors,
+  isBgmPlaying,
+  toggleBgm,
 }: CanvasUIProps) {
   const [isPressed, setIsPressed] = useState(false);
   const [showConfirmEffect, setShowConfirmEffect] = useState(false);
@@ -313,6 +317,49 @@ export default function CanvasUIPC({
               </button>
               <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs text-white transition-all group-hover:scale-100'>
                 그룹
+              </span>
+            </div>
+
+            {/* BGM 버튼 */}
+            <div className='group relative'>
+              <button
+                onClick={toggleBgm}
+                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
+              >
+                {isBgmPlaying ? (
+                  <svg
+                    className='h-6 w-6'
+                    xmlns='http://www.w3.org/2000/svg'
+                    fill='none'
+                    viewBox='0 0 24 24'
+                    strokeWidth={1.5}
+                    stroke='currentColor'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      d='M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z'
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    className='h-6 w-6'
+                    xmlns='http://www.w3.org/2000/svg'
+                    fill='none'
+                    viewBox='0 0 24 24'
+                    strokeWidth={1.5}
+                    stroke='currentColor'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      d='M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z'
+                    />
+                  </svg>
+                )}
+              </button>
+              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs text-white transition-all group-hover:scale-100'>
+                {isBgmPlaying ? 'BGM 끄기' : 'BGM 켜기'}
               </span>
             </div>
           </div>

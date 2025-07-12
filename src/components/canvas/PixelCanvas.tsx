@@ -9,6 +9,7 @@ import { toast } from 'react-toastify';
 import { fetchCanvasData as fetchCanvasDataUtil } from '../../api/canvasFetch';
 import NotFoundPage from '../../pages/NotFoundPage';
 import { useCanvasInteraction } from '../../hooks/useCanvasInteraction';
+import useSound from 'use-sound';
 
 import {
   INITIAL_POSITION,
@@ -56,6 +57,9 @@ function PixelCanvas({
   const [canvasType, setCanvasType] = useState<string | null>(null);
   const [endedAt, setEndedAt] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<string | null>(null);
+  const [playCountDown, { stop: stopCountDown }] = useSound('/count_down.mp3', {
+    volume: 0.3,
+  });
 
   const color = useCanvasUiStore((state) => state.color);
   const setHoverPos = useCanvasUiStore((state) => state.setHoverPos);
@@ -684,13 +688,18 @@ function PixelCanvas({
     flashingPixelRef.current = { x: pos.x, y: pos.y }; // Set flashing pixel
     draw();
     sendPixel({ x: pos.x, y: pos.y, color });
+
+    // 10초 카운트 다운 소리
+    // playCountDown();
+
     // The flashingPixelRef will now be cleared when cooldown ends, not after 1 second.
     setTimeout(() => {
       previewPixelRef.current = null;
       pos.color = 'transparent';
+      stopCountDown();
       draw();
-    }, 1000);
-  }, [color, draw, sendPixel, handleCooltime]);
+    }, 9000);
+  }, [color, draw, sendPixel, handleCooltime, playCountDown, stopCountDown]);
 
   const handleSelectColor = useCallback(
     (newColor: string) => {
@@ -955,6 +964,7 @@ function PixelCanvas({
           hasImage={!!imageCanvasRef.current}
           onZoomIn={handleZoomIn}
           onZoomOut={handleZoomOut}
+          canvasType={canvasType === 'event' ? 'event' : 'normal'}
         />
       )}
       {showImageControls && !isImageFixed && (
