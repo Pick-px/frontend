@@ -12,7 +12,7 @@ interface PixelDataWithCanvas extends PixelData {
 }
 
 class SocketService {
-  private socket: Socket | null = null;
+  socket: Socket | null = null;
 
   connect(canvas_id: string) {
     const { accessToken } = useAuthStore.getState();
@@ -175,6 +175,21 @@ class SocketService {
   offAuthError(callback: (error: { message: string }) => void) {
     if (this.socket) {
       this.socket.off('auth_error', callback);
+    }
+  }
+
+  //==== 게임 캠버스 관련 ====//
+
+  // 게임 결과 전송 (문제 풀기 결과)
+  sendGameResult(data: {
+    canvas_id: string;
+    x: number;
+    y: number;
+    color: string;
+    result: boolean;
+  }) {
+    if (this.socket) {
+      this.socket.emit('send_result', data);
     }
   }
 }

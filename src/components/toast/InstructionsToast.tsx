@@ -6,7 +6,7 @@ export const showInstructionsToast = () => {
 
   const mobileInstructions = (
     <div className='mx-auto max-w-2xl space-y-3 rounded-xl border border-cyan-400/50 bg-gray-800 p-4 font-sans shadow-lg'>
-      <div className='text-base font-medium text-cyan-300'>How to Play</div>
+      <div className='text-base font-medium text-cyan-300'> Play</div>
       <div className='flex items-center space-x-3'>
         <svg
           className='h-6 w-6 text-cyan-400'
@@ -71,7 +71,7 @@ export const showInstructionsToast = () => {
 
   const desktopInstructions = (
     <div className='mx-auto max-w-2xl space-y-3 rounded-xl border border-cyan-400/50 bg-gray-800 p-4 font-sans shadow-lg'>
-      <div className='text-base font-medium text-cyan-300'>How to Play</div>
+      <div className='text-base font-medium text-cyan-300'> Play</div>
       <div className='flex items-center space-x-3'>
         <svg
           className='h-6 w-6 text-cyan-400'

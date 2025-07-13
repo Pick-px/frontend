@@ -56,6 +56,9 @@ interface UseCanvasInteractionProps {
   DRAG_THRESHOLD: number;
 
   handleConfirm: () => void;
+  
+  // Game mode
+  isGameMode?: boolean;
 }
 
 export const useCanvasInteraction = ({
@@ -90,6 +93,7 @@ export const useCanvasInteraction = ({
   setShowPalette,
   DRAG_THRESHOLD,
   handleConfirm,
+  isGameMode = false,
 }: UseCanvasInteractionProps) => {
   // Refs managed within the hook
   const isPanningRef = useRef<boolean>(false);
@@ -165,7 +169,8 @@ export const useCanvasInteraction = ({
     (e: React.MouseEvent<HTMLCanvasElement>) => {
       const { offsetX, offsetY } = e.nativeEvent;
 
-      if (dragStartInfoRef.current && !isPanningRef.current) {
+      if (dragStartInfoRef.current && !isPanningRef.current && !isGameMode) {
+        // 게임 모드에서는 드래그로 캔버스 위치 변경 방지
         const dx = offsetX - dragStartInfoRef.current.x;
         const dy = offsetY - dragStartInfoRef.current.y;
         if (Math.sqrt(dx * dx + dy * dy) > DRAG_THRESHOLD) {
@@ -217,7 +222,8 @@ export const useCanvasInteraction = ({
         return;
       }
 
-      if (isPanningRef.current) {
+      if (isPanningRef.current && !isGameMode) {
+        // 게임 모드에서는 패닝 방지
         viewPosRef.current = {
           x: offsetX - startPosRef.current.x,
           y: offsetY - startPosRef.current.y,
@@ -271,7 +277,15 @@ export const useCanvasInteraction = ({
               y: pixelY,
               color: 'transparent',
             };
-            setShowPalette(true);
+            
+            // 게임 모드일 경우 팔레트를 표시하지 않고 노란색 테두리만 표시
+            if (isGameMode) {
+              // 확정 버튼을 클릭할 때까지 대기
+              draw();
+            } else {
+              setShowPalette(true);
+            }
+            
             centerOnPixel(sx, sy);
           }
         }

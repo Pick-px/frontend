@@ -1,6 +1,8 @@
 // App.tsx
 
 import PixelCanvas from './components/canvas/PixelCanvas';
+import GameCanvas from './components/canvas/GameCanvas';
+import { isGameCanvas, isGameCanvasById } from './utils/canvasTypeUtils';
 
 import React, { useRef, useEffect, useCallback, useState } from 'react'; // UI 상태 관리를 위해 import
 import { useLocation } from 'react-router-dom';
@@ -34,6 +36,7 @@ function App() {
   // URL에서 ?canvas_id= 값을 읽어온다
   const { search } = useLocation();
   const canvas_id = new URLSearchParams(search).get('canvas_id') || '';
+  const isGame = isGameCanvasById(canvas_id); // canvas_id로 게임 캔버스 여부 확인
 
   const {
     isLoginModalOpen,
@@ -99,11 +102,19 @@ function App() {
 
   return (
     <main className='touch-action-none flex h-screen w-screen items-center justify-center bg-[#2d3748]'>
-      <PixelCanvas
-        canvas_id={canvas_id}
-        key={canvas_id}
-        onLoadingChange={setCanvasLoading}
-      />
+      {isGame ? (
+        <GameCanvas
+          canvas_id={canvas_id}
+          key={canvas_id}
+          onLoadingChange={setCanvasLoading}
+        />
+      ) : (
+        <PixelCanvas
+          canvas_id={canvas_id}
+          key={canvas_id}
+          onLoadingChange={setCanvasLoading}
+        />
+      )}
       <Modal isOpen={isLoginModalOpen} onClose={closeLoginModal}>
         <LoginModalContent onClose={closeLoginModal} />
       </Modal>
