@@ -136,6 +136,7 @@ function App() {
       {/* 로딩 완료 후 채팅 컴포넌트 표시 */}
       {!isLoading &&
         !canvasLoading &&
+        !isGame &&
         (() => {
           try {
             return <Chat />;
