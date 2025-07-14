@@ -19,6 +19,8 @@ class SocketService {
     this.socket = io(
       import.meta.env.VITE_SOCKET_URL || 'https://ws.pick-px.com',
       {
+        transports: ['polling', 'websocket'],
+        withCredentials: true, // 반드시 설정!
         auth: {
           token: accessToken,
         },
@@ -188,6 +190,46 @@ class SocketService {
   }) {
     if (this.socket) {
       this.socket.emit('send_result', data);
+    } else {
+      console.error('SocketService: Cannot emit send_result, socket is null');
+    }
+  }
+  // 게임 픽셀 업데이트 수신
+  onGamePixelUpdate(callback: (pixelData: PixelData) => void) {
+    if (this.socket) {
+      this.socket.on('pixel_update', (data) => {
+        console.log(
+          'SocketService: Received pixel_update for game canvas',
+          data
+        );
+        callback(data);
+      });
+    }
+  }
+
+  // 죽은 픽셀 이벤트 수신
+  onDeadPixels(
+    callback: (data: {
+      pixels: Array<{ x: number; y: number; color: string }>;
+      username: string;
+    }) => void
+  ) {
+    if (this.socket) {
+      this.socket.on('dead_user', callback);
+    }
+  }
+
+  // 게임 픽셀 업데이트 리스너 제거
+  offGamePixelUpdate(callback: (pixelData: PixelData) => void) {
+    if (this.socket) {
+      this.socket.off('pixel_update', callback);
+    }
+  }
+
+  // 죽은 픽셀 이벤트 리스너 제거
+  offDeadPixels(callback: (data: any) => void) {
+    if (this.socket) {
+      this.socket.off('dead_user', callback);
     }
   }
 

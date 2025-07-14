@@ -10,6 +10,7 @@ import { fetchCanvasData as fetchCanvasDataUtil } from '../../api/canvasFetch';
 import NotFoundPage from '../../pages/NotFoundPage';
 import { useCanvasInteraction } from '../../hooks/useCanvasInteraction';
 import useSound from 'use-sound';
+import { useModalStore } from '../../store/modalStore'; // useModalStore import 추가
 
 import {
   INITIAL_POSITION,
@@ -18,6 +19,7 @@ import {
   INITIAL_BACKGROUND_COLOR,
   VIEWPORT_BACKGROUND_COLOR,
   COLORS,
+  CanvasType,
 } from './canvasConstants';
 
 type PixelCanvasProps = {
@@ -30,6 +32,16 @@ function PixelCanvas({
   onLoadingChange,
 }: PixelCanvasProps) {
   const { canvas_id, setCanvasId } = useCanvasStore();
+
+  const generateGrayscalePalette = (numColors: number) => {
+    const palette = [];
+    for (let i = 0; i < numColors; i++) {
+      const value = Math.floor((i / (numColors - 1)) * 255);
+      const hex = value.toString(16).padStart(2, '0');
+      palette.push(`#${hex}${hex}${hex}`);
+    }
+    return palette;
+  };
 
   const rootRef = useRef<HTMLDivElement>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -51,15 +63,20 @@ function PixelCanvas({
 
   const imageTransparencyRef = useRef(0.5);
 
-  // state를 각각 가져오도록 하여 불필요한 리렌더링을 방지합니다.
+  // state를 각각 가져오도록 하여 불필요한 리렌더링을 방지합니다。
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
   const [hasError, setHasError] = useState(false);
-  const [canvasType, setCanvasType] = useState<string | null>(null);
+  const [canvasType, setCanvasType] = useState<CanvasType | null>(null);
   const [endedAt, setEndedAt] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<string | null>(null);
   const [playCountDown, { stop: stopCountDown }] = useSound('/count_down.mp3', {
     volume: 0.3,
   });
+
+  const filteredColors =
+    canvasType === CanvasType.EVENT_COLORLIMIT
+      ? generateGrayscalePalette(20)
+      : COLORS;
 
   const color = useCanvasUiStore((state) => state.color);
   const setHoverPos = useCanvasUiStore((state) => state.setHoverPos);
@@ -89,6 +106,8 @@ function PixelCanvas({
   const setTargetPixel = useCanvasUiStore((state) => state.setTargetPixel);
 
   const startCooldown = useCanvasUiStore((state) => state.startCooldown);
+
+  const { openCanvasEndedModal } = useModalStore(); // openCanvasEndedModal 가져오기
 
   // 이미지 관련 상태 (Zustand로 이동하지 않는 부분)
   const imageCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -170,11 +189,20 @@ function PixelCanvas({
         canvasSize.width,
         canvasSize.height
       );
-      gradient.addColorStop(0, 'rgba(34, 197, 94, 0.8)');
-      gradient.addColorStop(0.25, 'rgba(59, 130, 246, 0.8)');
-      gradient.addColorStop(0.5, 'rgba(168, 85, 247, 0.8)');
-      gradient.addColorStop(0.75, 'rgba(236, 72, 153, 0.8)');
-      gradient.addColorStop(1, 'rgba(34, 197, 94, 0.8)');
+
+      if (canvasType === CanvasType.EVENT_COLORLIMIT) {
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 0.8)');
+        gradient.addColorStop(0.25, 'rgba(50, 50, 50, 0.8)');
+        gradient.addColorStop(0.5, 'rgba(100, 100, 100, 0.8)');
+        gradient.addColorStop(0.75, 'rgba(150, 150, 150, 0.8)');
+        gradient.addColorStop(1, 'rgba(200, 200, 200, 0.8)');
+      } else {
+        gradient.addColorStop(0, 'rgba(34, 197, 94, 0.8)');
+        gradient.addColorStop(0.25, 'rgba(59, 130, 246, 0.8)');
+        gradient.addColorStop(0.5, 'rgba(168, 85, 247, 0.8)');
+        gradient.addColorStop(0.75, 'rgba(236, 72, 153, 0.8)');
+        gradient.addColorStop(1, 'rgba(34, 197, 94, 0.8)');
+      }
 
       ctx.strokeStyle = gradient;
       ctx.lineWidth = 3 / scaleRef.current;
@@ -724,7 +752,7 @@ function PixelCanvas({
       pos.color = 'transparent';
       stopCountDown();
       draw();
-    }, 9000);
+    }, 1000);
   }, [color, draw, sendPixel, handleCooltime, playCountDown, stopCountDown]);
 
   const handleSelectColor = useCallback(
@@ -973,8 +1001,11 @@ function PixelCanvas({
     let timerInterval: number;
 
     const calculateTimeLeft = () => {
-      if (canvasType === 'event' && endedAt) {
-        const endDate = new Date(endedAt);
+      if (
+        canvasType === CanvasType.EVENT_COMMON ||
+        (canvasType === CanvasType.EVENT_COLORLIMIT && endedAt)
+      ) {
+        const endDate = new Date(endedAt!);
         const now = new Date();
         const difference = endDate.getTime() - now.getTime();
 
@@ -991,7 +1022,7 @@ function PixelCanvas({
           );
         } else {
           setTimeLeft('캔버스 종료');
-          // 종료시 로직 추후 추가
+          openCanvasEndedModal(); // 캔버스 종료 시 모달 열기
           clearInterval(timerInterval);
         }
       } else {
@@ -1003,7 +1034,7 @@ function PixelCanvas({
     timerInterval = setInterval(calculateTimeLeft, 1000); // Update every second
 
     return () => clearInterval(timerInterval);
-  }, [canvasType, endedAt]);
+  }, [canvasType, endedAt, openCanvasEndedModal]); // 의존성 배열에 openCanvasEndedModal 추가
 
   useEffect(() => {
     const rootElement = rootRef.current;
@@ -1055,9 +1086,12 @@ function PixelCanvas({
       <StarfieldCanvas viewPosRef={viewPosRef} />
       {timeLeft && (
         <div
-          className='bg-opacity-50 sm:text-md absolute top-4 left-1/2 z-10 -translate-x-1/2 rounded-lg bg-black px-4 py-2 text-base font-bold text-white'
+          className='bg-opacity-50 text-md absolute top-4 left-1/2 z-10 -translate-x-1/2 rounded-lg bg-transparent px-4 py-2 font-bold text-white'
           style={{ fontFamily: '"Press Start 2P", cursive' }}
         >
+          {canvasType === CanvasType.EVENT_COLORLIMIT && (
+            <p className='sm:text-md mr-2 text-lg text-gray-400'>BLACK&WHITE</p>
+          )}
           {timeLeft}
         </div>
       )}
@@ -1102,7 +1136,7 @@ function PixelCanvas({
         <Preloader />
       ) : (
         <CanvasUI
-          colors={COLORS}
+          colors={filteredColors}
           onConfirm={handleConfirm}
           onSelectColor={handleSelectColor}
           onImageAttach={handleImageAttach}
@@ -1110,7 +1144,7 @@ function PixelCanvas({
           hasImage={!!imageCanvasRef.current}
           onZoomIn={handleZoomIn}
           onZoomOut={handleZoomOut}
-          canvasType={canvasType === 'event' ? 'event' : 'normal'}
+          canvasType={canvasType!}
         />
       )}
       {showImageControls && !isImageFixed && (

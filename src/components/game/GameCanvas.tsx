@@ -1,4 +1,5 @@
-import React, { useRef, useEffect, useCallback, useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import GameReadyModal from '../modal/GameReadyModal';
 import GameStarfieldCanvas from './GameStarfieldCanvas';
 import { useCanvasUiStore } from '../../store/canvasUiStore';
 import Preloader from '../Preloader';
@@ -8,7 +9,9 @@ import { fetchCanvasData as fetchCanvasDataUtil } from '../../api/canvasFetch';
 import NotFoundPage from '../../pages/NotFoundPage';
 import { useCanvasInteraction } from '../../hooks/useCanvasInteraction';
 import useSound from 'use-sound';
-import { useGameSocket } from '../../hooks/useGameSocket';
+import { useGameSocketIntegration } from '../gameSocketIntegration';
+import { useNavigate } from 'react-router-dom';
+import GameTimer from './GameTimer'; // GameTimer import 추가
 
 import {
   INITIAL_POSITION,
@@ -16,7 +19,7 @@ import {
   MAX_SCALE,
   INITIAL_BACKGROUND_COLOR,
   VIEWPORT_BACKGROUND_COLOR,
-} from './canvasConstants';
+} from '../canvas/canvasConstants';
 
 // 게임 문제 타입 정의
 interface GameQuestion {
@@ -57,7 +60,18 @@ function GameCanvas({
   canvas_id: initialCanvasId,
   onLoadingChange,
 }: GameCanvasProps) {
+  const [isGameStarted, setIsGameStarted] = useState(false); // 게임 시작 상태
+  const [isReadyModalOpen, setIsReadyModalOpen] = useState(true); // 모달 표시 상태
+  const [assignedColor, setAssignedColor] = useState<string | undefined>(
+    undefined
+  );
+  const [remainingTime, setRemainingTime] = useState<number | undefined>(
+    undefined
+  );
+
+  const navigate = useNavigate();
   const { canvas_id, setCanvasId } = useCanvasStore();
+  const [showExitModal, setShowExitModal] = useState(false); // 나가기 모달 상태
   const [userColor, setUserColor] = useState<string>('#FF5733'); // 사용자 색상 (서버에서 받아올 예정)
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -88,15 +102,16 @@ function GameCanvas({
     null
   );
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [timeLeft, setTimeLeft] = useState(3);
+  const [questionTimeLeft, setQuestionTimeLeft] = useState(10); // 문제 타이머 (10초)
+  const [questionTimeDisplay, setQuestionTimeDisplay] = useState(10); // 문제 타이머 표시용
   const [currentPixel, setCurrentPixel] = useState<{
     x: number;
     y: number;
     color: string;
   } | null>(null);
-  const [playCountDown] = useSound('/count_down.mp3', { volume: 0.3 });
 
   const cooldown = useCanvasUiStore((state) => state.cooldown);
+  const timeLeft = useCanvasUiStore((state) => state.timeLeft);
   const setHoverPos = useCanvasUiStore((state) => state.setHoverPos);
   const startCooldown = useCanvasUiStore((state) => state.startCooldown);
   const isLoading = useCanvasUiStore((state) => state.isLoading);
@@ -104,16 +119,7 @@ function GameCanvas({
   const showCanvas = useCanvasUiStore((state) => state.showCanvas);
   const setShowCanvas = useCanvasUiStore((state) => state.setShowCanvas);
 
-  // 그라디언트 애니메이션을 위한 상태
-  const [gradientOffset, setGradientOffset] = useState(0);
-
-  // 그라디언트 애니메이션 효과
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setGradientOffset((prev) => (prev + 0.01) % 1);
-    }, 50);
-    return () => clearInterval(interval);
-  }, []);
+  // 애니메이션 제거
 
   const draw = useCallback(() => {
     const src = sourceCanvasRef.current;
@@ -129,32 +135,21 @@ function GameCanvas({
       ctx.fillStyle = INITIAL_BACKGROUND_COLOR;
       ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
 
-      // 회전하는 그라디언트 효과
+      // 테두리 그리기 - PixelCanvas 스타일
       const gradient = ctx.createLinearGradient(
         0,
         0,
         canvasSize.width,
         canvasSize.height
       );
-
-      // 애니메이션을 위해 오프셋 적용
-      gradient.addColorStop((0 + gradientOffset) % 1, 'rgba(34, 197, 94, 0.8)');
-      gradient.addColorStop(
-        (0.25 + gradientOffset) % 1,
-        'rgba(59, 130, 246, 0.8)'
-      );
-      gradient.addColorStop(
-        (0.5 + gradientOffset) % 1,
-        'rgba(168, 85, 247, 0.8)'
-      );
-      gradient.addColorStop(
-        (0.75 + gradientOffset) % 1,
-        'rgba(236, 72, 153, 0.8)'
-      );
-      gradient.addColorStop((1 + gradientOffset) % 1, 'rgba(34, 197, 94, 0.8)');
+      gradient.addColorStop(0, 'rgba(34, 197, 94, 0.8)');
+      gradient.addColorStop(0.25, 'rgba(59, 130, 246, 0.8)');
+      gradient.addColorStop(0.5, 'rgba(168, 85, 247, 0.8)');
+      gradient.addColorStop(0.75, 'rgba(236, 72, 153, 0.8)');
+      gradient.addColorStop(1, 'rgba(34, 197, 94, 0.8)');
 
       ctx.strokeStyle = gradient;
-      ctx.lineWidth = 5 / scaleRef.current; // 더 굵은 테두리
+      ctx.lineWidth = 3 / scaleRef.current;
       ctx.strokeRect(-1, -1, canvasSize.width + 2, canvasSize.height + 2);
 
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
@@ -164,7 +159,7 @@ function GameCanvas({
       ctx.drawImage(src, 0, 0);
 
       // 격자 그리기
-      ctx.strokeStyle = 'rgba(255,255,255, 0.5)';
+      ctx.strokeStyle = 'rgba(255,255,255, 0.3)';
       ctx.lineWidth = 1 / scaleRef.current;
       ctx.beginPath();
       for (let x = 0; x <= canvasSize.width; x++) {
@@ -228,38 +223,24 @@ function GameCanvas({
         }
       }
     }
-  }, [canvasSize, gradientOffset]);
+  }, [canvasSize, isGameStarted]);
 
   // 게임 소켓 연결
-  const { sendPixel, sendGameResult } = useGameSocket({
+  const onDeadPixels = useCallback((data: any) => {
+    // 필요한 경우 여기서 data 처리
+    // const { pixels, username } = data;
+    // toast.error(`${username} 사망!`,
+    //   {
+    //     position: 'top-center',
+    //     autoClose: 3000,
+    //   });
+  }, []);
+
+  const { sendPixel, sendGameResult } = useGameSocketIntegration({
     sourceCanvasRef,
     draw,
     canvas_id,
-    onCooldownReceived: (cooldownData) => {
-      if (cooldownData.cooldown) {
-        startCooldown(cooldownData.remaining);
-      }
-    },
-    onDeadPixels: (data) => {
-      // 죽은 픽셀 처리
-      const { pixels, username } = data;
-
-      // 소스 캔버스에 픽셀 업데이트
-      const sourceCtx = sourceCanvasRef.current?.getContext('2d');
-      if (sourceCtx) {
-        pixels.forEach((pixel: { x: number; y: number; color: string }) => {
-          sourceCtx.fillStyle = pixel.color;
-          sourceCtx.fillRect(pixel.x, pixel.y, 1, 1);
-        });
-        draw();
-      }
-
-      // 토스트 메시지 표시
-      toast.error(`${username} 사망!`, {
-        position: 'top-center',
-        autoClose: 3000,
-      });
-    },
+    onDeadPixels,
   });
 
   const updateOverlay = useCallback(
@@ -312,16 +293,18 @@ function GameCanvas({
     const canvas = renderCanvasRef.current;
     if (!canvas || canvas.clientWidth === 0 || canvasSize.width === 0) return;
 
-    // 화면 크기에 맞게 스케일 계산 - 더 크게 표시
     const viewportWidth = canvas.clientWidth;
     const viewportHeight = canvas.clientHeight;
 
-    // 스케일 팩터를 크게 설정하여 캔버스를 크게 표시 (10x10 유지하면서)
-    const scaleFactor = 2.0; // 더 큰 값으로 변경
+    // 모바일 (480px 이하)과 데스크탑에 따라 다른 스케일 팩터 적용
+    const isMobile = viewportWidth <= 480;
+    const scaleFactor = isMobile ? 1.0 : 2.0; // 모바일에서는 1.0, 데스크탑에서는 2.0
+    const maxScaleLimit = isMobile ? MAX_SCALE : MAX_SCALE * 2; // 모바일에서는 MAX_SCALE, 데스크탑에서는 MAX_SCALE * 2
+
     const scaleX = (viewportWidth / canvasSize.width) * scaleFactor;
     const scaleY = (viewportHeight / canvasSize.height) * scaleFactor;
     scaleRef.current = Math.max(Math.min(scaleX, scaleY), MIN_SCALE);
-    scaleRef.current = Math.min(scaleRef.current, MAX_SCALE * 2); // MAX_SCALE 제한도 늘림
+    scaleRef.current = Math.min(scaleRef.current, maxScaleLimit);
 
     // 캔버스를 화면 중앙에 배치
     viewPosRef.current.x =
@@ -343,33 +326,23 @@ function GameCanvas({
     if (!sourceCtx) return;
 
     const pixelData = sourceCtx.getImageData(pos.x, pos.y, 1, 1).data;
-    const currentColor = `rgb(${pixelData[0]}, ${pixelData[1]}, ${pixelData[2]})`;
     const isBlack =
       pixelData[0] === 0 && pixelData[1] === 0 && pixelData[2] === 0;
 
     if (isBlack) {
       // 검은색 픽셀이면 바로 그리기 (기존 로직과 동일)
-      startCooldown(3);
-
-      // 소스 캔버스에 직접 그리기 (소켓 응답을 기다리지 않고 즉시 표시)
-      sourceCtx.fillStyle = userColor;
-      sourceCtx.fillRect(pos.x, pos.y, 1, 1);
+      startCooldown(3); // 3초 쿨다운 유지
 
       previewPixelRef.current = { x: pos.x, y: pos.y, color: userColor };
       flashingPixelRef.current = { x: pos.x, y: pos.y };
       draw();
-
       // 소켓으로 전송
       sendPixel({ x: pos.x, y: pos.y, color: userColor });
-
       setTimeout(() => {
         previewPixelRef.current = null;
-        // 확정 버튼이 사라지지 않도록 fixedPosRef 유지
-        // if (fixedPosRef.current) {
-        //   fixedPosRef.current.color = 'transparent';
-        // }
+        pos.color = 'transparent';
         draw();
-      }, 3000);
+      }, 1000);
     } else {
       // 검은색이 아니면 문제 모달 표시
       setCurrentPixel({ x: pos.x, y: pos.y, color: userColor });
@@ -377,11 +350,10 @@ function GameCanvas({
         GAME_QUESTIONS[Math.floor(Math.random() * GAME_QUESTIONS.length)];
       setCurrentQuestion(randomQuestion);
       setSelectedAnswer(null);
-      setTimeLeft(3);
+      setQuestionTimeLeft(10); // 문제 타이머 10초로 초기화
       setShowQuestionModal(true);
-      playCountDown();
     }
-  }, [userColor, draw, sendPixel, startCooldown, playCountDown]);
+  }, [userColor, draw, sendPixel, startCooldown, setQuestionTimeLeft]);
 
   // 문제 답변 제출
   const submitAnswer = useCallback(() => {
@@ -389,19 +361,13 @@ function GameCanvas({
 
     const isCorrect = selectedAnswer === currentQuestion.answer;
     setShowQuestionModal(false);
+    setQuestionTimeLeft(10); // Reset question timer
 
     if (isCorrect) {
       toast.success('정답입니다!');
 
       // 픽셀 그리기
-      startCooldown(3);
-
-      // 소스 캔버스에 직접 그리기
-      const sourceCtx = sourceCanvasRef.current?.getContext('2d');
-      if (sourceCtx) {
-        sourceCtx.fillStyle = currentPixel.color;
-        sourceCtx.fillRect(currentPixel.x, currentPixel.y, 1, 1);
-      }
+      startCooldown(3); // 3초 쿨다운 유지
 
       previewPixelRef.current = {
         x: currentPixel.x,
@@ -453,17 +419,26 @@ function GameCanvas({
     draw,
     sendGameResult,
     startCooldown,
+    setQuestionTimeLeft,
   ]);
 
-  // 타이머 효과
+  // 문제 타이머 효과
   useEffect(() => {
     let timerId: number;
 
-    if (showQuestionModal && timeLeft > 0) {
+    // Reset timer when modal closes
+    if (!showQuestionModal) {
+      setQuestionTimeLeft(10);
+    }
+
+    if (showQuestionModal && questionTimeLeft > 0) {
       timerId = window.setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
+        setQuestionTimeLeft((prev) => {
+          console.log('Question timer:', prev - 1);
+          return prev - 1;
+        });
       }, 1000);
-    } else if (timeLeft === 0 && showQuestionModal) {
+    } else if (questionTimeLeft === 0 && showQuestionModal) {
       // 시간 초과 시 자동 제출
       submitAnswer();
     }
@@ -471,7 +446,30 @@ function GameCanvas({
     return () => {
       clearInterval(timerId);
     };
-  }, [showQuestionModal, timeLeft, submitAnswer]);
+  }, [showQuestionModal, questionTimeLeft, submitAnswer]);
+
+  // 색상 배정 받아오는 로직 여기서 처리
+  useEffect(() => {
+    setTimeout(() => {
+      setAssignedColor('#00FF00'); // Example color
+      setRemainingTime(10);
+    }, 2000);
+  }, []);
+
+  // 시작시간 받아오기 여기서 처리
+  useEffect(() => {
+    if (remainingTime === undefined) return;
+
+    if (remainingTime > 0) {
+      const timer = setInterval(() => {
+        setRemainingTime((prev) => (prev ? prev - 1 : 0));
+      }, 1000);
+      return () => clearInterval(timer);
+    } else if (remainingTime === 0) {
+      setIsGameStarted(true);
+      setIsReadyModalOpen(false);
+    }
+  }, [remainingTime]);
 
   // 캔버스 데이터 가져오기
   useEffect(() => {
@@ -505,23 +503,6 @@ function GameCanvas({
       setCanvasId(initialCanvasId);
     }
   }, [initialCanvasId, canvas_id, setCanvasId]);
-
-  // 애니메이션 루프 - 항상 실행하도록 수정
-  useEffect(() => {
-    let animationFrameId: number;
-
-    const animate = () => {
-      draw();
-      animationFrameId = requestAnimationFrame(animate);
-    };
-
-    // 항상 애니메이션 루프 실행 (쿨다운이나 깜박임 여부와 관계없이)
-    animationFrameId = requestAnimationFrame(animate);
-
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, [draw]);
 
   // 캔버스 크기 조정
   useEffect(() => {
@@ -604,6 +585,22 @@ function GameCanvas({
     return <NotFoundPage />;
   }
 
+  // 게임 나가기 핸들러
+  const handleExit = useCallback(() => {
+    setShowExitModal(true);
+  }, []);
+
+  // 게임 나가기 확인 핸들러
+  const confirmExit = useCallback(() => {
+    setShowExitModal(false);
+    navigate('/canvas/pixels'); // 홈페이지로 이동
+  }, [navigate]);
+
+  // 게임 나가기 취소 핸들러
+  const cancelExit = useCallback(() => {
+    setShowExitModal(false);
+  }, []);
+
   return (
     <div
       ref={rootRef}
@@ -613,10 +610,25 @@ function GameCanvas({
         boxShadow: cooldown
           ? 'inset 0 0 50px rgba(239, 68, 68, 0.3), 0 0 100px rgba(239, 68, 68, 0.2)'
           : 'inset 0 0 50px rgba(59, 130, 246, 0.3), 0 0 100px rgba(168, 85, 247, 0.2)',
-        animation: 'gradientBG 8s ease infinite',
       }}
     >
-      <style jsx>{`
+      <GameReadyModal
+        isOpen={isReadyModalOpen}
+        onClose={() => setIsReadyModalOpen(false)}
+        color={assignedColor}
+        remainingTime={remainingTime}
+      />
+      {isGameStarted && (
+        <>
+          {/* 나가기 버튼 */}
+          <button
+            onClick={handleExit}
+            className='absolute top-4 left-4 z-50 rounded-lg bg-red-600 px-4 py-2 font-bold text-white shadow-lg transition-all hover:bg-red-700 active:scale-95'
+          >
+            나가기
+          </button>
+          <GameTimer />
+          <style>{`
         @keyframes gradientBG {
           0% {
             box-shadow:
@@ -645,159 +657,197 @@ function GameCanvas({
           }
         }
       `}</style>
-      <GameStarfieldCanvas viewPosRef={viewPosRef} />
-      {cooldown && (
-        <>
-          <div className='pointer-events-none absolute inset-0 border-4 border-red-500/30' />
-          <div className='pointer-events-none absolute inset-2 border-2 border-red-400/20' />
-          <div className='pointer-events-none absolute inset-4 border border-red-300/10' />
-          <div className='pointer-events-none fixed bottom-[20px] left-1/2 z-[9999] -translate-x-1/2 transform'>
-            <div className='relative'>
-              {/* 외부 링 */}
-              <div
-                className='h-16 w-16 animate-spin rounded-full border-4 border-red-500/60'
-                style={{ animationDuration: '2s' }}
-              ></div>
-              {/* 중간 링 */}
-              <div
-                className='absolute inset-1 animate-spin rounded-full border-2 border-orange-400/50'
-                style={{
-                  animationDuration: '1.5s',
-                  animationDirection: 'reverse',
-                }}
-              ></div>
-              {/* 내부 원 */}
-              <div className='absolute inset-3 flex animate-pulse items-center justify-center rounded-full border border-red-400/60 bg-gradient-to-br from-red-900/80 to-black/70 shadow-2xl backdrop-blur-xl'>
-                <span className='animate-pulse font-mono text-xl font-bold tracking-wider text-red-300'>
-                  {timeLeft}
-                </span>
+          <GameStarfieldCanvas viewPosRef={viewPosRef} />
+          {cooldown && (
+            <>
+              <div className='pointer-events-none absolute inset-0 border-4 border-red-500/30' />
+              <div className='pointer-events-none absolute inset-2 border-2 border-red-400/20' />
+              <div className='pointer-events-none absolute inset-4 border border-red-300/10' />
+              <div className='pointer-events-none fixed bottom-[20px] left-1/2 z-[9999] -translate-x-1/2 transform'>
+                <div className='relative'>
+                  {/* 외부 링 */}
+                  <div
+                    className='h-16 w-16 animate-spin rounded-full border-4 border-red-500/60'
+                    style={{ animationDuration: '2s' }}
+                  ></div>
+                  {/* 중간 링 */}
+                  <div
+                    className='absolute inset-1 animate-spin rounded-full border-2 border-orange-400/50'
+                    style={{
+                      animationDuration: '1.5s',
+                      animationDirection: 'reverse',
+                    }}
+                  ></div>
+                  {/* 내부 원 */}
+                  <div className='absolute inset-3 flex animate-pulse items-center justify-center rounded-full border border-red-400/60 bg-gradient-to-br from-red-900/80 to-black/70 shadow-2xl backdrop-blur-xl'>
+                    <span className='animate-pulse font-mono text-xl font-bold tracking-wider text-red-300'>
+                      {timeLeft}
+                    </span>
+                  </div>
+                  {/* 글로우 효과 */}
+                  <div className='absolute inset-0 animate-ping rounded-full bg-red-500/15'></div>
+                  <div
+                    className='absolute inset-0 animate-ping rounded-full bg-orange-400/10'
+                    style={{ animationDelay: '1s' }}
+                  ></div>
+                </div>
               </div>
-              {/* 글로우 효과 */}
-              <div className='absolute inset-0 animate-ping rounded-full bg-red-500/15'></div>
-              <div
-                className='absolute inset-0 animate-ping rounded-full bg-orange-400/10'
-                style={{ animationDelay: '1s' }}
-              ></div>
-            </div>
-          </div>
-        </>
-      )}
-      <div
-        className={`transition-all duration-1000 ease-out ${
-          showCanvas
-            ? 'scale-100 transform opacity-100'
-            : 'scale-50 transform opacity-0'
-        }`}
-      >
-        <canvas
-          ref={renderCanvasRef}
-          className='pointer-events-none absolute top-0 left-0'
-        />
-        <canvas
-          ref={previewCanvasRef}
-          className='pointer-events-none absolute top-0 left-0'
-        />
-        <canvas
-          ref={interactionCanvasRef}
-          className='absolute top-0 left-0'
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseLeave}
-          onContextMenu={(e) => e.preventDefault()}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          onTouchCancel={handleTouchEnd}
-        />
-      </div>
-
-      {isLoading ? (
-        <Preloader />
-      ) : (
-        <div className='fixed right-4 bottom-4 z-10'>
-          {/* 확정 버튼 - 항상 표시 */}
-          <button
-            onClick={handleConfirm}
-            disabled={cooldown}
-            className={`transform rounded-lg px-6 py-3 text-base font-medium text-white shadow-lg transition-all ${cooldown 
-              ? 'cursor-not-allowed border border-red-500/30 bg-red-500/20 text-red-400' 
-              : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:scale-105 hover:from-green-600 hover:to-emerald-600 active:scale-95'}`}
+            </>
+          )}
+          <div
+            className={`transition-all duration-1000 ease-out ${
+              showCanvas
+                ? 'scale-100 transform opacity-100'
+                : 'scale-50 transform opacity-0'
+            }`}
           >
-            {cooldown ? (
-              <div className="flex items-center gap-2">
-                <svg
-                  className='h-5 w-5 animate-spin'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                >
-                  <circle
-                    className='opacity-25'
-                    cx='12'
-                    cy='12'
-                    r='10'
-                    stroke='currentColor'
-                    strokeWidth='4'
-                  ></circle>
-                  <path
-                    className='opacity-75'
-                    fill='currentColor'
-                    d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
-                  ></path>
-                </svg>
-                <span className="font-medium">{timeLeft}초 대기</span>
-              </div>
-            ) : (
-              '확정'
-            )}
-          </button>
-        </div>
-      )}
-
-      {/* 문제 모달 */}
-      {showQuestionModal && currentQuestion && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/70'>
-          <div className='w-full max-w-md rounded-xl bg-gray-900 p-6 shadow-2xl'>
-            <div className='mb-4 flex items-center justify-between'>
-              <h3 className='text-xl font-bold text-white'>문제</h3>
-              <div className='rounded-full bg-red-500 px-3 py-1 text-sm font-bold text-white'>
-                {timeLeft}초
-              </div>
-            </div>
-
-            <p className='mb-6 text-lg text-white'>
-              {currentQuestion.question}
-            </p>
-
-            <div className='space-y-3'>
-              {currentQuestion.options.map((option, index) => (
-                <button
-                  key={index}
-                  className={`w-full rounded-lg border border-gray-700 p-3 text-left transition-all ${
-                    selectedAnswer === index
-                      ? 'border-blue-500 bg-blue-500/20 text-blue-300'
-                      : 'text-gray-300 hover:bg-gray-800'
-                  }`}
-                  onClick={() => setSelectedAnswer(index)}
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
-
-            <button
-              className={`mt-6 w-full rounded-lg py-3 text-center font-bold ${
-                selectedAnswer !== null
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
-                  : 'bg-gray-700 text-gray-400'
-              }`}
-              onClick={submitAnswer}
-              disabled={selectedAnswer === null}
-            >
-              제출하기
-            </button>
+            <canvas
+              ref={renderCanvasRef}
+              className='pointer-events-none absolute top-0 left-0'
+            />
+            <canvas
+              ref={previewCanvasRef}
+              className='pointer-events-none absolute top-0 left-0'
+            />
+            <canvas
+              ref={interactionCanvasRef}
+              className='absolute top-0 left-0'
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseLeave}
+              onContextMenu={(e) => e.preventDefault()}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchEnd}
+            />
           </div>
-        </div>
+
+          {isLoading ? (
+            <Preloader />
+          ) : (
+            <div className='fixed right-4 bottom-4 z-10'>
+              {/* 확정 버튼 - 항상 표시 */}
+              <button
+                onClick={handleConfirm}
+                disabled={cooldown}
+                className={`transform rounded-lg px-6 py-3 text-base font-medium text-white shadow-lg transition-all ${
+                  cooldown
+                    ? 'cursor-not-allowed border border-red-500/30 bg-red-500/20 text-red-400'
+                    : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:scale-105 hover:from-green-600 hover:to-emerald-600 active:scale-95'
+                }`}
+              >
+                {cooldown ? (
+                  <div className='flex items-center gap-2'>
+                    <svg
+                      className='h-5 w-5 animate-spin'
+                      fill='none'
+                      viewBox='0 0 24 24'
+                    >
+                      <circle
+                        className='opacity-25'
+                        cx='12'
+                        cy='12'
+                        r='10'
+                        stroke='currentColor'
+                        strokeWidth='4'
+                      ></circle>
+                      <path
+                        className='opacity-75'
+                        fill='currentColor'
+                        d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
+                      ></path>
+                    </svg>
+                    <span className='font-medium'>{timeLeft}초 대기</span>
+                  </div>
+                ) : (
+                  '확정'
+                )}
+              </button>
+            </div>
+          )}
+
+          {/* 문제 모달 */}
+          {showQuestionModal && currentQuestion && (
+            <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/70'>
+              <div className='w-full max-w-md rounded-xl bg-gray-900 p-6 shadow-2xl'>
+                <div className='mb-4 flex items-center justify-between'>
+                  <h3 className='text-xl font-bold text-white'>문제</h3>
+                  <div className='rounded-full bg-red-500 px-3 py-1 text-sm font-bold text-white'>
+                    {questionTimeLeft}초
+                  </div>
+                </div>
+
+                <p className='mb-6 text-lg text-white'>
+                  {currentQuestion.question}
+                </p>
+
+                <div className='space-y-3'>
+                  {currentQuestion.options.map((option, index) => (
+                    <button
+                      key={index}
+                      className={`w-full rounded-lg border border-gray-700 p-3 text-left transition-all ${
+                        selectedAnswer === index
+                          ? 'border-blue-500 bg-blue-500/20 text-blue-300'
+                          : 'text-gray-300 hover:bg-gray-800'
+                      }`}
+                      onClick={() => setSelectedAnswer(index)}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  className={`mt-6 w-full rounded-lg py-3 text-center font-bold ${
+                    selectedAnswer !== null
+                      ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
+                      : 'bg-gray-700 text-gray-400'
+                  }`}
+                  onClick={submitAnswer}
+                  disabled={selectedAnswer === null}
+                >
+                  제출하기
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* 나가기 확인 모달 */}
+          {showExitModal && (
+            <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/70'>
+              <div className='w-full max-w-md rounded-xl bg-gray-900 p-6 shadow-2xl'>
+                <div className='mb-4 flex items-center justify-between'>
+                  <h3 className='text-xl font-bold text-white'>게임 탈락</h3>
+                  <div className='rounded-full bg-red-500 px-3 py-1 text-sm font-bold text-white'>
+                    주의
+                  </div>
+                </div>
+
+                <p className='mb-6 text-lg text-white'>
+                  정말 게임을 포기하시겠습니까? 지금 나가면 모든 진행 상황이
+                  사라집니다! 😱
+                </p>
+
+                <div className='flex gap-4'>
+                  <button
+                    className='flex-1 rounded-lg bg-gray-700 py-3 font-bold text-gray-300 transition-all hover:bg-gray-600'
+                    onClick={cancelExit}
+                  >
+                    계속하기
+                  </button>
+                  <button
+                    className='flex-1 rounded-lg bg-gradient-to-r from-red-500 to-red-700 py-3 font-bold text-white transition-all hover:from-red-600 hover:to-red-800'
+                    onClick={confirmExit}
+                  >
+                    나가기
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

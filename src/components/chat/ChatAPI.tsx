@@ -24,9 +24,13 @@ export const chatService = {
           new Date(a.timestamp || a.created_at).getTime() -
           new Date(b.timestamp || b.created_at).getTime()
       );
+      const sortedGroups = groups.sort(
+        (a: { group_id: string }, b: { group_id: string }) =>
+          Number(a.group_id) - Number(b.group_id)
+      );
       return {
         defaultGroupId,
-        groups,
+        groups: sortedGroups,
         messages: sortedMessages,
       };
     } catch (error) {

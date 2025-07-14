@@ -8,6 +8,8 @@ import { useModalStore } from '../../store/modalStore';
 import { showInstructionsToast } from '../toast/InstructionsToast';
 import { useCanvasUiStore } from '../../store/canvasUiStore';
 import UserCount from './UserCount';
+import { CanvasType } from './canvasConstants';
+
 // type HoverPos = { x: number; y: number } | null;
 
 type CanvasUIProps = {
@@ -19,6 +21,7 @@ type CanvasUIProps = {
   colors: string[];
   isBgmPlaying: boolean;
   toggleBgm: () => void;
+  canvasType: CanvasType;
 };
 
 export default function CanvasUIPC({
@@ -30,6 +33,7 @@ export default function CanvasUIPC({
   colors,
   isBgmPlaying,
   toggleBgm,
+  canvasType,
 }: CanvasUIProps) {
   const [isPressed, setIsPressed] = useState(false);
   const [showConfirmEffect, setShowConfirmEffect] = useState(false);
@@ -58,6 +62,7 @@ export default function CanvasUIPC({
     openAlbumModal,
     openMyPageModal,
     openGroupModal,
+    openHelpModal,
   } = useModalStore();
 
   // 드롭다움 열림, 닫힘 상태
@@ -84,11 +89,13 @@ export default function CanvasUIPC({
     };
   }, [isMenuOpen]);
 
+  console.log(canvasType);
+
   return (
     <>
       <ToastContainer />
       {/* 이미지 업로드 */}
-      <div className='pointer-events-auto fixed bottom-4 left-14 z-[9999] flex gap-2'>
+      <div className='pointer-events-auto fixed bottom-4 left-14 z-[100] flex gap-2'>
         {onImageAttach && (
           <div className='flex flex-col gap-1'>
             <div className='flex items-center gap-2'>
@@ -176,6 +183,7 @@ export default function CanvasUIPC({
           </div>
         )}
       </div>
+
       <div
         ref={menuRef}
         className='pointer-events-auto fixed top-[10px] left-[10px] z-60'
@@ -351,8 +359,35 @@ export default function CanvasUIPC({
                 {isBgmPlaying ? 'BGM 끄기' : 'BGM 켜기'}
               </span>
             </div>
+            {/* 도움말 버튼 */}
+            <div>
+              <button
+                onClick={openHelpModal}
+                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
+                title='게임 가이드'
+              >
+                <svg
+                  className='h-5 w-5'
+                  fill='none'
+                  stroke='currentColor'
+                  viewBox='0 0 24 24'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
         )}
+      </div>
+
+      {/* 좌표 표시창 */}
+      <div className='pointer-events-none fixed right-[20px] bottom-[20px] z-[9999] rounded-[8px] bg-[rgba(0,0,0,0.8)] p-[10px] text-white'>
+        {hoverPos ? `(${hoverPos.x}, ${hoverPos.y})` : 'OutSide'}
       </div>
 
       {/* 팔레트 */}
@@ -367,18 +402,20 @@ export default function CanvasUIPC({
         <div className='pointer-events-none top-[100px] right-[20px] z-[9999] w-20 rounded-[8px] bg-transparent p-[10px] text-center text-xs font-bold text-white'>
           {hoverPos ? `(${hoverPos.x},${hoverPos.y})` : 'OutSide'}
         </div>
-        <input
-          type='color'
-          value={color}
-          onChange={(e) => {
-            const newColor = e.target.value;
-            setColor(newColor);
-            onSelectColor(newColor);
-          }}
-          id='color-picker'
-          className='mb-3 h-[40px] w-20 cursor-pointer rounded-[4px] border-2 border-solid border-white p-0'
-          title='색상 선택'
-        />
+        {canvasType !== CanvasType.EVENT_COLORLIMIT && (
+          <input
+            type='color'
+            value={color}
+            onChange={(e) => {
+              const newColor = e.target.value;
+              setColor(newColor);
+              onSelectColor(newColor);
+            }}
+            id='color-picker'
+            className='mb-3 h-[40px] w-20 cursor-pointer rounded-[4px] border-2 border-solid border-white p-0'
+            title='색상 선택'
+          />
+        )}
         <button
           onClick={clearSelectedPixel}
           className='absolute top-0 right-1 cursor-pointer p-1 text-gray-400 transition-colors hover:text-white'

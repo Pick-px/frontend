@@ -1,7 +1,7 @@
 // App.tsx
 
 import PixelCanvas from './components/canvas/PixelCanvas';
-import GameCanvas from './components/canvas/GameCanvas';
+import GameCanvas from './components/game/GameCanvas';
 import { isGameCanvas, isGameCanvasById } from './utils/canvasTypeUtils';
 
 import React, { useRef, useEffect, useCallback, useState } from 'react'; // UI 상태 관리를 위해 import
@@ -19,6 +19,9 @@ import GroupModalContent from './components/modal/GroupModalContent';
 import CanvasModalContent from './components/modal/CanvasModalContent';
 import { toast } from 'react-toastify';
 import { jwtDecode } from 'jwt-decode';
+import AlbumModalContent from './components/modal/AlbumModalContent';
+import HelpModalContent from './components/modal/HelpModalContent';
+import CanvasEndedModal from './components/modal/CanvasEndedModal'; // CanvasEndedModal import 추가
 
 type DecodedToken = {
   sub: {
@@ -45,6 +48,11 @@ function App() {
     closeGroupModal,
     isCanvasModalOpen,
     closeCanvasModal,
+    isAlbumModalOpen,
+    closeAlbumModal,
+    isHelpModalOpen,
+    closeHelpModal,
+    isCanvasEndedModalOpen, // isCanvasEndedModalOpen 상태 가져오기
   } = useModalStore();
 
   // if (!canvas_id) {
@@ -121,19 +129,30 @@ function App() {
       <Modal isOpen={isCanvasModalOpen} onClose={closeCanvasModal}>
         <CanvasModalContent onClose={closeCanvasModal} />
       </Modal>
-      {/* 로딩 완료 후 채팅 컴포넌트 표시 - 게임 모드에서는 표시하지 않음 */}
-      {!isLoading && !canvasLoading && !isGame && (() => {
-        try {
-          return <Chat />;
-        } catch (error) {
-          console.error('Chat 컴포넌트 에러:', error);
-          return (
-            <div className='fixed bottom-5 left-5 text-red-500'>
-              채팅 로드 실패
-            </div>
-          );
-        }
-      })()}
+      <Modal isOpen={isAlbumModalOpen} onClose={closeAlbumModal}>
+        <AlbumModalContent onClose={closeAlbumModal} />
+      </Modal>
+      <Modal isOpen={isHelpModalOpen} onClose={closeHelpModal}>
+        <HelpModalContent />
+      </Modal>
+      {isCanvasEndedModalOpen && <CanvasEndedModal />}{' '}
+      {/* 캔버스 종료 모달 렌더링 */}
+      {/* 로딩 완료 후 채팅 컴포넌트 표시 */}
+      {!isLoading &&
+        !canvasLoading &&
+        !isGame &&
+        (() => {
+          try {
+            return <Chat />;
+          } catch (error) {
+            console.error('Chat 컴포넌트 에러:', error);
+            return (
+              <div className='fixed bottom-5 left-5 text-red-500'>
+                채팅 로드 실패
+              </div>
+            );
+          }
+        })()}
     </main>
   );
 }

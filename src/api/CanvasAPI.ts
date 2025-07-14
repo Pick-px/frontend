@@ -1,3 +1,4 @@
+import { CanvasType } from '../components/canvas/canvasConstants';
 import apiClient from '../services/apiClient';
 
 export interface Canvas {
@@ -6,7 +7,7 @@ export interface Canvas {
   created_at: string;
   size_x: number;
   size_y: number;
-  type: string;
+  type: CanvasType;
   ended_at: string;
   started_at?: string; // Add started_at field
   status?: 'active' | 'inactive' | 'archived';

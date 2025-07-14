@@ -7,6 +7,7 @@ import { useAuthStore } from '../../store/authStrore';
 import { useModalStore } from '../../store/modalStore';
 import { showInstructionsToast } from '../toast/InstructionsToast';
 import { useCanvasUiStore } from '../../store/canvasUiStore';
+import { CanvasType } from './canvasConstants';
 
 // type HoverPos = { x: number; y: number } | null;
 
@@ -21,6 +22,7 @@ type CanvasUIProps = {
   onZoomOut: () => void;
   isBgmPlaying: boolean;
   toggleBgm: () => void;
+  canvasType: CanvasType;
 };
 
 export default function CanvasUIMobile({
@@ -34,6 +36,7 @@ export default function CanvasUIMobile({
   onZoomOut,
   isBgmPlaying,
   toggleBgm,
+  canvasType,
 }: CanvasUIProps) {
   const [isPressed, setIsPressed] = useState(false);
   const [showConfirmEffect, setShowConfirmEffect] = useState(false);
@@ -62,6 +65,7 @@ export default function CanvasUIMobile({
     openAlbumModal,
     openMyPageModal,
     openGroupModal,
+    openHelpModal,
   } = useModalStore();
 
   // 드롭다움 열림, 닫힘 상태
@@ -93,17 +97,38 @@ export default function CanvasUIMobile({
       <ToastContainer />
       {/* 컬러 피커 */}
       <div className='pointer-events-auto fixed top-2 right-2 flex gap-2'>
-        <input
-          type='color'
-          value={color}
-          onChange={(e) => {
-            const newColor = e.target.value;
-            setColor(newColor);
-            onSelectColor(newColor);
-          }}
-          className='h-8 w-8 cursor-pointer rounded-full p-0'
-          title='색상 선택'
-        />
+        {canvasType === CanvasType.EVENT_COLORLIMIT ? (
+          <div className='flex flex-col gap-2'>
+            {['#000000', '#808080', '#c0c0c0', '#ffffff'].map((c) => (
+              <button
+                key={c}
+                onClick={() => {
+                  setColor(c);
+                  onSelectColor(c);
+                }}
+                style={{ backgroundColor: c }}
+                className={`h-8 w-8 cursor-pointer rounded-full transition-all duration-300 ${
+                  color === c
+                    ? 'scale-110 shadow-lg ring-2 shadow-cyan-400/60 ring-cyan-300 ring-offset-2 ring-offset-slate-800'
+                    : 'border border-white/30 hover:border-cyan-300/50 hover:shadow-md hover:shadow-white/20'
+                }`}
+              />
+            ))}
+          </div>
+        ) : (
+          <input
+            type='color'
+            value={color}
+            onChange={(e) => {
+              const newColor = e.target.value;
+              setColor(newColor);
+              onSelectColor(newColor);
+            }}
+            className='h-8 w-8 cursor-pointer rounded-full p-0'
+            title='색상 선택'
+          />
+        )}
+
         <div className='pointer-events-auto fixed top-2 right-11 flex h-8 w-8 gap-2 rounded-full'>
           <button
             disabled={cooldown}
@@ -253,6 +278,7 @@ export default function CanvasUIMobile({
           )}
         </div>
       </div>
+
       <div
         ref={menuRef}
         className='pointer-events-auto fixed top-[10px] left-[10px]'
@@ -427,6 +453,28 @@ export default function CanvasUIMobile({
               <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs text-white transition-all group-hover:scale-100'>
                 {isBgmPlaying ? 'BGM 끄기' : 'BGM 켜기'}
               </span>
+            </div>
+            {/* 도움말 버튼 */}
+            <div>
+              <button
+                onClick={openHelpModal}
+                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
+                title='게임 가이드'
+              >
+                <svg
+                  className='h-5 w-5'
+                  fill='none'
+                  stroke='currentColor'
+                  viewBox='0 0 24 24'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+                  />
+                </svg>
+              </button>
             </div>
           </div>
         )}
