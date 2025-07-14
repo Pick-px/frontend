@@ -30,6 +30,10 @@ type ModalState = {
   isHelpModalOpen: boolean;
   openHelpModal: () => void;
   closeHelpModal: () => void;
+
+  isCanvasEndedModalOpen: boolean;
+  openCanvasEndedModal: () => void;
+  closeCanvasEndedModal: () => void;
 };
 
 export const useModalStore = create<ModalState>((set) => ({
@@ -44,6 +48,7 @@ export const useModalStore = create<ModalState>((set) => ({
       isGroupModalOpen: false,
       isChatOpen: false,
       isHelpModalOpen: false,
+      isCanvasEndedModalOpen: false, // 추가
     }),
   closeLoginModal: () => set({ isLoginModalOpen: false }),
 
@@ -57,6 +62,7 @@ export const useModalStore = create<ModalState>((set) => ({
       isGroupModalOpen: false,
       isChatOpen: false,
       isHelpModalOpen: false,
+      isCanvasEndedModalOpen: false, // 추가
     }),
   closeCanvasModal: () => set({ isCanvasModalOpen: false }),
 
@@ -70,6 +76,7 @@ export const useModalStore = create<ModalState>((set) => ({
       isGroupModalOpen: false,
       isChatOpen: false,
       isHelpModalOpen: false,
+      isCanvasEndedModalOpen: false, // 추가
     }),
   closeAlbumModal: () => set({ isAlbumModalOpen: false }),
 
@@ -83,6 +90,7 @@ export const useModalStore = create<ModalState>((set) => ({
       isGroupModalOpen: false,
       isChatOpen: false,
       isHelpModalOpen: false,
+      isCanvasEndedModalOpen: false, // 추가
     }),
   closeMyPageModal: () => set({ isMyPageModalOpen: false }),
 
@@ -96,6 +104,7 @@ export const useModalStore = create<ModalState>((set) => ({
       isGroupModalOpen: true,
       isChatOpen: false,
       isHelpModalOpen: false,
+      isCanvasEndedModalOpen: false, // 추가
     }),
   closeGroupModal: () => set({ isGroupModalOpen: false }),
 
@@ -110,6 +119,7 @@ export const useModalStore = create<ModalState>((set) => ({
       isGroupModalOpen: false,
       isChatOpen: true,
       isHelpModalOpen: false,
+      isCanvasEndedModalOpen: false, // 추가
     }),
   closeChat: () => set({ isChatOpen: false }),
 
@@ -124,6 +134,22 @@ export const useModalStore = create<ModalState>((set) => ({
       isGroupModalOpen: false,
       isChatOpen: false,
       isHelpModalOpen: true,
+      isCanvasEndedModalOpen: false, // 추가
     }),
   closeHelpModal: () => set({ isHelpModalOpen: false }),
+
+  // 캔버스 종료 모달 상태 추가
+  isCanvasEndedModalOpen: false,
+  openCanvasEndedModal: () =>
+    set({
+      isLoginModalOpen: false,
+      isCanvasModalOpen: false,
+      isAlbumModalOpen: false,
+      isMyPageModalOpen: false,
+      isGroupModalOpen: false,
+      isChatOpen: false,
+      isHelpModalOpen: false,
+      isCanvasEndedModalOpen: true
+    }),
+  closeCanvasEndedModal: () => set({ isCanvasEndedModalOpen: false }),
 }));

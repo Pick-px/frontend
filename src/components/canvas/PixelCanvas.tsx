@@ -10,6 +10,7 @@ import { fetchCanvasData as fetchCanvasDataUtil } from '../../api/canvasFetch';
 import NotFoundPage from '../../pages/NotFoundPage';
 import { useCanvasInteraction } from '../../hooks/useCanvasInteraction';
 import useSound from 'use-sound';
+import { useModalStore } from '../../store/modalStore'; // useModalStore import 추가
 
 import {
   INITIAL_POSITION,
@@ -51,7 +52,7 @@ function PixelCanvas({
 
   const imageTransparencyRef = useRef(0.5);
 
-  // state를 각각 가져오도록 하여 불필요한 리렌더링을 방지합니다.
+  // state를 각각 가져오도록 하여 불필요한 리렌더링을 방지합니다。
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
   const [hasError, setHasError] = useState(false);
   const [canvasType, setCanvasType] = useState<string | null>(null);
@@ -89,6 +90,8 @@ function PixelCanvas({
   const setTargetPixel = useCanvasUiStore((state) => state.setTargetPixel);
 
   const startCooldown = useCanvasUiStore((state) => state.startCooldown);
+
+  const { openCanvasEndedModal } = useModalStore(); // openCanvasEndedModal 가져오기
 
   // 이미지 관련 상태 (Zustand로 이동하지 않는 부분)
   const imageCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -991,7 +994,7 @@ function PixelCanvas({
           );
         } else {
           setTimeLeft('캔버스 종료');
-          // 종료시 로직 추후 추가
+          openCanvasEndedModal(); // 캔버스 종료 시 모달 열기
           clearInterval(timerInterval);
         }
       } else {
@@ -1003,7 +1006,7 @@ function PixelCanvas({
     timerInterval = setInterval(calculateTimeLeft, 1000); // Update every second
 
     return () => clearInterval(timerInterval);
-  }, [canvasType, endedAt]);
+  }, [canvasType, endedAt, openCanvasEndedModal]); // 의존성 배열에 openCanvasEndedModal 추가
 
   useEffect(() => {
     const rootElement = rootRef.current;
