@@ -1,10 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
 import type { AlbumItemData } from '../album/albumTypes';
+import { albumServices } from '../album/albumAPI';
 
 type AlbumModalContentProps = {
   onClose?: () => void;
 };
+
+interface ApiResponse {
+  isSuccess: boolean;
+  code: string;
+  message: string;
+  data: AlbumItemData[];
+}
 
 const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
   const [albums, setAlbums] = useState<AlbumItemData[]>([]);
@@ -42,94 +50,82 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
       setLoading(true);
       setError(null);
 
-      // The Cat API에서 고양이 이미지들 가져오기
-      const response = await fetch(
-        'https://api.thecatapi.com/v1/images/search?limit=12&size=med'
-      );
-      // const response = albumServices.getAlbumList(user?.userId, canvas_id);
-      // const resToJson = await response.json();
-      // const mockAlbums: AlbumItemData[] = resToJson.map();
-      if (!response.ok) {
-        throw new Error('고양이 이미지를 불러오는데 실패했습니다.');
+      // const response = await albumServices.getAlbumList();
+      const response: ApiResponse = {
+        isSuccess: true,
+        code: '200',
+        message: '요청에 성공하였습니다.',
+        data: [
+          {
+            image_url: 'https://s3.amazonaws.com/bucket/history/1/image.png',
+            title: '고양이캔버스',
+            type: 'event',
+            created_at: '2025-07-20T09:30:00Z',
+            ended_at: '2025-07-20T09:30:00Z',
+            size_x: 200,
+            size_y: 150,
+            participant_count: 10,
+            total_try_count: 1500,
+            top_try_user_name: 'user123',
+            top_try_user_count: 45,
+            top_own_user_name: 'user456',
+            top_own_user_count: 23,
+          },
+          {
+            image_url: 'https://s3.amazonaws.com/bucket/history/1/image.png',
+            title: '고양이캔버스',
+            type: 'event',
+            created_at: '2025-07-20T09:30:00Z',
+            ended_at: '2025-07-20T09:30:00Z',
+            size_x: 200,
+            size_y: 150,
+            participant_count: 10,
+            total_try_count: 1500,
+            top_try_user_name: 'user123',
+            top_try_user_count: 45,
+            top_own_user_name: 'user456',
+            top_own_user_count: 23,
+          },
+          {
+            image_url: 'https://s3.amazonaws.com/bucket/history/1/image.png',
+            title: '고양이캔버스',
+            type: 'event',
+            created_at: '2025-07-20T09:30:00Z',
+            ended_at: '2025-07-20T09:30:00Z',
+            size_x: 200,
+            size_y: 150,
+            participant_count: 10,
+            total_try_count: 1500,
+            top_try_user_name: 'user123',
+            top_try_user_count: 45,
+            top_own_user_name: 'user456',
+            top_own_user_count: 23,
+          },
+        ],
+      };
+
+      if (response.isSuccess) {
+        const albumsData: AlbumItemData[] = response.data.map(
+          (canvas: AlbumItemData) => ({
+            image_url: canvas.image_url,
+            title: canvas.title,
+            type: canvas.type,
+            created_at: canvas.created_at,
+            ended_at: canvas.ended_at,
+            size_x: canvas.size_x,
+            size_y: canvas.size_y,
+            participant_count: canvas.participant_count,
+            total_try_count: canvas.total_try_count,
+            top_try_user_name: canvas.top_try_user_name,
+            top_try_user_count: canvas.top_try_user_count,
+            top_own_user_name: canvas.top_own_user_name,
+            top_own_user_count: canvas.top_own_user_count,
+          })
+        );
+        setAlbums(albumsData);
+      } else {
+        setError(response.message || '앨범 목록을 불러오는데 실패했습니다.');
       }
-
-      const catImages = await response.json();
-      // 고양이 이미지 데이터를 새로운 앨범 형태로 변환
-      const mockAlbums: AlbumItemData[] = catImages.map(
-        (cat: any, index: number) => {
-          const canvasTypes = [
-            'Battle',
-            'Event',
-            'Special',
-            'Community',
-            'Seasonal',
-          ];
-          const canvasTitles = [
-            '고양이 천국 캔버스',
-            '냥이 축제 이벤트',
-            '고양이 카페 특별전',
-            '커뮤니티 냥이 아트',
-            '봄맞이 고양이 테마',
-            '여름 고양이 해변',
-            '가을 고양이 단풍',
-            '겨울 고양이 눈놀이',
-            '고양이 우주 탐험',
-            '레트로 고양이 스타일',
-            '미래형 사이버 고양이',
-            '고양이 판타지 월드',
-          ];
-
-          // 랜덤한 캔버스 크기 생성
-          const sizes = [
-            { x: 500, y: 500 },
-            { x: 800, y: 600 },
-            { x: 1000, y: 800 },
-            { x: 1200, y: 900 },
-            { x: 600, y: 400 },
-            { x: 900, y: 700 },
-          ];
-          const randomSize = sizes[Math.floor(Math.random() * sizes.length)];
-
-          // 랜덤한 생성/종료 날짜 생성
-          const createdDate = new Date();
-          createdDate.setDate(
-            createdDate.getDate() - Math.floor(Math.random() * 180) - 30
-          );
-
-          const endedDate = new Date(createdDate);
-          endedDate.setDate(
-            endedDate.getDate() + Math.floor(Math.random() * 30) + 1
-          );
-
-          // 랜덤한 사용자 이름 생성
-          const userNames = [
-            '김철수',
-            '이영희',
-            '박민수',
-            '최지영',
-            '정다은',
-            '홍길동',
-          ];
-          const mostPaintedUser =
-            userNames[Math.floor(Math.random() * userNames.length)];
-          const topPainter =
-            userNames[Math.floor(Math.random() * userNames.length)];
-
-          return {
-            image_url: cat.url,
-            title: canvasTitles[index] || `고양이 캔버스 ${index + 1}`,
-            type: canvasTypes[Math.floor(Math.random() * canvasTypes.length)],
-            created_at: createdDate.toISOString(),
-            ended_at: endedDate.toISOString(),
-            size_x: randomSize.x,
-            size_y: randomSize.y,
-            mostPaintedUser: mostPaintedUser,
-            topPainter: topPainter,
-          };
-        }
-      );
-
-      setAlbums(mockAlbums);
     } catch (err) {
       setError(
         err instanceof Error
@@ -427,7 +423,7 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
                 {/* 정보 영역 - 고정 높이로 항상 표시 */}
                 <div className='flex-shrink-0 p-2 sm:p-3 md:p-4'>
                   {/* 제목과 타입 */}
-                  <div className='mb-2 sm:mb-3'>
+                  <div className='mb-2 flex items-center justify-between sm:mb-3'>
                     <h3
                       className='text-sm font-bold text-white sm:text-base md:text-lg'
                       style={{
@@ -439,7 +435,7 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
                     >
                       {album.title}
                     </h3>
-                    <span className='mt-1 inline-block rounded-full bg-blue-500/20 px-2 py-1 text-xs text-blue-400'>
+                    <span className='inline-block rounded-full bg-blue-500/20 px-2 py-1 text-xs text-blue-400'>
                       {album.type}
                     </span>
                   </div>
@@ -455,29 +451,27 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
                     <div className='flex items-center justify-between'>
                       <span className='text-xs text-gray-400'>진행 기간</span>
                       <span className='text-xs font-semibold text-white sm:text-sm'>
-                        {calculateDuration(album.created_at, album.ended_at)}
+                        {`${formatDate(album.created_at)} ~ ${formatDate(album.ended_at)}(${calculateDuration(album.created_at, album.ended_at)})`}
+                      </span>
+                    </div>
+                    <div className='flex items-center justify-between'>
+                      <span className='text-xs text-gray-400'>최다 시도상</span>
+                      <span className='text-xs font-semibold text-white sm:text-sm'>
+                        {`${album.top_try_user_name}(${album.top_try_user_count}회)`}
+                      </span>
+                    </div>
+                    <div className='flex items-center justify-between'>
+                      <span className='text-xs text-gray-400'>최다 기여상</span>
+                      <span className='text-xs font-semibold text-white sm:text-sm'>
+                        {`${album.top_own_user_name}(${album.top_own_user_count}회)`}
                       </span>
                     </div>
                     <div className='flex items-center justify-between'>
                       <span className='text-xs text-gray-400'>
-                        가장 많이 시도한 유저
+                        전체 픽셀 수 / 참여자
                       </span>
                       <span className='text-xs font-semibold text-white sm:text-sm'>
-                        {album.mostPaintedUser}
-                      </span>
-                    </div>
-                    <div className='flex items-center justify-between'>
-                      <span className='text-xs text-gray-400'>
-                        가장 많이 칠한 유저
-                      </span>
-                      <span className='text-xs font-semibold text-white sm:text-sm'>
-                        {album.topPainter}
-                      </span>
-                    </div>
-                    <div className='flex items-center justify-between'>
-                      <span className='text-xs text-gray-400'>완성일</span>
-                      <span className='text-xs font-semibold text-white sm:text-sm'>
-                        {formatDate(album.ended_at)}
+                        {`${album.total_try_count} / ${album.participant_count}회`}
                       </span>
                     </div>
                   </div>

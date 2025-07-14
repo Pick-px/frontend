@@ -1,15 +1,13 @@
 import apiClient from '../../services/apiClient';
 
 export const albumServices = {
-  async getAlbumList(userId: string | undefined, canvasId: string) {
+  async getAlbumList() {
     try {
-      const response = await apiClient.get(`/album`, {
-        params: { user_id: userId, canvas_id: canvasId },
-      });
-      console.log(response);
+      const response = await apiClient.get(`/gallery`);
+      console.log('get', response);
       return response.data;
     } catch (error) {
-      console.error(`Failed to fetch albumList ${userId}`, userId);
+      console.error(`Failed to fetch albumList `);
       throw error;
     }
   },
