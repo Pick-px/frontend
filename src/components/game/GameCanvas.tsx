@@ -4,6 +4,7 @@ import GameStarfieldCanvas from './GameStarfieldCanvas';
 import { useCanvasUiStore } from '../../store/canvasUiStore';
 import Preloader from '../Preloader';
 import { useCanvasStore } from '../../store/canvasStore';
+import { useAuthStore } from '../../store/authStrore';
 import { toast } from 'react-toastify';
 import { fetchCanvasData as fetchCanvasDataUtil } from '../../api/canvasFetch';
 import NotFoundPage from '../../pages/NotFoundPage';
@@ -68,11 +69,17 @@ function GameCanvas({
   const [remainingTime, setRemainingTime] = useState<number | undefined>(
     undefined
   );
+  const [lives, setLives] = useState(2); // 사용자 생명 (2개)
 
   const navigate = useNavigate();
   const { canvas_id, setCanvasId } = useCanvasStore();
+  const { user } = useAuthStore(); // 현재 사용자 정보 가져오기
+  const [isPlayerDead, setIsPlayerDead] = useState(false); // 플레이어 사망 상태
   const [showExitModal, setShowExitModal] = useState(false); // 나가기 모달 상태
   const [userColor, setUserColor] = useState<string>('#FF5733'); // 사용자 색상 (서버에서 받아올 예정)
+  const [playExplosion] = useSound('/explosion.mp3', {
+    volume: 0.2,
+  });
 
   const rootRef = useRef<HTMLDivElement>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -104,6 +111,8 @@ function GameCanvas({
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [questionTimeLeft, setQuestionTimeLeft] = useState(10); // 문제 타이머 (10초)
   const [questionTimeDisplay, setQuestionTimeDisplay] = useState(10); // 문제 타이머 표시용
+  const [showResult, setShowResult] = useState(false); // 문제 결과 표시 상태
+  const [isCorrect, setIsCorrect] = useState(false); // 정답 여부
   const [currentPixel, setCurrentPixel] = useState<{
     x: number;
     y: number;
@@ -118,9 +127,6 @@ function GameCanvas({
   const setIsLoading = useCanvasUiStore((state) => state.setIsLoading);
   const showCanvas = useCanvasUiStore((state) => state.showCanvas);
   const setShowCanvas = useCanvasUiStore((state) => state.setShowCanvas);
-
-  // 애니메이션 제거
-
   const draw = useCallback(() => {
     const src = sourceCanvasRef.current;
     if (!src) return;
@@ -226,14 +232,270 @@ function GameCanvas({
   }, [canvasSize, isGameStarted]);
 
   // 게임 소켓 연결
-  const onDeadPixels = useCallback((data: any) => {
-    // 필요한 경우 여기서 data 처리
-    // const { pixels, username } = data;
-    // toast.error(`${username} 사망!`,
-    //   {
-    //     position: 'top-center',
-    //     autoClose: 3000,
-    //   });
+  // 다른 유저의 사망 처리 (dead_user 이벤트)
+  const onDeadPixels = useCallback(
+    (data: any) => {
+      playExplosion();
+      const { pixels, username } = data;
+
+      // 소스 캔버스에 죽은 픽셀 표시
+      const sourceCtx = sourceCanvasRef.current?.getContext('2d');
+      if (sourceCtx && pixels && pixels.length > 0) {
+        // 각 픽셀에 대해 폭발 효과 생성
+        pixels.forEach((pixel: { x: number; y: number; color: string }) => {
+          // 소스 캔버스에 픽셀 그리기
+          sourceCtx.fillStyle = pixel.color;
+          sourceCtx.fillRect(pixel.x, pixel.y, 1, 1);
+
+          // 폭발 효과 생성
+          createExplosionEffect(pixel.x, pixel.y);
+        });
+
+        // 캔버스 다시 그리기
+        draw();
+      }
+
+      // 다른 플레이어 사망시 작은 알림 표시
+      const deathMessage = document.createElement('div');
+      deathMessage.className =
+        'fixed z-50 top-4 right-4 bg-gradient-to-b from-red-900/90 to-black/90 text-white px-4 py-2 rounded-lg shadow-lg backdrop-blur-sm border border-red-500 text-sm max-w-[200px]';
+
+      // 애니메이션 적용
+      deathMessage.animate(
+        [
+          { opacity: 0, transform: 'translateY(-20px)' },
+          { opacity: 1, transform: 'translateY(0)' },
+        ],
+        {
+          duration: 300,
+          easing: 'ease-out',
+          fill: 'forwards',
+        }
+      );
+
+      deathMessage.innerHTML = `
+      <div class="flex items-center gap-2">
+        <div class="text-xl">☠️</div>
+        <div>
+          <div class="text-lg font-bold text-red-400">${username} 전사!</div>
+          <div class="text-xs text-white opacity-80">상대의 색이 사라졌습니다!</div>
+          <div class="text-xs opacity-70">지금이 기회! 빈 공간을 차지하세요!</div>
+        </div>
+      </div>
+    `;
+      document.body.appendChild(deathMessage);
+
+      // 화면 진동 효과
+      const shakeScreen = () => {
+        const root = rootRef.current;
+        if (!root) return;
+
+        root.animate(
+          [
+            { transform: 'translate(0, 0)' },
+            { transform: 'translate(-5px, 5px)' },
+            { transform: 'translate(5px, -5px)' },
+            { transform: 'translate(-5px, -5px)' },
+            { transform: 'translate(5px, 5px)' },
+            { transform: 'translate(0, 0)' },
+          ],
+          { duration: 500, easing: 'ease-in-out' }
+        );
+      };
+
+      shakeScreen();
+
+      // 3초 후 메시지 제거 (페이드 아웃 효과 추가)
+      setTimeout(() => {
+        deathMessage.animate(
+          [
+            { opacity: 1, transform: 'translateY(0)' },
+            { opacity: 0, transform: 'translateY(-20px)' },
+          ],
+          { duration: 300, easing: 'ease-in', fill: 'forwards' }
+        );
+
+        setTimeout(() => {
+          if (document.body.contains(deathMessage)) {
+            document.body.removeChild(deathMessage);
+          }
+        }, 300);
+      }, 3000);
+    },
+    [draw]
+  );
+
+  // 본인 사망 처리 (dead_notice 이벤트)
+  const onDeadNotice = useCallback(
+    (data: { message: string }) => {
+      // 플레이어 사망 상태로 설정
+      setIsPlayerDead(true);
+
+      // 화면 중앙에 큰 사망 모달 표시
+      const myDeathModal = document.createElement('div');
+      myDeathModal.className =
+        'fixed inset-0 z-[9999] flex items-center justify-center bg-black/80';
+      myDeathModal.innerHTML = `
+      <div class="w-full max-w-md rounded-xl bg-gradient-to-b from-red-900/90 to-black/90 p-8 shadow-2xl border-2 border-red-500 text-center">
+        <div class="text-8xl mb-4">☠️</div>
+        <h2 class="text-4xl font-bold mb-6 text-red-400 animate-pulse">당신은 탈락했습니다!</h2>
+        <p class="text-xl mb-8 text-white">모든 생명을 잃었습니다.</p>
+        <p class="text-lg mb-8 text-gray-300">전장이 마무리될 때까지 잠시만 기다려주세요.</p>
+      </div>
+    `;
+      document.body.appendChild(myDeathModal);
+
+      // 화면 진동 효과 (더 강하게)
+      const root = rootRef.current;
+      if (root) {
+        root.animate(
+          [
+            { transform: 'translate(0, 0)' },
+            { transform: 'translate(-10px, 10px)' },
+            { transform: 'translate(10px, -10px)' },
+            { transform: 'translate(-10px, -10px)' },
+            { transform: 'translate(10px, 10px)' },
+            { transform: 'translate(-5px, 5px)' },
+            { transform: 'translate(5px, -5px)' },
+            { transform: 'translate(0, 0)' },
+          ],
+          { duration: 800, easing: 'ease-in-out' }
+        );
+      }
+    },
+    [playExplosion, setIsPlayerDead]
+  );
+
+  // 폭발 효과 생성 함수
+  const createExplosionEffect = useCallback((x: number, y: number) => {
+    // 폭발 효과를 더 화려하게 개선
+    // 1. 큰 폭발 원 생성
+    const explosion = document.createElement('div');
+    explosion.className = 'absolute rounded-full z-40';
+
+    // 위치 계산 (캔버스 좌표계에서 화면 좌표계로 변환)
+    const screenX = x * scaleRef.current + viewPosRef.current.x;
+    const screenY = y * scaleRef.current + viewPosRef.current.y;
+
+    explosion.style.left = `${screenX}px`;
+    explosion.style.top = `${screenY}px`;
+    explosion.style.transform = 'translate(-50%, -50%)';
+    explosion.style.boxShadow = '0 0 10px 2px rgba(255, 100, 50, 0.8)';
+
+    // 폭발 애니메이션
+    explosion.animate(
+      [
+        {
+          width: '0px',
+          height: '0px',
+          backgroundColor: 'rgba(255, 255, 200, 1)',
+          opacity: 1,
+        },
+        {
+          width: '80px',
+          height: '80px',
+          backgroundColor: 'rgba(255, 100, 50, 0.8)',
+          opacity: 0.8,
+        },
+        {
+          width: '120px',
+          height: '120px',
+          backgroundColor: 'rgba(255, 50, 0, 0)',
+          opacity: 0,
+        },
+      ],
+      { duration: 600, easing: 'ease-out', fill: 'forwards' }
+    );
+
+    document.body.appendChild(explosion);
+
+    // 2. 파티클 수 증가
+    const particleCount = 20;
+
+    // 3. 파티클 생성
+    for (let i = 0; i < particleCount; i++) {
+      const particle = document.createElement('div');
+
+      // 랜덤 형태 (동그라미 또는 사각형)
+      const isCircle = Math.random() > 0.3;
+      particle.className = `absolute z-40 ${isCircle ? 'rounded-full' : ''}`;
+
+      // 랜덤 크기 (3px ~ 10px)
+      const size = Math.floor(Math.random() * 8) + 3;
+      particle.style.width = `${size}px`;
+      particle.style.height = `${size}px`;
+
+      // 더 다양한 색상
+      const colors = [
+        '#ff4444',
+        '#ff7700',
+        '#ffaa00',
+        '#ff0000',
+        '#ffff00',
+        '#ffcc00',
+        '#ff5500',
+        '#ff2200',
+        '#ffddaa',
+        '#ffffff',
+      ];
+      particle.style.backgroundColor =
+        colors[Math.floor(Math.random() * colors.length)];
+
+      // 반짝임 효과 추가
+      if (Math.random() > 0.7) {
+        particle.style.boxShadow =
+          '0 0 3px 1px ' + particle.style.backgroundColor;
+      }
+
+      particle.style.left = `${screenX}px`;
+      particle.style.top = `${screenY}px`;
+      particle.style.transform = 'translate(-50%, -50%)';
+
+      // 애니메이션 설정
+      const angle = Math.random() * Math.PI * 2; // 랜덤 방향
+      const speed = Math.random() * 100 + 50; // 더 빠른 속도
+      const duration = Math.random() * 1500 + 800; // 더 긴 지속시간
+
+      // 회전 추가
+      const rotation = Math.random() * 720 - 360; // -360도 ~ 360도
+
+      // 애니메이션 적용
+      particle.animate(
+        [
+          {
+            opacity: 1,
+            transform: 'translate(-50%, -50%) scale(1) rotate(0deg)',
+          },
+          {
+            opacity: 0.8,
+            transform: `translate(calc(-50% + ${Math.cos(angle) * speed * 0.5}px), calc(-50% + ${Math.sin(angle) * speed * 0.5}px)) scale(1.5) rotate(${rotation * 0.5}deg)`,
+            offset: 0.4,
+          },
+          {
+            opacity: 0,
+            transform: `translate(calc(-50% + ${Math.cos(angle) * speed}px), calc(-50% + ${Math.sin(angle) * speed}px)) scale(0) rotate(${rotation}deg)`,
+          },
+        ],
+        { duration, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' }
+      );
+
+      // DOM에 추가
+      document.body.appendChild(particle);
+
+      // 애니메이션 종료 후 제거
+      setTimeout(() => {
+        if (document.body.contains(particle)) {
+          document.body.removeChild(particle);
+        }
+      }, duration);
+    }
+
+    // 폭발 원 제거
+    setTimeout(() => {
+      if (document.body.contains(explosion)) {
+        document.body.removeChild(explosion);
+      }
+    }, 600);
   }, []);
 
   const { sendPixel, sendGameResult } = useGameSocketIntegration({
@@ -241,6 +503,7 @@ function GameCanvas({
     draw,
     canvas_id,
     onDeadPixels,
+    onDeadNotice,
   });
 
   const updateOverlay = useCallback(
@@ -331,13 +594,13 @@ function GameCanvas({
 
     if (isBlack) {
       // 검은색 픽셀이면 바로 그리기 (기존 로직과 동일)
-      startCooldown(3); // 3초 쿨다운 유지
+      startCooldown(1); // 쿨다운 유지
 
       previewPixelRef.current = { x: pos.x, y: pos.y, color: userColor };
       flashingPixelRef.current = { x: pos.x, y: pos.y };
       draw();
       // 소켓으로 전송
-      sendPixel({ x: pos.x, y: pos.y, color: userColor });
+      sendGameResult({ x: pos.x, y: pos.y, color: userColor, result: true });
       setTimeout(() => {
         previewPixelRef.current = null;
         pos.color = 'transparent';
@@ -359,59 +622,63 @@ function GameCanvas({
   const submitAnswer = useCallback(() => {
     if (!currentQuestion || selectedAnswer === null || !currentPixel) return;
 
-    const isCorrect = selectedAnswer === currentQuestion.answer;
-    setShowQuestionModal(false);
-    setQuestionTimeLeft(10); // Reset question timer
+    const answerCorrect = selectedAnswer === currentQuestion.answer;
+    setIsCorrect(answerCorrect);
+    setShowResult(true);
 
-    if (isCorrect) {
-      toast.success('정답입니다!');
+    // 3초 후에 결과 화면 닫기
+    setTimeout(() => {
+      setShowQuestionModal(false);
+      setShowResult(false);
+      setQuestionTimeLeft(10); // Reset question timer
 
-      // 픽셀 그리기
-      startCooldown(3); // 3초 쿨다운 유지
+      if (answerCorrect) {
+        startCooldown(1); // 쿨다운 유지
 
-      previewPixelRef.current = {
-        x: currentPixel.x,
-        y: currentPixel.y,
-        color: currentPixel.color,
-      };
-      flashingPixelRef.current = { x: currentPixel.x, y: currentPixel.y };
-      draw();
-
-      // 결과 전송 - 정답일 경우 result: true
-      console.log('게임 결과 전송 (정답):', {
-        x: currentPixel.x,
-        y: currentPixel.y,
-        color: currentPixel.color,
-        result: true,
-      });
-      sendGameResult({
-        x: currentPixel.x,
-        y: currentPixel.y,
-        color: currentPixel.color,
-        result: true,
-      });
-
-      setTimeout(() => {
-        previewPixelRef.current = null;
-        // 확정 버튼이 사라지지 않도록 fixedPosRef 유지
-        // if (fixedPosRef.current) {
-        //   fixedPosRef.current.color = 'transparent';
-        // }
+        previewPixelRef.current = {
+          x: currentPixel.x,
+          y: currentPixel.y,
+          color: currentPixel.color,
+        };
+        flashingPixelRef.current = { x: currentPixel.x, y: currentPixel.y };
         draw();
-      }, 3000);
-    } else {
-      toast.error('오답입니다!');
 
-      // 오답 결과 전송 - 오답일 경우 result: false
-      sendGameResult({
-        x: currentPixel.x,
-        y: currentPixel.y,
-        color: currentPixel.color,
-        result: false,
-      });
-    }
+        // 결과 전송 - 정답일 경우 result: true
+        sendGameResult({
+          x: currentPixel.x,
+          y: currentPixel.y,
+          color: currentPixel.color,
+          result: true,
+        });
 
-    setCurrentPixel(null);
+        setTimeout(() => {
+          previewPixelRef.current = null;
+          draw();
+        }, 1000);
+      } else {
+        // 오답일 경우 생명 감소
+        setLives((prev) => Math.max(0, prev - 1));
+        startCooldown(1);
+
+        // 생명이 0이 되면 토스트 메시지만 표시
+        if (lives <= 1) {
+          toast.error('생명이 모두 소진되었습니다!', {
+            position: 'top-center',
+            autoClose: 3000,
+          });
+          // 게임 종료하지 않고 계속 진행
+        }
+
+        sendGameResult({
+          x: currentPixel.x,
+          y: currentPixel.y,
+          color: currentPixel.color,
+          result: false,
+        });
+      }
+
+      setCurrentPixel(null);
+    }, 2000);
   }, [
     currentQuestion,
     selectedAnswer,
@@ -420,6 +687,8 @@ function GameCanvas({
     sendGameResult,
     startCooldown,
     setQuestionTimeLeft,
+    lives,
+    setLives,
   ]);
 
   // 문제 타이머 효과
@@ -441,6 +710,7 @@ function GameCanvas({
     } else if (questionTimeLeft === 0 && showQuestionModal) {
       // 시간 초과 시 자동 제출
       submitAnswer();
+      setShowQuestionModal(false);
     }
 
     return () => {
@@ -620,13 +890,46 @@ function GameCanvas({
       />
       {isGameStarted && (
         <>
-          {/* 나가기 버튼 */}
-          <button
-            onClick={handleExit}
-            className='absolute top-4 left-4 z-50 rounded-lg bg-red-600 px-4 py-2 font-bold text-white shadow-lg transition-all hover:bg-red-700 active:scale-95'
-          >
-            나가기
-          </button>
+          {/* 나가기 버튼 및 생명 표시 */}
+          <div className='absolute top-4 left-4 z-50 flex items-center gap-3'>
+            <button
+              onClick={handleExit}
+              className='rounded-lg bg-red-600 px-4 py-2 font-bold text-white shadow-lg transition-all hover:bg-red-700 active:scale-95'
+            >
+              나가기
+            </button>
+            <div className='flex items-center gap-1 rounded-lg bg-gray-900/80 px-3 py-2 backdrop-blur-sm'>
+              {[...Array(2)].map((_, i) => (
+                <div key={i} className='h-6 w-6'>
+                  {i < lives ? (
+                    <svg
+                      xmlns='http://www.w3.org/2000/svg'
+                      viewBox='0 0 24 24'
+                      fill='#ef4444'
+                      className='h-6 w-6'
+                    >
+                      <path d='m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z' />
+                    </svg>
+                  ) : (
+                    <svg
+                      xmlns='http://www.w3.org/2000/svg'
+                      fill='none'
+                      viewBox='0 0 24 24'
+                      strokeWidth={1.5}
+                      stroke='#ef4444'
+                      className='h-6 w-6'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        d='M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z'
+                      />
+                    </svg>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
           <GameTimer />
           <style>{`
         @keyframes gradientBG {
@@ -727,7 +1030,7 @@ function GameCanvas({
           {isLoading ? (
             <Preloader />
           ) : (
-            <div className='fixed right-4 bottom-4 z-10'>
+            <div className='fixed right-4 bottom-4 z-10 flex flex-col gap-2'>
               {/* 확정 버튼 - 항상 표시 */}
               <button
                 onClick={handleConfirm}
@@ -765,6 +1068,48 @@ function GameCanvas({
                   '확정'
                 )}
               </button>
+
+              {/* 테스트 버튼 */}
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => {
+                    // 다른 유저 사망 테스트 (dead_user 이벤트)
+                    const centerX = Math.floor(canvasSize.width / 2);
+                    const centerY = Math.floor(canvasSize.height / 2);
+
+                    // 5x5 픽셀 패턴 생성
+                    const pixels = [];
+                    for (let i = -2; i <= 2; i++) {
+                      for (let j = -2; j <= 2; j++) {
+                        pixels.push({
+                          x: centerX + i,
+                          y: centerY + j,
+                          color: '#000000',
+                        });
+                      }
+                    }
+
+                    // onDeadPixels 호출
+                    onDeadPixels({
+                      pixels: pixels,
+                      username: '이유민',
+                    });
+                  }}
+                  className='rounded-lg bg-gray-700 px-3 py-2 text-xs font-medium text-white shadow-lg hover:bg-gray-600 active:scale-95'
+                >
+                  다른 유저 사망 테스트
+                </button>
+                
+                <button
+                  onClick={() => {
+                    // 본인 사망 테스트 (dead_notice 이벤트)
+                    onDeadNotice({ message: '사망하셨습니다.' });
+                  }}
+                  className='rounded-lg bg-red-700 px-3 py-2 text-xs font-medium text-white shadow-lg hover:bg-red-600 active:scale-95'
+                >
+                  본인 사망 테스트
+                </button>
+              </div>
             </div>
           )}
 
@@ -774,42 +1119,93 @@ function GameCanvas({
               <div className='w-full max-w-md rounded-xl bg-gray-900 p-6 shadow-2xl'>
                 <div className='mb-4 flex items-center justify-between'>
                   <h3 className='text-xl font-bold text-white'>문제</h3>
-                  <div className='rounded-full bg-red-500 px-3 py-1 text-sm font-bold text-white'>
-                    {questionTimeLeft}초
+                  <div className='flex items-center gap-2'>
+                    {/* 생명 하트 표시 */}
+                    <div className='flex items-center gap-1'>
+                      {[...Array(2)].map((_, i) => (
+                        <div key={i} className='h-6 w-6'>
+                          {i < lives ? (
+                            <svg
+                              xmlns='http://www.w3.org/2000/svg'
+                              viewBox='0 0 24 24'
+                              fill='#ef4444'
+                              className='h-6 w-6'
+                            >
+                              <path d='m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z' />
+                            </svg>
+                          ) : (
+                            <svg
+                              xmlns='http://www.w3.org/2000/svg'
+                              fill='none'
+                              viewBox='0 0 24 24'
+                              strokeWidth={1.5}
+                              stroke='#ef4444'
+                              className='h-6 w-6'
+                            >
+                              <path
+                                strokeLinecap='round'
+                                strokeLinejoin='round'
+                                d='M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z'
+                              />
+                            </svg>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <div className='rounded-full bg-red-500 px-3 py-1 text-sm font-bold text-white'>
+                      {questionTimeLeft}초
+                    </div>
                   </div>
                 </div>
 
-                <p className='mb-6 text-lg text-white'>
-                  {currentQuestion.question}
-                </p>
-
-                <div className='space-y-3'>
-                  {currentQuestion.options.map((option, index) => (
-                    <button
-                      key={index}
-                      className={`w-full rounded-lg border border-gray-700 p-3 text-left transition-all ${
-                        selectedAnswer === index
-                          ? 'border-blue-500 bg-blue-500/20 text-blue-300'
-                          : 'text-gray-300 hover:bg-gray-800'
-                      }`}
-                      onClick={() => setSelectedAnswer(index)}
+                {showResult ? (
+                  <div
+                    className={`mb-6 rounded-lg p-4 text-center ${isCorrect ? 'bg-green-500/20' : 'bg-red-500/20'}`}
+                  >
+                    <p
+                      className={`text-2xl font-bold ${isCorrect ? 'text-green-400' : 'text-red-400'}`}
                     >
-                      {option}
-                    </button>
-                  ))}
-                </div>
+                      {isCorrect ? '✅ 정답입니다!' : '❌ 오답입니다!'}
+                    </p>
+                    {!isCorrect && (
+                      <p className='mt-2 text-white'>생명이 1 감소합니다.</p>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    <p className='mb-6 text-lg text-white'>
+                      {currentQuestion.question}
+                    </p>
 
-                <button
-                  className={`mt-6 w-full rounded-lg py-3 text-center font-bold ${
-                    selectedAnswer !== null
-                      ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
-                      : 'bg-gray-700 text-gray-400'
-                  }`}
-                  onClick={submitAnswer}
-                  disabled={selectedAnswer === null}
-                >
-                  제출하기
-                </button>
+                    <div className='space-y-3'>
+                      {currentQuestion.options.map((option, index) => (
+                        <button
+                          key={index}
+                          className={`w-full rounded-lg border border-gray-700 p-3 text-left transition-all ${
+                            selectedAnswer === index
+                              ? 'border-blue-500 bg-blue-500/20 text-blue-300'
+                              : 'text-gray-300 hover:bg-gray-800'
+                          }`}
+                          onClick={() => setSelectedAnswer(index)}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+
+                    <button
+                      className={`mt-6 w-full rounded-lg py-3 text-center font-bold ${
+                        selectedAnswer !== null
+                          ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
+                          : 'bg-gray-700 text-gray-400'
+                      }`}
+                      onClick={submitAnswer}
+                      disabled={selectedAnswer === null}
+                    >
+                      제출하기
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           )}

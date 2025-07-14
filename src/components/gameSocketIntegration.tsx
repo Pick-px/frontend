@@ -9,6 +9,7 @@ interface GameSocketProps {
     pixels: Array<{ x: number; y: number; color: string }>;
     username: string;
   }) => void;
+  onDeadNotice?: (data: { message: string }) => void;
 }
 
 export const useGameSocketIntegration = ({
@@ -16,6 +17,7 @@ export const useGameSocketIntegration = ({
   draw,
   canvas_id,
   onDeadPixels,
+  onDeadNotice,
 }: GameSocketProps) => {
   const handlePixelReceived = useCallback(
     (pixel: { x: number; y: number; color: string }) => {
@@ -32,7 +34,8 @@ export const useGameSocketIntegration = ({
   const { sendPixel, sendGameResult } = useGameSocket(
     handlePixelReceived,
     canvas_id,
-    onDeadPixels
+    onDeadPixels,
+    onDeadNotice
   );
 
   return { sendPixel, sendGameResult };

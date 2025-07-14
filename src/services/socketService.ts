@@ -218,6 +218,20 @@ class SocketService {
       this.socket.on('dead_user', callback);
     }
   }
+  
+  // 사망 알림 이벤트 수신 (본인 사망 시)
+  onDeadNotice(callback: (data: { message: string }) => void) {
+    if (this.socket) {
+      this.socket.on('dead_notice', callback);
+    }
+  }
+  
+  // 사망 알림 이벤트 리스너 제거
+  offDeadNotice(callback: (data: { message: string }) => void) {
+    if (this.socket) {
+      this.socket.off('dead_notice', callback);
+    }
+  }
 
   // 게임 픽셀 업데이트 리스너 제거
   offGamePixelUpdate(callback: (pixelData: PixelData) => void) {
