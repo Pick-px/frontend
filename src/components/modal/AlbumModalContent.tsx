@@ -47,13 +47,13 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
         'https://api.thecatapi.com/v1/images/search?limit=12&size=med'
       );
       // const response = albumServices.getAlbumList(user?.userId, canvas_id);
-
+      // const resToJson = await response.json();
+      // const mockAlbums: AlbumItemData[] = resToJson.map();
       if (!response.ok) {
         throw new Error('고양이 이미지를 불러오는데 실패했습니다.');
       }
 
       const catImages = await response.json();
-
       // 고양이 이미지 데이터를 새로운 앨범 형태로 변환
       const mockAlbums: AlbumItemData[] = catImages.map(
         (cat: any, index: number) => {
@@ -359,7 +359,7 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
               </svg>
             </button>
           </div>
-          
+
           {/* 중앙: 제목과 페이지 정보 */}
           <div className='flex-1 text-center'>
             <h2 className='text-base font-semibold text-white sm:text-lg'>
@@ -369,7 +369,7 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
               {currentIndex + 1} / {albums.length}
             </p>
           </div>
-          
+
           {/* 오른쪽: X버튼을 위한 공간 확보 */}
           <div className='w-16 sm:w-20'></div>
         </div>
