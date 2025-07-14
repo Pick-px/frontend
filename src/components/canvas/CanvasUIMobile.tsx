@@ -10,6 +10,8 @@ import { useCanvasUiStore } from '../../store/canvasUiStore';
 
 // type HoverPos = { x: number; y: number } | null;
 
+import { CanvasType } from '../../api/CanvasAPI';
+
 type CanvasUIProps = {
   onConfirm: () => void;
   onSelectColor: (color: string) => void;
@@ -21,6 +23,7 @@ type CanvasUIProps = {
   onZoomOut: () => void;
   isBgmPlaying: boolean;
   toggleBgm: () => void;
+  canvasType: CanvasType;
 };
 
 export default function CanvasUIMobile({
@@ -34,6 +37,7 @@ export default function CanvasUIMobile({
   onZoomOut,
   isBgmPlaying,
   toggleBgm,
+  canvasType,
 }: CanvasUIProps) {
   const [isPressed, setIsPressed] = useState(false);
   const [showConfirmEffect, setShowConfirmEffect] = useState(false);
@@ -94,17 +98,38 @@ export default function CanvasUIMobile({
       <ToastContainer />
       {/* 컬러 피커 */}
       <div className='pointer-events-auto fixed top-2 right-2 flex gap-2'>
-        <input
-          type='color'
-          value={color}
-          onChange={(e) => {
-            const newColor = e.target.value;
-            setColor(newColor);
-            onSelectColor(newColor);
-          }}
-          className='h-8 w-8 cursor-pointer rounded-full p-0'
-          title='색상 선택'
-        />
+        {canvasType === CanvasType.EVENT_COLORLIMIT ? (
+          <div className='flex flex-col gap-2'>
+            {['#000000', '#808080', '#c0c0c0', '#ffffff'].map((c) => (
+              <button
+                key={c}
+                onClick={() => {
+                  setColor(c);
+                  onSelectColor(c);
+                }}
+                style={{ backgroundColor: c }}
+                className={`h-8 w-8 cursor-pointer rounded-full transition-all duration-300 ${
+                  color === c
+                    ? 'scale-110 shadow-lg ring-2 shadow-cyan-400/60 ring-cyan-300 ring-offset-2 ring-offset-slate-800'
+                    : 'border border-white/30 hover:border-cyan-300/50 hover:shadow-md hover:shadow-white/20'
+                }`}
+              />
+            ))}
+          </div>
+        ) : (
+          <input
+            type='color'
+            value={color}
+            onChange={(e) => {
+              const newColor = e.target.value;
+              setColor(newColor);
+              onSelectColor(newColor);
+            }}
+            className='h-8 w-8 cursor-pointer rounded-full p-0'
+            title='색상 선택'
+          />
+        )}
+
         <div className='pointer-events-auto fixed top-2 right-11 flex h-8 w-8 gap-2 rounded-full'>
           <button
             disabled={cooldown}

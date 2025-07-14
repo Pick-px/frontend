@@ -40,8 +40,8 @@ export default function CanvasUI(props: CanvasUIProps) {
   };
 
   return isDesktopOrLaptop ? (
-    <CanvasUIPC {...props} isBgmPlaying={isPlaying} toggleBgm={toggleBgm} />
+    <CanvasUIPC {...props} isBgmPlaying={isPlaying} toggleBgm={toggleBgm} canvasType={canvasType} />
   ) : (
-    <CanvasUIMobile {...props} isBgmPlaying={isPlaying} toggleBgm={toggleBgm} />
+    <CanvasUIMobile {...props} isBgmPlaying={isPlaying} toggleBgm={toggleBgm} canvasType={canvasType} />
   );
 }

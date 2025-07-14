@@ -10,6 +10,8 @@ import { useCanvasUiStore } from '../../store/canvasUiStore';
 
 // type HoverPos = { x: number; y: number } | null;
 
+import { CanvasType } from '../../api/CanvasAPI';
+
 type CanvasUIProps = {
   onConfirm: () => void;
   onSelectColor: (color: string) => void;
@@ -19,6 +21,7 @@ type CanvasUIProps = {
   colors: string[];
   isBgmPlaying: boolean;
   toggleBgm: () => void;
+  canvasType: CanvasType;
 };
 
 export default function CanvasUIPC({
@@ -30,6 +33,7 @@ export default function CanvasUIPC({
   colors,
   isBgmPlaying,
   toggleBgm,
+  canvasType,
 }: CanvasUIProps) {
   const [isPressed, setIsPressed] = useState(false);
   const [showConfirmEffect, setShowConfirmEffect] = useState(false);
@@ -84,6 +88,8 @@ export default function CanvasUIPC({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isMenuOpen]);
+
+  console.log(canvasType);
 
   return (
     <>
@@ -396,18 +402,20 @@ export default function CanvasUIPC({
         <div className='pointer-events-none top-[100px] right-[20px] z-[9999] w-20 rounded-[8px] bg-transparent p-[10px] text-center text-xs font-bold text-white'>
           {hoverPos ? `(${hoverPos.x},${hoverPos.y})` : 'OutSide'}
         </div>
-        <input
-          type='color'
-          value={color}
-          onChange={(e) => {
-            const newColor = e.target.value;
-            setColor(newColor);
-            onSelectColor(newColor);
-          }}
-          id='color-picker'
-          className='mb-3 h-[40px] w-20 cursor-pointer rounded-[4px] border-2 border-solid border-white p-0'
-          title='색상 선택'
-        />
+        {canvasType !== CanvasType.EVENT_COLORLIMIT && (
+          <input
+            type='color'
+            value={color}
+            onChange={(e) => {
+              const newColor = e.target.value;
+              setColor(newColor);
+              onSelectColor(newColor);
+            }}
+            id='color-picker'
+            className='mb-3 h-[40px] w-20 cursor-pointer rounded-[4px] border-2 border-solid border-white p-0'
+            title='색상 선택'
+          />
+        )}
         <button
           onClick={clearSelectedPixel}
           className='absolute top-0 right-1 cursor-pointer p-1 text-gray-400 transition-colors hover:text-white'

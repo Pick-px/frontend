@@ -646,7 +646,7 @@ function GameCanvas({
         나가기
       </button>
       <GameTimer />
-      <style jsx>{`
+      <style>{`
         @keyframes gradientBG {
           0% {
             box-shadow:
