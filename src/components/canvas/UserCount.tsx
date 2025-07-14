@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import socketService from '../../services/socketService';
 import { useCanvasStore } from '../../store/canvasStore';
 
@@ -11,20 +11,29 @@ interface ActiveUserCountData {
   timestamp: number; // 이벤트 발생 시간 (Unix timestamp)
 }
 
-export default function userCount() {
+export default function UserCount() {
   const [userCount, setUserCount] = useState<number | null>(null);
   const [canvasCount, setCanvasCount] = useState<number | null>(null);
   const { canvas_id } = useCanvasStore();
 
+  // useCallback으로 함수를 메모이제이션하여 불필요한 리렌더링 방지
+  const handleUserCountChange = (data: ActiveUserCountData | null) => {
+    if (data) {
+      setUserCount(data.count);
+      const currentCanvasCount = data.canvasCounts[canvas_id];
+      setCanvasCount(currentCanvasCount || 0); // undefined일 경우 0으로 설정
+    }
+  };
+
   useEffect(() => {
-    socketService.onUserCountChange((data: ActiveUserCountData | null) => {
-      if (data) {
-        setUserCount(data.count);
-        const currentCanvasCount = data.canvasCounts[canvas_id];
-        setCanvasCount(currentCanvasCount);
-      }
-    });
-  }, [canvas_id]);
+    // 리스너 등록
+    socketService.onUserCountChange(handleUserCountChange);
+
+    // // cleanup 함수: 컴포넌트 언마운트 또는 의존성 변경 시 리스너 제거
+    return () => {
+      socketService.offUserCountChange(handleUserCountChange);
+    };
+  }, [canvas_id, handleUserCountChange]); // handleUserCountChange가 변경될 때만 재실행
 
   return (
     <div className='text pointer-events-none fixed right-[1px] bottom-[1px] z-[9999] rounded-[8px] p-[10px] text-sm text-white'>

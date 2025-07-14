@@ -216,6 +216,7 @@ class SocketService {
         // 캔버스별 접속자 수
         [canvasId: string]: number;
       };
+      timestamp: number; // 이벤트 발생 시간 (Unix timestamp)
     }) => void
   ) {
     if (this.socket) {
