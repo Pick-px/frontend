@@ -25,7 +25,7 @@ export const useSocket = (
   const pixelCallbackRef = useRef(onPixelReceived);
   const cooldownCallbackRef = useRef(onCooldownReceived);
   const [isConnected, setIsConnected] = useState(false);
-  const showToast = useToastStore((state) => state.showToast); //
+  const showToast = useToastStore((state) => state.showToast);
 
   // 콜백 함수 업데이트
   pixelCallbackRef.current = onPixelReceived;
@@ -61,8 +61,8 @@ export const useSocket = (
         showToast(
           `게임 시작 30초 전: ${data.title}`,
           String(data.canvas_id),
-          10000
-        ); // 10초 후 자동 사라짐
+          25000
+        ); // 25초 후 자동 사라짐
       }
     );
 

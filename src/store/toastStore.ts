@@ -4,6 +4,7 @@ interface ToastState {
   isOpen: boolean;
   message: string;
   canvasId: string | null;
+  startedAt: number | null; // 토스트가 시작된 시간 (타임스탬프)
   timeoutId: number | null; // setTimeout ID 저장
 
   showToast: (
@@ -18,6 +19,7 @@ export const useToastStore = create<ToastState>((set, get) => ({
   isOpen: false,
   message: '',
   canvasId: null,
+  startedAt: null, // 초기값 설정
   timeoutId: null,
 
   showToast: (message, canvasId, duration) => {
@@ -26,7 +28,7 @@ export const useToastStore = create<ToastState>((set, get) => ({
       clearTimeout(get().timeoutId!);
     }
 
-    set({ isOpen: true, message, canvasId });
+    set({ isOpen: true, message, canvasId, startedAt: Date.now() }); // startedAt 추가
 
     if (duration) {
       const id = setTimeout(() => {
@@ -41,6 +43,12 @@ export const useToastStore = create<ToastState>((set, get) => ({
     if (get().timeoutId) {
       clearTimeout(get().timeoutId!);
     }
-    set({ isOpen: false, message: '', canvasId: null, timeoutId: null });
+    set({
+      isOpen: false,
+      message: '',
+      canvasId: null,
+      startedAt: null,
+      timeoutId: null,
+    }); // startedAt 초기화
   },
 }));

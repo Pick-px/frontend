@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import GameReadyModal from '../modal/GameReadyModal';
+
 import GameStarfieldCanvas from './GameStarfieldCanvas';
 import { useCanvasUiStore } from '../../store/canvasUiStore';
 import Preloader from '../Preloader';
@@ -21,6 +21,7 @@ import {
   INITIAL_BACKGROUND_COLOR,
   VIEWPORT_BACKGROUND_COLOR,
 } from '../canvas/canvasConstants';
+import GameReadyModal from './GameReadyModal';
 
 // 게임 문제 타입 정의
 interface GameQuestion {
