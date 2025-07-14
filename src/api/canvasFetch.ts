@@ -1,6 +1,5 @@
 import React from 'react';
-
-import { CanvasType } from './CanvasAPI';
+import type { CanvasType } from '../components/canvas/canvasConstants';
 
 interface FetchCanvasDataParams {
   id: string | null;
@@ -10,7 +9,7 @@ interface FetchCanvasDataParams {
   setCanvasSize: React.Dispatch<
     React.SetStateAction<{ width: number; height: number }>
   >;
-  sourceCanvasRef: React.MutableRefObject<HTMLCanvasElement>;
+  sourceCanvasRef: React.RefObject<HTMLCanvasElement>;
   onLoadingChange?: (loading: boolean) => void;
   setShowCanvas: (show: boolean) => void;
   INITIAL_BACKGROUND_COLOR: string;

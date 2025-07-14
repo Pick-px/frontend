@@ -1,4 +1,5 @@
-import React, { useRef, useEffect, useCallback, useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import GameReadyModal from '../modal/GameReadyModal';
 import GameStarfieldCanvas from './GameStarfieldCanvas';
 import { useCanvasUiStore } from '../../store/canvasUiStore';
 import Preloader from '../Preloader';
@@ -59,6 +60,15 @@ function GameCanvas({
   canvas_id: initialCanvasId,
   onLoadingChange,
 }: GameCanvasProps) {
+  const [isGameStarted, setIsGameStarted] = useState(false); // 게임 시작 상태
+  const [isReadyModalOpen, setIsReadyModalOpen] = useState(true);
+  const [assignedColor, setAssignedColor] = useState<string | undefined>(
+    undefined
+  );
+  const [remainingTime, setRemainingTime] = useState<number | undefined>(
+    undefined
+  );
+
   const navigate = useNavigate();
   const { canvas_id, setCanvasId } = useCanvasStore();
   const [userColor, setUserColor] = useState<string>('#FF5733'); // 사용자 색상 (서버에서 받아올 예정)
@@ -479,6 +489,29 @@ function GameCanvas({
     };
   }, [showQuestionModal, timeLeft, submitAnswer]);
 
+  // 색상 배정 받아오는 로직 여기서 처리
+  useEffect(() => {
+    setTimeout(() => {
+      setAssignedColor('#00FF00'); // Example color
+      setRemainingTime(10);
+    }, 2000);
+  }, []);
+
+  // 시작시간 받아오기 여기서 처리
+  useEffect(() => {
+    if (remainingTime === undefined) return;
+
+    if (remainingTime > 0) {
+      const timer = setInterval(() => {
+        setRemainingTime((prev) => (prev ? prev - 1 : 0));
+      }, 1000);
+      return () => clearInterval(timer);
+    } else if (remainingTime === 0) {
+      setIsGameStarted(true);
+      setIsReadyModalOpen(false);
+    }
+  }, [remainingTime]);
+
   // 캔버스 데이터 가져오기
   useEffect(() => {
     fetchCanvasDataUtil({
@@ -638,15 +671,23 @@ function GameCanvas({
         animation: 'gradientBG 8s ease infinite',
       }}
     >
-      {/* 나가기 버튼 */}
-      <button
-        onClick={handleExit}
-        className='absolute top-4 left-4 z-50 rounded-lg bg-red-600 px-4 py-2 font-bold text-white shadow-lg transition-all hover:bg-red-700 active:scale-95'
-      >
-        나가기
-      </button>
-      <GameTimer />
-      <style>{`
+      <GameReadyModal
+        isOpen={isReadyModalOpen}
+        onClose={() => setIsReadyModalOpen(false)}
+        color={assignedColor}
+        remainingTime={remainingTime}
+      />
+      {isGameStarted && (
+        <>
+          {/* 나가기 버튼 */}
+          <button
+            onClick={handleExit}
+            className='absolute top-4 left-4 z-50 rounded-lg bg-red-600 px-4 py-2 font-bold text-white shadow-lg transition-all hover:bg-red-700 active:scale-95'
+          >
+            나가기
+          </button>
+          <GameTimer />
+          <style>{`
         @keyframes gradientBG {
           0% {
             box-shadow:
@@ -675,195 +716,197 @@ function GameCanvas({
           }
         }
       `}</style>
-      <GameStarfieldCanvas viewPosRef={viewPosRef} />
-      {cooldown && (
-        <>
-          <div className='pointer-events-none absolute inset-0 border-4 border-red-500/30' />
-          <div className='pointer-events-none absolute inset-2 border-2 border-red-400/20' />
-          <div className='pointer-events-none absolute inset-4 border border-red-300/10' />
-          <div className='pointer-events-none fixed bottom-[20px] left-1/2 z-[9999] -translate-x-1/2 transform'>
-            <div className='relative'>
-              {/* 외부 링 */}
-              <div
-                className='h-16 w-16 animate-spin rounded-full border-4 border-red-500/60'
-                style={{ animationDuration: '2s' }}
-              ></div>
-              {/* 중간 링 */}
-              <div
-                className='absolute inset-1 animate-spin rounded-full border-2 border-orange-400/50'
-                style={{
-                  animationDuration: '1.5s',
-                  animationDirection: 'reverse',
-                }}
-              ></div>
-              {/* 내부 원 */}
-              <div className='absolute inset-3 flex animate-pulse items-center justify-center rounded-full border border-red-400/60 bg-gradient-to-br from-red-900/80 to-black/70 shadow-2xl backdrop-blur-xl'>
-                <span className='animate-pulse font-mono text-xl font-bold tracking-wider text-red-300'>
-                  {timeLeft}
-                </span>
+          <GameStarfieldCanvas viewPosRef={viewPosRef} />
+          {cooldown && (
+            <>
+              <div className='pointer-events-none absolute inset-0 border-4 border-red-500/30' />
+              <div className='pointer-events-none absolute inset-2 border-2 border-red-400/20' />
+              <div className='pointer-events-none absolute inset-4 border border-red-300/10' />
+              <div className='pointer-events-none fixed bottom-[20px] left-1/2 z-[9999] -translate-x-1/2 transform'>
+                <div className='relative'>
+                  {/* 외부 링 */}
+                  <div
+                    className='h-16 w-16 animate-spin rounded-full border-4 border-red-500/60'
+                    style={{ animationDuration: '2s' }}
+                  ></div>
+                  {/* 중간 링 */}
+                  <div
+                    className='absolute inset-1 animate-spin rounded-full border-2 border-orange-400/50'
+                    style={{
+                      animationDuration: '1.5s',
+                      animationDirection: 'reverse',
+                    }}
+                  ></div>
+                  {/* 내부 원 */}
+                  <div className='absolute inset-3 flex animate-pulse items-center justify-center rounded-full border border-red-400/60 bg-gradient-to-br from-red-900/80 to-black/70 shadow-2xl backdrop-blur-xl'>
+                    <span className='animate-pulse font-mono text-xl font-bold tracking-wider text-red-300'>
+                      {timeLeft}
+                    </span>
+                  </div>
+                  {/* 글로우 효과 */}
+                  <div className='absolute inset-0 animate-ping rounded-full bg-red-500/15'></div>
+                  <div
+                    className='absolute inset-0 animate-ping rounded-full bg-orange-400/10'
+                    style={{ animationDelay: '1s' }}
+                  ></div>
+                </div>
               </div>
-              {/* 글로우 효과 */}
-              <div className='absolute inset-0 animate-ping rounded-full bg-red-500/15'></div>
-              <div
-                className='absolute inset-0 animate-ping rounded-full bg-orange-400/10'
-                style={{ animationDelay: '1s' }}
-              ></div>
-            </div>
-          </div>
-        </>
-      )}
-      <div
-        className={`transition-all duration-1000 ease-out ${
-          showCanvas
-            ? 'scale-100 transform opacity-100'
-            : 'scale-50 transform opacity-0'
-        }`}
-      >
-        <canvas
-          ref={renderCanvasRef}
-          className='pointer-events-none absolute top-0 left-0'
-        />
-        <canvas
-          ref={previewCanvasRef}
-          className='pointer-events-none absolute top-0 left-0'
-        />
-        <canvas
-          ref={interactionCanvasRef}
-          className='absolute top-0 left-0'
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseLeave}
-          onContextMenu={(e) => e.preventDefault()}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          onTouchCancel={handleTouchEnd}
-        />
-      </div>
-
-      {isLoading ? (
-        <Preloader />
-      ) : (
-        <div className='fixed right-4 bottom-4 z-10'>
-          {/* 확정 버튼 - 항상 표시 */}
-          <button
-            onClick={handleConfirm}
-            disabled={cooldown}
-            className={`transform rounded-lg px-6 py-3 text-base font-medium text-white shadow-lg transition-all ${
-              cooldown
-                ? 'cursor-not-allowed border border-red-500/30 bg-red-500/20 text-red-400'
-                : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:scale-105 hover:from-green-600 hover:to-emerald-600 active:scale-95'
+            </>
+          )}
+          <div
+            className={`transition-all duration-1000 ease-out ${
+              showCanvas
+                ? 'scale-100 transform opacity-100'
+                : 'scale-50 transform opacity-0'
             }`}
           >
-            {cooldown ? (
-              <div className='flex items-center gap-2'>
-                <svg
-                  className='h-5 w-5 animate-spin'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                >
-                  <circle
-                    className='opacity-25'
-                    cx='12'
-                    cy='12'
-                    r='10'
-                    stroke='currentColor'
-                    strokeWidth='4'
-                  ></circle>
-                  <path
-                    className='opacity-75'
-                    fill='currentColor'
-                    d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
-                  ></path>
-                </svg>
-                <span className='font-medium'>{timeLeft}초 대기</span>
-              </div>
-            ) : (
-              '확정'
-            )}
-          </button>
-        </div>
-      )}
+            <canvas
+              ref={renderCanvasRef}
+              className='pointer-events-none absolute top-0 left-0'
+            />
+            <canvas
+              ref={previewCanvasRef}
+              className='pointer-events-none absolute top-0 left-0'
+            />
+            <canvas
+              ref={interactionCanvasRef}
+              className='absolute top-0 left-0'
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseLeave}
+              onContextMenu={(e) => e.preventDefault()}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchEnd}
+            />
+          </div>
 
-      {/* 문제 모달 */}
-      {showQuestionModal && currentQuestion && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/70'>
-          <div className='w-full max-w-md rounded-xl bg-gray-900 p-6 shadow-2xl'>
-            <div className='mb-4 flex items-center justify-between'>
-              <h3 className='text-xl font-bold text-white'>문제</h3>
-              <div className='rounded-full bg-red-500 px-3 py-1 text-sm font-bold text-white'>
-                {timeLeft}초
-              </div>
+          {isLoading ? (
+            <Preloader />
+          ) : (
+            <div className='fixed right-4 bottom-4 z-10'>
+              {/* 확정 버튼 - 항상 표시 */}
+              <button
+                onClick={handleConfirm}
+                disabled={cooldown}
+                className={`transform rounded-lg px-6 py-3 text-base font-medium text-white shadow-lg transition-all ${
+                  cooldown
+                    ? 'cursor-not-allowed border border-red-500/30 bg-red-500/20 text-red-400'
+                    : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:scale-105 hover:from-green-600 hover:to-emerald-600 active:scale-95'
+                }`}
+              >
+                {cooldown ? (
+                  <div className='flex items-center gap-2'>
+                    <svg
+                      className='h-5 w-5 animate-spin'
+                      fill='none'
+                      viewBox='0 0 24 24'
+                    >
+                      <circle
+                        className='opacity-25'
+                        cx='12'
+                        cy='12'
+                        r='10'
+                        stroke='currentColor'
+                        strokeWidth='4'
+                      ></circle>
+                      <path
+                        className='opacity-75'
+                        fill='currentColor'
+                        d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
+                      ></path>
+                    </svg>
+                    <span className='font-medium'>{timeLeft}초 대기</span>
+                  </div>
+                ) : (
+                  '확정'
+                )}
+              </button>
             </div>
+          )}
 
-            <p className='mb-6 text-lg text-white'>
-              {currentQuestion.question}
-            </p>
+          {/* 문제 모달 */}
+          {showQuestionModal && currentQuestion && (
+            <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/70'>
+              <div className='w-full max-w-md rounded-xl bg-gray-900 p-6 shadow-2xl'>
+                <div className='mb-4 flex items-center justify-between'>
+                  <h3 className='text-xl font-bold text-white'>문제</h3>
+                  <div className='rounded-full bg-red-500 px-3 py-1 text-sm font-bold text-white'>
+                    {timeLeft}초
+                  </div>
+                </div>
 
-            <div className='space-y-3'>
-              {currentQuestion.options.map((option, index) => (
+                <p className='mb-6 text-lg text-white'>
+                  {currentQuestion.question}
+                </p>
+
+                <div className='space-y-3'>
+                  {currentQuestion.options.map((option, index) => (
+                    <button
+                      key={index}
+                      className={`w-full rounded-lg border border-gray-700 p-3 text-left transition-all ${
+                        selectedAnswer === index
+                          ? 'border-blue-500 bg-blue-500/20 text-blue-300'
+                          : 'text-gray-300 hover:bg-gray-800'
+                      }`}
+                      onClick={() => setSelectedAnswer(index)}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+
                 <button
-                  key={index}
-                  className={`w-full rounded-lg border border-gray-700 p-3 text-left transition-all ${
-                    selectedAnswer === index
-                      ? 'border-blue-500 bg-blue-500/20 text-blue-300'
-                      : 'text-gray-300 hover:bg-gray-800'
+                  className={`mt-6 w-full rounded-lg py-3 text-center font-bold ${
+                    selectedAnswer !== null
+                      ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
+                      : 'bg-gray-700 text-gray-400'
                   }`}
-                  onClick={() => setSelectedAnswer(index)}
+                  onClick={submitAnswer}
+                  disabled={selectedAnswer === null}
                 >
-                  {option}
+                  제출하기
                 </button>
-              ))}
-            </div>
-
-            <button
-              className={`mt-6 w-full rounded-lg py-3 text-center font-bold ${
-                selectedAnswer !== null
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
-                  : 'bg-gray-700 text-gray-400'
-              }`}
-              onClick={submitAnswer}
-              disabled={selectedAnswer === null}
-            >
-              제출하기
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* 나가기 확인 모달 */}
-      {showExitModal && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/70'>
-          <div className='w-full max-w-md rounded-xl bg-gray-900 p-6 shadow-2xl'>
-            <div className='mb-4 flex items-center justify-between'>
-              <h3 className='text-xl font-bold text-white'>게임 탈락</h3>
-              <div className='rounded-full bg-red-500 px-3 py-1 text-sm font-bold text-white'>
-                주의
               </div>
             </div>
+          )}
 
-            <p className='mb-6 text-lg text-white'>
-              정말 게임을 포기하시겠습니까? 지금 나가면 모든 진행 상황이
-              사라집니다! 😱
-            </p>
+          {/* 나가기 확인 모달 */}
+          {showExitModal && (
+            <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/70'>
+              <div className='w-full max-w-md rounded-xl bg-gray-900 p-6 shadow-2xl'>
+                <div className='mb-4 flex items-center justify-between'>
+                  <h3 className='text-xl font-bold text-white'>게임 탈락</h3>
+                  <div className='rounded-full bg-red-500 px-3 py-1 text-sm font-bold text-white'>
+                    주의
+                  </div>
+                </div>
 
-            <div className='flex gap-4'>
-              <button
-                className='flex-1 rounded-lg bg-gray-700 py-3 font-bold text-gray-300 transition-all hover:bg-gray-600'
-                onClick={cancelExit}
-              >
-                계속하기
-              </button>
-              <button
-                className='flex-1 rounded-lg bg-gradient-to-r from-red-500 to-red-700 py-3 font-bold text-white transition-all hover:from-red-600 hover:to-red-800'
-                onClick={confirmExit}
-              >
-                나가기
-              </button>
+                <p className='mb-6 text-lg text-white'>
+                  정말 게임을 포기하시겠습니까? 지금 나가면 모든 진행 상황이
+                  사라집니다! 😱
+                </p>
+
+                <div className='flex gap-4'>
+                  <button
+                    className='flex-1 rounded-lg bg-gray-700 py-3 font-bold text-gray-300 transition-all hover:bg-gray-600'
+                    onClick={cancelExit}
+                  >
+                    계속하기
+                  </button>
+                  <button
+                    className='flex-1 rounded-lg bg-gradient-to-r from-red-500 to-red-700 py-3 font-bold text-white transition-all hover:from-red-600 hover:to-red-800'
+                    onClick={confirmExit}
+                  >
+                    나가기
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          )}
+        </>
       )}
     </div>
   );

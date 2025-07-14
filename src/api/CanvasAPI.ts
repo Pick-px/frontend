@@ -1,11 +1,12 @@
+import { CanvasType } from '../components/canvas/canvasConstants';
 import apiClient from '../services/apiClient';
 
-export enum CanvasType {
-  PUBLIC = 'public',
-  EVENT_COMMON = 'event',
-  EVENT_COLORLIMIT = 'event_colorlimit',
-  GAME_CALCULATION = 'game_calculation',
-}
+// export enum CanvasType {
+//   PUBLIC = 'public',
+//   EVENT_COMMON = 'event',
+//   EVENT_COLORLIMIT = 'event_colorlimit',
+//   GAME_CALCULATION = 'game_calculation',
+// }
 
 export interface Canvas {
   canvasId: number;

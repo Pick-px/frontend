@@ -4,6 +4,7 @@ import useSound from 'use-sound';
 import CanvasUIPC from './CanvasUIPC';
 import CanvasUIMobile from './CanvasUIMobile';
 import { useBgmStore } from '../../store/bgmStore';
+import type { CanvasType } from './canvasConstants';
 
 type CanvasUIProps = {
   onConfirm: () => void;
@@ -14,7 +15,7 @@ type CanvasUIProps = {
   colors: string[];
   onZoomIn: () => void;
   onZoomOut: () => void;
-  canvasType: 'normal' | 'event';
+  canvasType: CanvasType;
 };
 
 export default function CanvasUI(props: CanvasUIProps) {
@@ -40,8 +41,18 @@ export default function CanvasUI(props: CanvasUIProps) {
   };
 
   return isDesktopOrLaptop ? (
-    <CanvasUIPC {...props} isBgmPlaying={isPlaying} toggleBgm={toggleBgm} canvasType={canvasType} />
+    <CanvasUIPC
+      {...props}
+      isBgmPlaying={isPlaying}
+      toggleBgm={toggleBgm}
+      canvasType={canvasType}
+    />
   ) : (
-    <CanvasUIMobile {...props} isBgmPlaying={isPlaying} toggleBgm={toggleBgm} canvasType={canvasType} />
+    <CanvasUIMobile
+      {...props}
+      isBgmPlaying={isPlaying}
+      toggleBgm={toggleBgm}
+      canvasType={canvasType}
+    />
   );
 }

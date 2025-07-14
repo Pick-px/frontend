@@ -135,7 +135,8 @@ function App() {
       <Modal isOpen={isHelpModalOpen} onClose={closeHelpModal}>
         <HelpModalContent />
       </Modal>
-      {isCanvasEndedModalOpen && <CanvasEndedModal />} {/* 캔버스 종료 모달 렌더링 */}
+      {isCanvasEndedModalOpen && <CanvasEndedModal />}{' '}
+      {/* 캔버스 종료 모달 렌더링 */}
       {/* 로딩 완료 후 채팅 컴포넌트 표시 */}
       {!isLoading &&
         !canvasLoading &&
