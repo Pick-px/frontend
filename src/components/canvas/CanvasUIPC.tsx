@@ -7,6 +7,7 @@ import { useAuthStore } from '../../store/authStrore';
 import { useModalStore } from '../../store/modalStore';
 import { showInstructionsToast } from '../toast/InstructionsToast';
 import { useCanvasUiStore } from '../../store/canvasUiStore';
+import UserCount from './UserCount';
 import { CanvasType } from './canvasConstants';
 
 // type HoverPos = { x: number; y: number } | null;
@@ -511,6 +512,8 @@ export default function CanvasUIPC({
           )}
         </button>
       </div>
+      {/* 접속자수 표시 */}
+      <UserCount />
 
       {/* 쿨타임 창 : 쿨타임 중에만 표시*/}
       {cooldown && (

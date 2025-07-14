@@ -232,6 +232,39 @@ class SocketService {
       this.socket.off('dead_user', callback);
     }
   }
+
+  //==== 접속자 수 ====//
+
+  // 실시간 접속자 수 표시
+  onUserCountChange(
+    callback: (data: {
+      count: number; // 전체 접속자 수 (소켓 연결 수)
+      canvasCounts: {
+        // 캔버스별 접속자 수
+        [canvasId: string]: number;
+      };
+      timestamp: number; // 이벤트 발생 시간 (Unix timestamp)
+    }) => void
+  ) {
+    if (this.socket) {
+      this.socket.on('active_user_count', callback);
+    }
+  }
+
+  offUserCountChange(
+    callback: (data: {
+      count: number; // 전체 접속자 수 (소켓 연결 수)
+      canvasCounts: {
+        // 캔버스별 접속자 수
+        [canvasId: string]: number;
+      };
+      timestamp: number; // 이벤트 발생 시간 (Unix timestamp)
+    }) => void
+  ) {
+    if (this.socket) {
+      this.socket.off('active_user_count', callback);
+    }
+  }
 }
 
 export default new SocketService();
