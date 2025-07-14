@@ -26,6 +26,10 @@ type ModalState = {
   isChatOpen: boolean;
   openChat: () => void;
   closeChat: () => void;
+
+  isHelpModalOpen: boolean;
+  openHelpModal: () => void;
+  closeHelpModal: () => void;
 };
 
 export const useModalStore = create<ModalState>((set) => ({
@@ -39,6 +43,7 @@ export const useModalStore = create<ModalState>((set) => ({
       isMyPageModalOpen: false,
       isGroupModalOpen: false,
       isChatOpen: false,
+      isHelpModalOpen: false,
     }),
   closeLoginModal: () => set({ isLoginModalOpen: false }),
 
@@ -51,6 +56,7 @@ export const useModalStore = create<ModalState>((set) => ({
       isMyPageModalOpen: false,
       isGroupModalOpen: false,
       isChatOpen: false,
+      isHelpModalOpen: false,
     }),
   closeCanvasModal: () => set({ isCanvasModalOpen: false }),
 
@@ -63,6 +69,7 @@ export const useModalStore = create<ModalState>((set) => ({
       isMyPageModalOpen: false,
       isGroupModalOpen: false,
       isChatOpen: false,
+      isHelpModalOpen: false,
     }),
   closeAlbumModal: () => set({ isAlbumModalOpen: false }),
 
@@ -75,6 +82,7 @@ export const useModalStore = create<ModalState>((set) => ({
       isMyPageModalOpen: true,
       isGroupModalOpen: false,
       isChatOpen: false,
+      isHelpModalOpen: false,
     }),
   closeMyPageModal: () => set({ isMyPageModalOpen: false }),
 
@@ -87,6 +95,7 @@ export const useModalStore = create<ModalState>((set) => ({
       isMyPageModalOpen: false,
       isGroupModalOpen: true,
       isChatOpen: false,
+      isHelpModalOpen: false,
     }),
   closeGroupModal: () => set({ isGroupModalOpen: false }),
 
@@ -100,6 +109,21 @@ export const useModalStore = create<ModalState>((set) => ({
       isMyPageModalOpen: false,
       isGroupModalOpen: false,
       isChatOpen: true,
+      isHelpModalOpen: false,
     }),
   closeChat: () => set({ isChatOpen: false }),
+
+  // 도움말 모달 상태 추가
+  isHelpModalOpen: false,
+  openHelpModal: () =>
+    set({
+      isLoginModalOpen: false,
+      isCanvasModalOpen: false,
+      isAlbumModalOpen: false,
+      isMyPageModalOpen: false,
+      isGroupModalOpen: false,
+      isChatOpen: false,
+      isHelpModalOpen: true,
+    }),
+  closeHelpModal: () => set({ isHelpModalOpen: false }),
 }));

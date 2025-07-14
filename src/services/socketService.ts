@@ -19,6 +19,8 @@ class SocketService {
     this.socket = io(
       import.meta.env.VITE_SOCKET_URL || 'https://ws.pick-px.com',
       {
+        transports: ['polling', 'websocket'],
+        withCredentials: true, // 반드시 설정!
         auth: {
           token: accessToken,
         },

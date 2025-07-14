@@ -58,6 +58,7 @@ export default function CanvasUIPC({
     openAlbumModal,
     openMyPageModal,
     openGroupModal,
+    openHelpModal,
   } = useModalStore();
 
   // 드롭다움 열림, 닫힘 상태
@@ -176,6 +177,7 @@ export default function CanvasUIPC({
           </div>
         )}
       </div>
+
       <div
         ref={menuRef}
         className='pointer-events-auto fixed top-[10px] left-[10px] z-60'
@@ -351,8 +353,35 @@ export default function CanvasUIPC({
                 {isBgmPlaying ? 'BGM 끄기' : 'BGM 켜기'}
               </span>
             </div>
+            {/* 도움말 버튼 */}
+            <div>
+              <button
+                onClick={openHelpModal}
+                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
+                title='게임 가이드'
+              >
+                <svg
+                  className='h-5 w-5'
+                  fill='none'
+                  stroke='currentColor'
+                  viewBox='0 0 24 24'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
         )}
+      </div>
+
+      {/* 좌표 표시창 */}
+      <div className='pointer-events-none fixed right-[20px] bottom-[20px] z-[9999] rounded-[8px] bg-[rgba(0,0,0,0.8)] p-[10px] text-white'>
+        {hoverPos ? `(${hoverPos.x}, ${hoverPos.y})` : 'OutSide'}
       </div>
 
       {/* 팔레트 */}
