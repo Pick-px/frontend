@@ -8,12 +8,12 @@ interface GameReadyModalProps {
   remainingTime?: number;
 }
 
-const GameReadyModal: React.FC<GameReadyModalProps> = ({
+const GameReadyModal = ({
   isOpen,
   onClose,
   color,
   remainingTime,
-}) => {
+}: GameReadyModalProps) => {
   const navigate = useNavigate();
 
   const handleExit = () => {
