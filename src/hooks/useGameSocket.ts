@@ -16,16 +16,19 @@ export const useGameSocket = (
   onDeadPixels?: (data: {
     pixels: Array<{ x: number; y: number; color: string }>;
     username: string;
-  }) => void
+  }) => void,
+  onDeadNotice?: (data: { message: string }) => void
 ) => {
   // 디버깅: useGameSocket 후크에서 canvas_id 값 확인
   const { accessToken, user } = useAuthStore();
   const pixelCallbackRef = useRef(onPixelReceived);
   const deadPixelsCallbackRef = useRef(onDeadPixels);
+  const deadNoticeCallbackRef = useRef(onDeadNotice);
 
   // 콜백 함수 업데이트
   pixelCallbackRef.current = onPixelReceived;
   deadPixelsCallbackRef.current = onDeadPixels;
+  deadNoticeCallbackRef.current = onDeadNotice;
 
   useEffect(() => {
     // 스토어에서 최신 canvas_id 가져오기
@@ -45,6 +48,13 @@ export const useGameSocket = (
     if (deadPixelsCallbackRef.current) {
       socketService.onDeadPixels((data) => {
         deadPixelsCallbackRef.current?.(data);
+      });
+    }
+    
+    // 사망 알림 이벤트 리스너
+    if (deadNoticeCallbackRef.current) {
+      socketService.onDeadNotice((data) => {
+        deadNoticeCallbackRef.current?.(data);
       });
     }
 
@@ -70,6 +80,9 @@ export const useGameSocket = (
       socketService.offGamePixelUpdate(pixelCallbackRef.current);
       if (deadPixelsCallbackRef.current) {
         socketService.offDeadPixels(deadPixelsCallbackRef.current);
+      }
+      if (deadNoticeCallbackRef.current) {
+        socketService.offDeadNotice(deadNoticeCallbackRef.current);
       }
       socketService.offAuthError(() => {});
       socketService.offPixelError(() => {});
