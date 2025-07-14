@@ -384,12 +384,6 @@ export default function CanvasUIPC({
           </div>
         )}
       </div>
-
-      {/* 좌표 표시창 */}
-      <div className='pointer-events-none fixed right-[20px] bottom-[20px] z-[9999] rounded-[8px] bg-[rgba(0,0,0,0.8)] p-[10px] text-white'>
-        {hoverPos ? `(${hoverPos.x}, ${hoverPos.y})` : 'OutSide'}
-      </div>
-
       {/* 팔레트 */}
       <div
         className={`pointer-events-auto fixed top-1/2 z-[9999] -translate-y-1/2 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-900/90 to-black/80 p-5 shadow-2xl backdrop-blur-xl transition-all duration-500 ease-out ${

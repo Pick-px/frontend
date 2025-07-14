@@ -68,6 +68,7 @@ class SocketService {
       this.socket.on('cooldown_info', callback);
     }
   }
+
   // 픽셀 에러 수신 (쿨다운 중, 서버 오류 등)
   onPixelError(
     callback: (error: { message: string; remaining?: number }) => void
@@ -277,6 +278,19 @@ class SocketService {
   ) {
     if (this.socket) {
       this.socket.off('active_user_count', callback);
+    }
+  }
+
+  // 게임 캔버스 열림 공지
+  onCanvasOpenAlarm(
+    callback: (data: {
+      canvas_id: number;
+      title: string;
+      started_at: string;
+    }) => void
+  ) {
+    if (this.socket) {
+      this.socket.on('canvas_open_alarm', callback);
     }
   }
 }

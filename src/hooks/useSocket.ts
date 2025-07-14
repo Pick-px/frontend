@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import socketService from '../services/socketService';
 import { useAuthStore } from '../store/authStrore';
 import { toast } from 'react-toastify';
+import { useToastStore } from '../store/toastStore'; // 추가
 
 interface PixelData {
   x: number;
@@ -24,6 +25,7 @@ export const useSocket = (
   const pixelCallbackRef = useRef(onPixelReceived);
   const cooldownCallbackRef = useRef(onCooldownReceived);
   const [isConnected, setIsConnected] = useState(false);
+  const showToast = useToastStore((state) => state.showToast);
 
   // 콜백 함수 업데이트
   pixelCallbackRef.current = onPixelReceived;
@@ -52,6 +54,18 @@ export const useSocket = (
       });
     }
 
+    // canvas_open_alarm 이벤트 리스너 추가
+    socketService.onCanvasOpenAlarm(
+      (data: { canvas_id: number; title: string; started_at: string }) => {
+        console.log('onCanvasOpenAlarm:', data);
+        showToast(
+          `게임 시작 30초 전: ${data.title}`,
+          String(data.canvas_id),
+          25000
+        ); // 25초 후 자동 사라짐
+      }
+    );
+
     // 인증 에러 이벤트 리스너
     socketService.onAuthError((error) => {
       toast.error(`인증 오류: ${error.message}`);
@@ -78,7 +92,7 @@ export const useSocket = (
       socketService.disconnect();
       setIsConnected(false);
     };
-  }, [canvas_id, accessToken]);
+  }, [canvas_id, accessToken, showToast]); // showToast 의존성 추가
 
   const sendPixel = (pixel: PixelData) => {
     if (!canvas_id) return;

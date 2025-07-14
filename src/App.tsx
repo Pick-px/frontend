@@ -22,6 +22,8 @@ import { jwtDecode } from 'jwt-decode';
 import AlbumModalContent from './components/modal/AlbumModalContent';
 import HelpModalContent from './components/modal/HelpModalContent';
 import CanvasEndedModal from './components/modal/CanvasEndedModal'; // CanvasEndedModal import 추가
+import NotificationToast from './components/toast/NotificationToast'; // NotificationToast import 추가
+import { useToastStore } from './store/toastStore'; // useToastStore import 추가
 
 type DecodedToken = {
   sub: {
@@ -35,9 +37,12 @@ type DecodedToken = {
 
 function App() {
   // URL에서 ?canvas_id= 값을 읽어온다
-  const { search } = useLocation();
+  const { search, state } = useLocation(); // state도 함께 가져옴
   const canvas_id = new URLSearchParams(search).get('canvas_id') || '';
-  const isGame = isGameCanvasById(canvas_id); // canvas_id로 게임 캔버스 여부 확인
+
+  // state에서 isGame 정보를 가져오거나, 기존 isGameCanvasById로 판단
+  const isGameFromState = state?.isGame || false;
+  const isGame = isGameFromState || isGameCanvasById(canvas_id); // state 정보 우선 사용
 
   const {
     isLoginModalOpen,
@@ -55,13 +60,17 @@ function App() {
     isCanvasEndedModalOpen, // isCanvasEndedModalOpen 상태 가져오기
   } = useModalStore();
 
-  // if (!canvas_id) {
-  //   return <div className='text-red-500'> canvas_id 쿼리가 필요합니다.</div>;
-  // }
-
   const { isLoggedIn, setAuth, clearAuth } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
   const [canvasLoading, setCanvasLoading] = useState(true);
+
+  // useToastStore 훅 사용
+  const showToast = useToastStore((state) => state.showToast);
+
+  // 개발용 토스트 트리거 함수
+  const handleTestToast = () => {
+    showToast('게임 시작 30초 전: 테스트 캔버스', '3', 10000); // 10초 후 사라짐
+  };
 
   useEffect(() => {
     //=======canvas_id 파싱
@@ -135,8 +144,9 @@ function App() {
       <Modal isOpen={isHelpModalOpen} onClose={closeHelpModal}>
         <HelpModalContent />
       </Modal>
-      {isCanvasEndedModalOpen && <CanvasEndedModal />}{' '}
-      {/* 캔버스 종료 모달 렌더링 */}
+      {isCanvasEndedModalOpen && <CanvasEndedModal />}
+      {/* NotificationToast 컴포넌트 추가 */}
+      <NotificationToast />
       {/* 로딩 완료 후 채팅 컴포넌트 표시 */}
       {!isLoading &&
         !canvasLoading &&
