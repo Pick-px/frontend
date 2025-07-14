@@ -9,7 +9,7 @@ import { fetchCanvasData as fetchCanvasDataUtil } from '../../api/canvasFetch';
 import NotFoundPage from '../../pages/NotFoundPage';
 import { useCanvasInteraction } from '../../hooks/useCanvasInteraction';
 import useSound from 'use-sound';
-import { useGameSocket } from '../../hooks/useGameSocket';
+import { useGameSocketIntegration } from '../gameSocketIntegration';
 import { useNavigate } from 'react-router-dom';
 import GameTimer from './GameTimer'; // GameTimer import 추가
 
@@ -61,7 +61,7 @@ function GameCanvas({
   onLoadingChange,
 }: GameCanvasProps) {
   const [isGameStarted, setIsGameStarted] = useState(false); // 게임 시작 상태
-  const [isReadyModalOpen, setIsReadyModalOpen] = useState(true);
+  const [isReadyModalOpen, setIsReadyModalOpen] = useState(true); // 모달 표시 상태
   const [assignedColor, setAssignedColor] = useState<string | undefined>(
     undefined
   );
@@ -71,8 +71,8 @@ function GameCanvas({
 
   const navigate = useNavigate();
   const { canvas_id, setCanvasId } = useCanvasStore();
-  const [userColor, setUserColor] = useState<string>('#FF5733'); // 사용자 색상 (서버에서 받아올 예정)
   const [showExitModal, setShowExitModal] = useState(false); // 나가기 모달 상태
+  const [userColor, setUserColor] = useState<string>('#FF5733'); // 사용자 색상 (서버에서 받아올 예정)
 
   const rootRef = useRef<HTMLDivElement>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -102,15 +102,16 @@ function GameCanvas({
     null
   );
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [timeLeft, setTimeLeft] = useState(3);
+  const [questionTimeLeft, setQuestionTimeLeft] = useState(10); // 문제 타이머 (10초)
+  const [questionTimeDisplay, setQuestionTimeDisplay] = useState(10); // 문제 타이머 표시용
   const [currentPixel, setCurrentPixel] = useState<{
     x: number;
     y: number;
     color: string;
   } | null>(null);
-  const [playCountDown] = useSound('/count_down.mp3', { volume: 0.3 });
 
   const cooldown = useCanvasUiStore((state) => state.cooldown);
+  const timeLeft = useCanvasUiStore((state) => state.timeLeft);
   const setHoverPos = useCanvasUiStore((state) => state.setHoverPos);
   const startCooldown = useCanvasUiStore((state) => state.startCooldown);
   const isLoading = useCanvasUiStore((state) => state.isLoading);
@@ -118,16 +119,7 @@ function GameCanvas({
   const showCanvas = useCanvasUiStore((state) => state.showCanvas);
   const setShowCanvas = useCanvasUiStore((state) => state.setShowCanvas);
 
-  // 그라디언트 애니메이션을 위한 상태
-  const [gradientOffset, setGradientOffset] = useState(0);
-
-  // 그라디언트 애니메이션 효과
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setGradientOffset((prev) => (prev + 0.01) % 1);
-    }, 50);
-    return () => clearInterval(interval);
-  }, []);
+  // 애니메이션 제거
 
   const draw = useCallback(() => {
     const src = sourceCanvasRef.current;
@@ -143,32 +135,21 @@ function GameCanvas({
       ctx.fillStyle = INITIAL_BACKGROUND_COLOR;
       ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
 
-      // 회전하는 그라디언트 효과
+      // 테두리 그리기 - PixelCanvas 스타일
       const gradient = ctx.createLinearGradient(
         0,
         0,
         canvasSize.width,
         canvasSize.height
       );
-
-      // 애니메이션을 위해 오프셋 적용
-      gradient.addColorStop((0 + gradientOffset) % 1, 'rgba(34, 197, 94, 0.8)');
-      gradient.addColorStop(
-        (0.25 + gradientOffset) % 1,
-        'rgba(59, 130, 246, 0.8)'
-      );
-      gradient.addColorStop(
-        (0.5 + gradientOffset) % 1,
-        'rgba(168, 85, 247, 0.8)'
-      );
-      gradient.addColorStop(
-        (0.75 + gradientOffset) % 1,
-        'rgba(236, 72, 153, 0.8)'
-      );
-      gradient.addColorStop((1 + gradientOffset) % 1, 'rgba(34, 197, 94, 0.8)');
+      gradient.addColorStop(0, 'rgba(34, 197, 94, 0.8)');
+      gradient.addColorStop(0.25, 'rgba(59, 130, 246, 0.8)');
+      gradient.addColorStop(0.5, 'rgba(168, 85, 247, 0.8)');
+      gradient.addColorStop(0.75, 'rgba(236, 72, 153, 0.8)');
+      gradient.addColorStop(1, 'rgba(34, 197, 94, 0.8)');
 
       ctx.strokeStyle = gradient;
-      ctx.lineWidth = 5 / scaleRef.current; // 더 굵은 테두리
+      ctx.lineWidth = 3 / scaleRef.current;
       ctx.strokeRect(-1, -1, canvasSize.width + 2, canvasSize.height + 2);
 
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
@@ -178,7 +159,7 @@ function GameCanvas({
       ctx.drawImage(src, 0, 0);
 
       // 격자 그리기
-      ctx.strokeStyle = 'rgba(255,255,255, 0.5)';
+      ctx.strokeStyle = 'rgba(255,255,255, 0.3)';
       ctx.lineWidth = 1 / scaleRef.current;
       ctx.beginPath();
       for (let x = 0; x <= canvasSize.width; x++) {
@@ -242,38 +223,24 @@ function GameCanvas({
         }
       }
     }
-  }, [canvasSize, gradientOffset]);
+  }, [canvasSize, isGameStarted]);
 
   // 게임 소켓 연결
-  const { sendPixel, sendGameResult } = useGameSocket({
+  const onDeadPixels = useCallback((data: any) => {
+    // 필요한 경우 여기서 data 처리
+    // const { pixels, username } = data;
+    // toast.error(`${username} 사망!`,
+    //   {
+    //     position: 'top-center',
+    //     autoClose: 3000,
+    //   });
+  }, []);
+
+  const { sendPixel, sendGameResult } = useGameSocketIntegration({
     sourceCanvasRef,
     draw,
     canvas_id,
-    onCooldownReceived: (cooldownData) => {
-      if (cooldownData.cooldown) {
-        startCooldown(cooldownData.remaining);
-      }
-    },
-    onDeadPixels: (data) => {
-      // 죽은 픽셀 처리
-      const { pixels, username } = data;
-
-      // 소스 캔버스에 픽셀 업데이트
-      const sourceCtx = sourceCanvasRef.current?.getContext('2d');
-      if (sourceCtx) {
-        pixels.forEach((pixel: { x: number; y: number; color: string }) => {
-          sourceCtx.fillStyle = pixel.color;
-          sourceCtx.fillRect(pixel.x, pixel.y, 1, 1);
-        });
-        draw();
-      }
-
-      // 토스트 메시지 표시
-      toast.error(`${username} 사망!`, {
-        position: 'top-center',
-        autoClose: 3000,
-      });
-    },
+    onDeadPixels,
   });
 
   const updateOverlay = useCallback(
@@ -359,33 +326,23 @@ function GameCanvas({
     if (!sourceCtx) return;
 
     const pixelData = sourceCtx.getImageData(pos.x, pos.y, 1, 1).data;
-    const currentColor = `rgb(${pixelData[0]}, ${pixelData[1]}, ${pixelData[2]})`;
     const isBlack =
       pixelData[0] === 0 && pixelData[1] === 0 && pixelData[2] === 0;
 
     if (isBlack) {
       // 검은색 픽셀이면 바로 그리기 (기존 로직과 동일)
-      startCooldown(3);
-
-      // 소스 캔버스에 직접 그리기 (소켓 응답을 기다리지 않고 즉시 표시)
-      sourceCtx.fillStyle = userColor;
-      sourceCtx.fillRect(pos.x, pos.y, 1, 1);
+      startCooldown(3); // 3초 쿨다운 유지
 
       previewPixelRef.current = { x: pos.x, y: pos.y, color: userColor };
       flashingPixelRef.current = { x: pos.x, y: pos.y };
       draw();
-
       // 소켓으로 전송
       sendPixel({ x: pos.x, y: pos.y, color: userColor });
-
       setTimeout(() => {
         previewPixelRef.current = null;
-        // 확정 버튼이 사라지지 않도록 fixedPosRef 유지
-        if (fixedPosRef.current) {
-          fixedPosRef.current.color = 'transparent';
-        }
+        pos.color = 'transparent';
         draw();
-      }, 500);
+      }, 1000);
     } else {
       // 검은색이 아니면 문제 모달 표시
       setCurrentPixel({ x: pos.x, y: pos.y, color: userColor });
@@ -393,11 +350,10 @@ function GameCanvas({
         GAME_QUESTIONS[Math.floor(Math.random() * GAME_QUESTIONS.length)];
       setCurrentQuestion(randomQuestion);
       setSelectedAnswer(null);
-      setTimeLeft(3);
+      setQuestionTimeLeft(10); // 문제 타이머 10초로 초기화
       setShowQuestionModal(true);
-      playCountDown();
     }
-  }, [userColor, draw, sendPixel, startCooldown, playCountDown]);
+  }, [userColor, draw, sendPixel, startCooldown, setQuestionTimeLeft]);
 
   // 문제 답변 제출
   const submitAnswer = useCallback(() => {
@@ -405,19 +361,13 @@ function GameCanvas({
 
     const isCorrect = selectedAnswer === currentQuestion.answer;
     setShowQuestionModal(false);
+    setQuestionTimeLeft(10); // Reset question timer
 
     if (isCorrect) {
       toast.success('정답입니다!');
 
       // 픽셀 그리기
-      startCooldown(3);
-
-      // 소스 캔버스에 직접 그리기
-      const sourceCtx = sourceCanvasRef.current?.getContext('2d');
-      if (sourceCtx) {
-        sourceCtx.fillStyle = currentPixel.color;
-        sourceCtx.fillRect(currentPixel.x, currentPixel.y, 1, 1);
-      }
+      startCooldown(3); // 3초 쿨다운 유지
 
       previewPixelRef.current = {
         x: currentPixel.x,
@@ -469,17 +419,26 @@ function GameCanvas({
     draw,
     sendGameResult,
     startCooldown,
+    setQuestionTimeLeft,
   ]);
 
-  // 타이머 효과
+  // 문제 타이머 효과
   useEffect(() => {
     let timerId: number;
 
-    if (showQuestionModal && timeLeft > 0) {
+    // Reset timer when modal closes
+    if (!showQuestionModal) {
+      setQuestionTimeLeft(10);
+    }
+
+    if (showQuestionModal && questionTimeLeft > 0) {
       timerId = window.setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
+        setQuestionTimeLeft((prev) => {
+          console.log('Question timer:', prev - 1);
+          return prev - 1;
+        });
       }, 1000);
-    } else if (timeLeft === 0 && showQuestionModal) {
+    } else if (questionTimeLeft === 0 && showQuestionModal) {
       // 시간 초과 시 자동 제출
       submitAnswer();
     }
@@ -487,7 +446,7 @@ function GameCanvas({
     return () => {
       clearInterval(timerId);
     };
-  }, [showQuestionModal, timeLeft, submitAnswer]);
+  }, [showQuestionModal, questionTimeLeft, submitAnswer]);
 
   // 색상 배정 받아오는 로직 여기서 처리
   useEffect(() => {
@@ -544,23 +503,6 @@ function GameCanvas({
       setCanvasId(initialCanvasId);
     }
   }, [initialCanvasId, canvas_id, setCanvasId]);
-
-  // 애니메이션 루프 - 항상 실행하도록 수정
-  useEffect(() => {
-    let animationFrameId: number;
-
-    const animate = () => {
-      draw();
-      animationFrameId = requestAnimationFrame(animate);
-    };
-
-    // 항상 애니메이션 루프 실행 (쿨다운이나 깜박임 여부와 관계없이)
-    animationFrameId = requestAnimationFrame(animate);
-
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, [draw]);
 
   // 캔버스 크기 조정
   useEffect(() => {
@@ -668,7 +610,6 @@ function GameCanvas({
         boxShadow: cooldown
           ? 'inset 0 0 50px rgba(239, 68, 68, 0.3), 0 0 100px rgba(239, 68, 68, 0.2)'
           : 'inset 0 0 50px rgba(59, 130, 246, 0.3), 0 0 100px rgba(168, 85, 247, 0.2)',
-        animation: 'gradientBG 8s ease infinite',
       }}
     >
       <GameReadyModal
@@ -834,7 +775,7 @@ function GameCanvas({
                 <div className='mb-4 flex items-center justify-between'>
                   <h3 className='text-xl font-bold text-white'>문제</h3>
                   <div className='rounded-full bg-red-500 px-3 py-1 text-sm font-bold text-white'>
-                    {timeLeft}초
+                    {questionTimeLeft}초
                   </div>
                 </div>
 
