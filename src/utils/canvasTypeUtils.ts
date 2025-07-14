@@ -1,5 +1,4 @@
-// 캔버스 타입으로 게임 캔버스 여부를 확인하는 유틸리티 함수
-import { CanvasType } from '../api/CanvasAPI';
+import { CanvasType } from '../components/canvas/canvasConstants';
 
 // 캔버스 타입으로 게임 캔버스 여부를 확인하는 유틸리티 함수
 export const isGameCanvas = (

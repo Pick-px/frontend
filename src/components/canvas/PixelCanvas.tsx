@@ -19,14 +19,13 @@ import {
   INITIAL_BACKGROUND_COLOR,
   VIEWPORT_BACKGROUND_COLOR,
   COLORS,
+  CanvasType,
 } from './canvasConstants';
 
 type PixelCanvasProps = {
   canvas_id: string;
   onLoadingChange?: (loading: boolean) => void;
 };
-
-import { CanvasType } from '../../api/CanvasAPI';
 
 function PixelCanvas({
   canvas_id: initialCanvasId,

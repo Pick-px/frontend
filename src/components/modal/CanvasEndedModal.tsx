@@ -12,7 +12,7 @@ const CanvasEndedModal = () => {
   };
 
   return (
-    <div className='bg-opacity-75 fixed inset-0 z-50 flex items-center justify-center bg-black'>
+    <div className='bg-opacity-75 fixed inset-0 z-900 flex items-center justify-center bg-black'>
       <div className='rounded-lg bg-gray-800 p-8 text-center shadow-xl'>
         <h2 className='mb-4 text-2xl font-bold text-white'>
           캔버스 이벤트 종료

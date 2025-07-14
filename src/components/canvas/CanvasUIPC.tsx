@@ -7,10 +7,9 @@ import { useAuthStore } from '../../store/authStrore';
 import { useModalStore } from '../../store/modalStore';
 import { showInstructionsToast } from '../toast/InstructionsToast';
 import { useCanvasUiStore } from '../../store/canvasUiStore';
+import { CanvasType } from './canvasConstants';
 
 // type HoverPos = { x: number; y: number } | null;
-
-import { CanvasType } from '../../api/CanvasAPI';
 
 type CanvasUIProps = {
   onConfirm: () => void;
@@ -95,7 +94,7 @@ export default function CanvasUIPC({
     <>
       <ToastContainer />
       {/* 이미지 업로드 */}
-      <div className='pointer-events-auto fixed bottom-4 left-14 z-[9999] flex gap-2'>
+      <div className='pointer-events-auto fixed bottom-4 left-14 z-[100] flex gap-2'>
         {onImageAttach && (
           <div className='flex flex-col gap-1'>
             <div className='flex items-center gap-2'>

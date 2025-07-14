@@ -7,10 +7,9 @@ import { useAuthStore } from '../../store/authStrore';
 import { useModalStore } from '../../store/modalStore';
 import { showInstructionsToast } from '../toast/InstructionsToast';
 import { useCanvasUiStore } from '../../store/canvasUiStore';
+import { CanvasType } from './canvasConstants';
 
 // type HoverPos = { x: number; y: number } | null;
-
-import { CanvasType } from '../../api/CanvasAPI';
 
 type CanvasUIProps = {
   onConfirm: () => void;
