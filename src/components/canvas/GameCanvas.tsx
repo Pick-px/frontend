@@ -9,6 +9,7 @@ import NotFoundPage from '../../pages/NotFoundPage';
 import { useCanvasInteraction } from '../../hooks/useCanvasInteraction';
 import useSound from 'use-sound';
 import { useGameSocket } from '../../hooks/useGameSocket';
+import { useNavigate } from 'react-router-dom';
 
 import {
   INITIAL_POSITION,
@@ -57,8 +58,10 @@ function GameCanvas({
   canvas_id: initialCanvasId,
   onLoadingChange,
 }: GameCanvasProps) {
+  const navigate = useNavigate();
   const { canvas_id, setCanvasId } = useCanvasStore();
   const [userColor, setUserColor] = useState<string>('#FF5733'); // 사용자 색상 (서버에서 받아올 예정)
+  const [showExitModal, setShowExitModal] = useState(false); // 나가기 모달 상태
 
   const rootRef = useRef<HTMLDivElement>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -365,11 +368,11 @@ function GameCanvas({
       setTimeout(() => {
         previewPixelRef.current = null;
         // 확정 버튼이 사라지지 않도록 fixedPosRef 유지
-        // if (fixedPosRef.current) {
-        //   fixedPosRef.current.color = 'transparent';
-        // }
+        if (fixedPosRef.current) {
+          fixedPosRef.current.color = 'transparent';
+        }
         draw();
-      }, 3000);
+      }, 500);
     } else {
       // 검은색이 아니면 문제 모달 표시
       setCurrentPixel({ x: pos.x, y: pos.y, color: userColor });
@@ -604,6 +607,22 @@ function GameCanvas({
     return <NotFoundPage />;
   }
 
+  // 게임 나가기 핸들러
+  const handleExit = useCallback(() => {
+    setShowExitModal(true);
+  }, []);
+
+  // 게임 나가기 확인 핸들러
+  const confirmExit = useCallback(() => {
+    setShowExitModal(false);
+    navigate('/canvas/pixels'); // 홈페이지로 이동
+  }, [navigate]);
+
+  // 게임 나가기 취소 핸들러
+  const cancelExit = useCallback(() => {
+    setShowExitModal(false);
+  }, []);
+
   return (
     <div
       ref={rootRef}
@@ -616,6 +635,13 @@ function GameCanvas({
         animation: 'gradientBG 8s ease infinite',
       }}
     >
+      {/* 나가기 버튼 */}
+      <button
+        onClick={handleExit}
+        className="absolute top-4 left-4 z-50 rounded-lg bg-red-600 px-4 py-2 font-bold text-white shadow-lg transition-all hover:bg-red-700 active:scale-95"
+      >
+        나가기
+      </button>
       <style jsx>{`
         @keyframes gradientBG {
           0% {
@@ -720,12 +746,14 @@ function GameCanvas({
           <button
             onClick={handleConfirm}
             disabled={cooldown}
-            className={`transform rounded-lg px-6 py-3 text-base font-medium text-white shadow-lg transition-all ${cooldown 
-              ? 'cursor-not-allowed border border-red-500/30 bg-red-500/20 text-red-400' 
-              : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:scale-105 hover:from-green-600 hover:to-emerald-600 active:scale-95'}`}
+            className={`transform rounded-lg px-6 py-3 text-base font-medium text-white shadow-lg transition-all ${
+              cooldown
+                ? 'cursor-not-allowed border border-red-500/30 bg-red-500/20 text-red-400'
+                : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:scale-105 hover:from-green-600 hover:to-emerald-600 active:scale-95'
+            }`}
           >
             {cooldown ? (
-              <div className="flex items-center gap-2">
+              <div className='flex items-center gap-2'>
                 <svg
                   className='h-5 w-5 animate-spin'
                   fill='none'
@@ -745,7 +773,7 @@ function GameCanvas({
                     d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
                   ></path>
                 </svg>
-                <span className="font-medium">{timeLeft}초 대기</span>
+                <span className='font-medium'>{timeLeft}초 대기</span>
               </div>
             ) : (
               '확정'
@@ -796,6 +824,39 @@ function GameCanvas({
             >
               제출하기
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* 나가기 확인 모달 */}
+      {showExitModal && (
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/70'>
+          <div className='w-full max-w-md rounded-xl bg-gray-900 p-6 shadow-2xl'>
+            <div className='mb-4 flex items-center justify-between'>
+              <h3 className='text-xl font-bold text-white'>게임 탈락</h3>
+              <div className='rounded-full bg-red-500 px-3 py-1 text-sm font-bold text-white'>
+                주의
+              </div>
+            </div>
+
+            <p className='mb-6 text-lg text-white'>
+              정말 게임을 포기하시겠습니까? 지금 나가면 모든 진행 상황이 사라집니다! 😱
+            </p>
+
+            <div className='flex gap-4'>
+              <button
+                className='flex-1 rounded-lg bg-gray-700 py-3 font-bold text-gray-300 transition-all hover:bg-gray-600'
+                onClick={cancelExit}
+              >
+                계속하기
+              </button>
+              <button
+                className='flex-1 rounded-lg bg-gradient-to-r from-red-500 to-red-700 py-3 font-bold text-white transition-all hover:from-red-600 hover:to-red-800'
+                onClick={confirmExit}
+              >
+                나가기
+              </button>
+            </div>
           </div>
         </div>
       )}

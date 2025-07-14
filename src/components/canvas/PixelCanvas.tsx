@@ -724,7 +724,7 @@ function PixelCanvas({
       pos.color = 'transparent';
       stopCountDown();
       draw();
-    }, 9000);
+    }, 1000);
   }, [color, draw, sendPixel, handleCooltime, playCountDown, stopCountDown]);
 
   const handleSelectColor = useCallback(
