@@ -10,6 +10,7 @@ import { useCanvasInteraction } from '../../hooks/useCanvasInteraction';
 import useSound from 'use-sound';
 import { useGameSocket } from '../../hooks/useGameSocket';
 import { useNavigate } from 'react-router-dom';
+import GameTimer from './GameTimer'; // GameTimer import 추가
 
 import {
   INITIAL_POSITION,
@@ -17,7 +18,7 @@ import {
   MAX_SCALE,
   INITIAL_BACKGROUND_COLOR,
   VIEWPORT_BACKGROUND_COLOR,
-} from './canvasConstants';
+} from '../canvas/canvasConstants';
 
 // 게임 문제 타입 정의
 interface GameQuestion {
@@ -315,16 +316,18 @@ function GameCanvas({
     const canvas = renderCanvasRef.current;
     if (!canvas || canvas.clientWidth === 0 || canvasSize.width === 0) return;
 
-    // 화면 크기에 맞게 스케일 계산 - 더 크게 표시
     const viewportWidth = canvas.clientWidth;
     const viewportHeight = canvas.clientHeight;
 
-    // 스케일 팩터를 크게 설정하여 캔버스를 크게 표시 (10x10 유지하면서)
-    const scaleFactor = 2.0; // 더 큰 값으로 변경
+    // 모바일 (480px 이하)과 데스크탑에 따라 다른 스케일 팩터 적용
+    const isMobile = viewportWidth <= 480;
+    const scaleFactor = isMobile ? 1.0 : 2.0; // 모바일에서는 1.0, 데스크탑에서는 2.0
+    const maxScaleLimit = isMobile ? MAX_SCALE : MAX_SCALE * 2; // 모바일에서는 MAX_SCALE, 데스크탑에서는 MAX_SCALE * 2
+
     const scaleX = (viewportWidth / canvasSize.width) * scaleFactor;
     const scaleY = (viewportHeight / canvasSize.height) * scaleFactor;
     scaleRef.current = Math.max(Math.min(scaleX, scaleY), MIN_SCALE);
-    scaleRef.current = Math.min(scaleRef.current, MAX_SCALE * 2); // MAX_SCALE 제한도 늘림
+    scaleRef.current = Math.min(scaleRef.current, maxScaleLimit);
 
     // 캔버스를 화면 중앙에 배치
     viewPosRef.current.x =
@@ -638,11 +641,12 @@ function GameCanvas({
       {/* 나가기 버튼 */}
       <button
         onClick={handleExit}
-        className="absolute top-4 left-4 z-50 rounded-lg bg-red-600 px-4 py-2 font-bold text-white shadow-lg transition-all hover:bg-red-700 active:scale-95"
+        className='absolute top-4 left-4 z-50 rounded-lg bg-red-600 px-4 py-2 font-bold text-white shadow-lg transition-all hover:bg-red-700 active:scale-95'
       >
         나가기
       </button>
-      <style jsx>{`
+      <GameTimer />
+      <style>{`
         @keyframes gradientBG {
           0% {
             box-shadow:
@@ -840,7 +844,8 @@ function GameCanvas({
             </div>
 
             <p className='mb-6 text-lg text-white'>
-              정말 게임을 포기하시겠습니까? 지금 나가면 모든 진행 상황이 사라집니다! 😱
+              정말 게임을 포기하시겠습니까? 지금 나가면 모든 진행 상황이
+              사라집니다! 😱
             </p>
 
             <div className='flex gap-4'>

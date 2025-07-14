@@ -1,12 +1,19 @@
 import apiClient from '../services/apiClient';
 
+export enum CanvasType {
+  PUBLIC = 'public',
+  EVENT_COMMON = 'event',
+  EVENT_COLORLIMIT = 'event_colorlimit',
+  GAME_CALCULATION = 'game_calculation',
+}
+
 export interface Canvas {
   canvasId: number;
   title: string;
   created_at: string;
   size_x: number;
   size_y: number;
-  type: string;
+  type: CanvasType;
   ended_at: string;
   started_at?: string; // Add started_at field
   status?: 'active' | 'inactive' | 'archived';

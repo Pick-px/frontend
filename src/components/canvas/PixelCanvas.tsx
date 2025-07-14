@@ -26,11 +26,23 @@ type PixelCanvasProps = {
   onLoadingChange?: (loading: boolean) => void;
 };
 
+import { CanvasType } from '../../api/CanvasAPI';
+
 function PixelCanvas({
   canvas_id: initialCanvasId,
   onLoadingChange,
 }: PixelCanvasProps) {
   const { canvas_id, setCanvasId } = useCanvasStore();
+
+  const generateGrayscalePalette = (numColors: number) => {
+    const palette = [];
+    for (let i = 0; i < numColors; i++) {
+      const value = Math.floor((i / (numColors - 1)) * 255);
+      const hex = value.toString(16).padStart(2, '0');
+      palette.push(`#${hex}${hex}${hex}`);
+    }
+    return palette;
+  };
 
   const rootRef = useRef<HTMLDivElement>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -55,12 +67,17 @@ function PixelCanvas({
   // state를 각각 가져오도록 하여 불필요한 리렌더링을 방지합니다。
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
   const [hasError, setHasError] = useState(false);
-  const [canvasType, setCanvasType] = useState<string | null>(null);
+  const [canvasType, setCanvasType] = useState<CanvasType | null>(null);
   const [endedAt, setEndedAt] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<string | null>(null);
   const [playCountDown, { stop: stopCountDown }] = useSound('/count_down.mp3', {
     volume: 0.3,
   });
+
+  const filteredColors =
+    canvasType === CanvasType.EVENT_COLORLIMIT
+      ? generateGrayscalePalette(20)
+      : COLORS;
 
   const color = useCanvasUiStore((state) => state.color);
   const setHoverPos = useCanvasUiStore((state) => state.setHoverPos);
@@ -173,11 +190,20 @@ function PixelCanvas({
         canvasSize.width,
         canvasSize.height
       );
-      gradient.addColorStop(0, 'rgba(34, 197, 94, 0.8)');
-      gradient.addColorStop(0.25, 'rgba(59, 130, 246, 0.8)');
-      gradient.addColorStop(0.5, 'rgba(168, 85, 247, 0.8)');
-      gradient.addColorStop(0.75, 'rgba(236, 72, 153, 0.8)');
-      gradient.addColorStop(1, 'rgba(34, 197, 94, 0.8)');
+
+      if (canvasType === CanvasType.EVENT_COLORLIMIT) {
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 0.8)');
+        gradient.addColorStop(0.25, 'rgba(50, 50, 50, 0.8)');
+        gradient.addColorStop(0.5, 'rgba(100, 100, 100, 0.8)');
+        gradient.addColorStop(0.75, 'rgba(150, 150, 150, 0.8)');
+        gradient.addColorStop(1, 'rgba(200, 200, 200, 0.8)');
+      } else {
+        gradient.addColorStop(0, 'rgba(34, 197, 94, 0.8)');
+        gradient.addColorStop(0.25, 'rgba(59, 130, 246, 0.8)');
+        gradient.addColorStop(0.5, 'rgba(168, 85, 247, 0.8)');
+        gradient.addColorStop(0.75, 'rgba(236, 72, 153, 0.8)');
+        gradient.addColorStop(1, 'rgba(34, 197, 94, 0.8)');
+      }
 
       ctx.strokeStyle = gradient;
       ctx.lineWidth = 3 / scaleRef.current;
@@ -976,8 +1002,11 @@ function PixelCanvas({
     let timerInterval: number;
 
     const calculateTimeLeft = () => {
-      if (canvasType === 'event' && endedAt) {
-        const endDate = new Date(endedAt);
+      if (
+        canvasType === CanvasType.EVENT_COMMON ||
+        (canvasType === CanvasType.EVENT_COLORLIMIT && endedAt)
+      ) {
+        const endDate = new Date(endedAt!);
         const now = new Date();
         const difference = endDate.getTime() - now.getTime();
 
@@ -1058,9 +1087,12 @@ function PixelCanvas({
       <StarfieldCanvas viewPosRef={viewPosRef} />
       {timeLeft && (
         <div
-          className='bg-opacity-50 sm:text-md absolute top-4 left-1/2 z-10 -translate-x-1/2 rounded-lg bg-black px-4 py-2 text-base font-bold text-white'
+          className='bg-opacity-50 text-md absolute top-4 left-1/2 z-10 -translate-x-1/2 rounded-lg bg-transparent px-4 py-2 font-bold text-white'
           style={{ fontFamily: '"Press Start 2P", cursive' }}
         >
+          {canvasType === CanvasType.EVENT_COLORLIMIT && (
+            <p className='sm:text-md mr-2 text-lg text-gray-400'>BLACK&WHITE</p>
+          )}
           {timeLeft}
         </div>
       )}
@@ -1105,7 +1137,7 @@ function PixelCanvas({
         <Preloader />
       ) : (
         <CanvasUI
-          colors={COLORS}
+          colors={filteredColors}
           onConfirm={handleConfirm}
           onSelectColor={handleSelectColor}
           onImageAttach={handleImageAttach}
@@ -1113,7 +1145,7 @@ function PixelCanvas({
           hasImage={!!imageCanvasRef.current}
           onZoomIn={handleZoomIn}
           onZoomOut={handleZoomOut}
-          canvasType={canvasType === 'event' ? 'event' : 'normal'}
+          canvasType={canvasType!}
         />
       )}
       {showImageControls && !isImageFixed && (

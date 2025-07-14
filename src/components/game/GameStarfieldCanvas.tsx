@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import './StarfieldCanvas.css';
+import '../canvas/StarfieldCanvas.css';
 
 type StarfieldCanvasProps = {
   viewPosRef: React.RefObject<{ x: number; y: number }>;
