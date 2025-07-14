@@ -26,6 +26,8 @@ type PixelCanvasProps = {
   onLoadingChange?: (loading: boolean) => void;
 };
 
+import { CanvasType } from '../../api/CanvasAPI';
+
 function PixelCanvas({
   canvas_id: initialCanvasId,
   onLoadingChange,
@@ -55,7 +57,7 @@ function PixelCanvas({
   // state를 각각 가져오도록 하여 불필요한 리렌더링을 방지합니다。
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
   const [hasError, setHasError] = useState(false);
-  const [canvasType, setCanvasType] = useState<string | null>(null);
+  const [canvasType, setCanvasType] = useState<CanvasType | null>(null);
   const [endedAt, setEndedAt] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<string | null>(null);
   const [playCountDown, { stop: stopCountDown }] = useSound('/count_down.mp3', {
@@ -976,8 +978,8 @@ function PixelCanvas({
     let timerInterval: number;
 
     const calculateTimeLeft = () => {
-      if (canvasType === 'event' && endedAt) {
-        const endDate = new Date(endedAt);
+      if (canvasType === CanvasType.EVENT_COMMON || canvasType === CanvasType.EVENT_COLORLIMIT && endedAt) {
+        const endDate = new Date(endedAt!);
         const now = new Date();
         const difference = endDate.getTime() - now.getTime();
 
@@ -1113,7 +1115,7 @@ function PixelCanvas({
           hasImage={!!imageCanvasRef.current}
           onZoomIn={handleZoomIn}
           onZoomOut={handleZoomOut}
-          canvasType={canvasType === 'event' ? 'event' : 'normal'}
+          canvasType={canvasType === CanvasType.EVENT_COMMON || canvasType === CanvasType.EVENT_COLORLIMIT ? 'event' : 'normal'}
         />
       )}
       {showImageControls && !isImageFixed && (

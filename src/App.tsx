@@ -1,7 +1,7 @@
 // App.tsx
 
 import PixelCanvas from './components/canvas/PixelCanvas';
-import GameCanvas from './components/canvas/GameCanvas';
+import GameCanvas from './components/game/GameCanvas';
 import { isGameCanvas, isGameCanvasById } from './utils/canvasTypeUtils';
 
 import React, { useRef, useEffect, useCallback, useState } from 'react'; // UI 상태 관리를 위해 import

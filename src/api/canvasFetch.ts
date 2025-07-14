@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { CanvasType } from './CanvasAPI';
+
 interface FetchCanvasDataParams {
   id: string | null;
   setIsLoading: (loading: boolean) => void;
@@ -12,7 +14,7 @@ interface FetchCanvasDataParams {
   onLoadingChange?: (loading: boolean) => void;
   setShowCanvas: (show: boolean) => void;
   INITIAL_BACKGROUND_COLOR: string;
-  setCanvasType: (type: string) => void;
+  setCanvasType: (type: CanvasType) => void;
   setEndedAt: (endedAt: string | null) => void;
 }
 
