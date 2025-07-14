@@ -78,7 +78,7 @@ export const useSocket = (
       socketService.disconnect();
       setIsConnected(false);
     };
-  }, [canvas_id, accessToken, user]);
+  }, [canvas_id, accessToken]);
 
   const sendPixel = (pixel: PixelData) => {
     if (!canvas_id) return;

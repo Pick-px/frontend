@@ -1,123 +1,120 @@
-import { useCallback, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import socketService from '../services/socketService';
-import { useCanvasUiStore } from '../store/canvasUiStore';
 import { useAuthStore } from '../store/authStrore';
+import { useCanvasStore } from '../store/canvasStore';
+import { toast } from 'react-toastify';
 
-interface GameSocketProps {
-  sourceCanvasRef: React.RefObject<HTMLCanvasElement>;
-  draw: () => void;
-  canvas_id: string;
-  onCooldownReceived?: (cooldown: {
-    cooldown: boolean;
-    remaining: number;
-  }) => void;
+interface PixelData {
+  x: number;
+  y: number;
+  color: string;
+}
+
+export const useGameSocket = (
+  onPixelReceived: (pixel: PixelData) => void,
+  canvas_id: string | undefined,
   onDeadPixels?: (data: {
     pixels: Array<{ x: number; y: number; color: string }>;
     username: string;
-  }) => void;
-}
+  }) => void
+) => {
+  // 디버깅: useGameSocket 후크에서 canvas_id 값 확인
+  const { accessToken, user } = useAuthStore();
+  const pixelCallbackRef = useRef(onPixelReceived);
+  const deadPixelsCallbackRef = useRef(onDeadPixels);
 
-export const useGameSocket = ({
-  sourceCanvasRef,
-  draw,
-  canvas_id,
-  onCooldownReceived,
-  onDeadPixels,
-}: GameSocketProps) => {
-  // 쿨다운 상태 가져오기
-  const cooldown = useCanvasUiStore(state => state.cooldown);
-  const startCooldown = useCanvasUiStore(state => state.startCooldown);
-  
-  // 로그인 상태 확인
-  const isLoggedIn = useAuthStore(state => state.isLoggedIn);
-  const accessToken = useAuthStore(state => state.accessToken);
+  // 콜백 함수 업데이트
+  pixelCallbackRef.current = onPixelReceived;
+  deadPixelsCallbackRef.current = onDeadPixels;
 
-  // 소켓 연결 및 이벤트 리스너 등록
   useEffect(() => {
-    if (!canvas_id) return;
-    
-    console.log('GameSocket 초기화:', { isLoggedIn, hasToken: !!accessToken });
+    // 스토어에서 최신 canvas_id 가져오기
+    const storeCanvasId = useCanvasStore.getState().canvas_id;
+    // props로 전달된 canvas_id가 없으면 스토어의 값 사용
+    const effectiveCanvasId = canvas_id || storeCanvasId;
 
-    // 소켓 연결
-    if (!socketService.socket) {
-      socketService.connect(canvas_id);
-    }
+    socketService.disconnect();
+    socketService.connect(effectiveCanvasId);
 
     // 픽셀 업데이트 이벤트 리스너
-    const onPixelUpdate = (pixel: { x: number; y: number; color: string }) => {
-      const sourceCtx = sourceCanvasRef.current?.getContext('2d');
-      if (sourceCtx) {
-        sourceCtx.fillStyle = pixel.color;
-        sourceCtx.fillRect(pixel.x, pixel.y, 1, 1);
-        draw();
-      }
-    };
-
-    // 쿨다운 이벤트 리스너
-    const onCooldown = (data: { cooldown: boolean; remaining: number }) => {
-      if (onCooldownReceived) {
-        onCooldownReceived(data);
-      }
-    };
+    socketService.onGamePixelUpdate((pixel) => {
+      pixelCallbackRef.current(pixel);
+    });
 
     // 죽은 픽셀 이벤트 리스너
-    const onDeadPixelsEvent = (data: any) => {
-      if (onDeadPixels) {
-        onDeadPixels(data);
-      }
-    };
-
-    // 이벤트 리스너 등록
-    if (socketService.socket) {
-      socketService.socket.on('pixel_update', onPixelUpdate);
-      socketService.socket.on('cooldown', onCooldown);
-      socketService.socket.on('dead_pixels', onDeadPixelsEvent);
-      
-      // 에러 이벤트 리스너
-      socketService.socket.on('connect_error', (error) => {
-        console.error('소켓 연결 에러:', error.message);
-      });
-      
-      socketService.socket.on('auth_error', (error) => {
-        console.error('인증 에러:', error.message);
+    if (deadPixelsCallbackRef.current) {
+      socketService.onDeadPixels((data) => {
+        deadPixelsCallbackRef.current?.(data);
       });
     }
 
-    // 클린업 함수
-    return () => {
-      if (socketService.socket) {
-        socketService.socket.off('pixel_update', onPixelUpdate);
-        socketService.socket.off('cooldown', onCooldown);
-        socketService.socket.off('dead_pixels', onDeadPixelsEvent);
-        socketService.socket.off('connect_error');
-        socketService.socket.off('auth_error');
+    // 인증 에러 이벤트 리스너
+    socketService.onAuthError((error) => {
+      toast.error(`인증 오류: ${error.message}`);
+    });
+
+    // 픽셀 에러 이벤트 리스너
+    socketService.onPixelError((error) => {
+      if (error.remaining) {
+        toast.warning(
+          `픽셀 오류: ${error.message} (남은 시간: ${error.remaining}초)`
+        );
+      } else {
+        toast.error(`픽셀 오류: ${error.message}`);
       }
+    });
+
+    // 컴포넌트 언마운트 시 이벤트 리스너 제거 및 소켓 연결 해제
+    return () => {
+      // 이벤트 리스너 제거
+      socketService.offGamePixelUpdate(pixelCallbackRef.current);
+      if (deadPixelsCallbackRef.current) {
+        socketService.offDeadPixels(deadPixelsCallbackRef.current);
+      }
+      socketService.offAuthError(() => {});
+      socketService.offPixelError(() => {});
+
+      // 소켓 연결 해제
+      socketService.disconnect();
     };
-  }, [canvas_id, draw, onCooldownReceived, onDeadPixels, sourceCanvasRef, isLoggedIn, accessToken]);
+  }, [canvas_id, accessToken, user, useCanvasStore.getState().canvas_id]);
 
-  // 픽셀 전송 함수
-  const sendPixel = useCallback(
-    (pixel: { x: number; y: number; color: string }) => {
-      if (!canvas_id || !socketService.socket || cooldown) return;
-      
-      console.log('픽셀 전송:', { ...pixel, canvas_id });
-      socketService.socket.emit('draw_pixel', { ...pixel, canvas_id });
-      startCooldown(3);
-    },
-    [canvas_id, cooldown, startCooldown]
-  );
+  const sendPixel = (pixel: PixelData) => {
+    // 스토어에서 최신 canvas_id 가져오기
+    const storeCanvasId = useCanvasStore.getState().canvas_id;
+    // props로 전달된 canvas_id가 없으면 스토어의 값 사용
+    const effectiveCanvasId = canvas_id || storeCanvasId;
 
-  // 게임 결과 전송 함수
-  const sendGameResult = useCallback(
-    (data: { x: number; y: number; color: string; result: boolean }) => {
-      if (!canvas_id || !socketService.socket || cooldown) return;
-      
-      console.log('게임 결과 전송:', { ...data, canvas_id });
-      socketService.socket.emit('send_result', { ...data, canvas_id });
-      startCooldown(3);
-    },
-    [canvas_id, cooldown, startCooldown]
-  );
+    // 소켓이 연결되어 있는지 확인
+    if (!socketService.socket) {
+      socketService.connect(effectiveCanvasId);
+      return;
+    }
+    socketService.drawPixel({ ...pixel, canvas_id: effectiveCanvasId });
+  };
+
+  const sendGameResult = (data: {
+    x: number;
+    y: number;
+    color: string;
+    result: boolean;
+  }) => {
+    // 스토어에서 최신 canvas_id 가져오기
+    const storeCanvasId = useCanvasStore.getState().canvas_id;
+    // props로 전달된 canvas_id가 없으면 스토어의 값 사용
+    const effectiveCanvasId = canvas_id || storeCanvasId;
+
+    // 소켓이 연결되어 있는지 확인
+    if (!socketService.socket) {
+      socketService.connect(effectiveCanvasId);
+      return;
+    }
+    // socketService의 sendGameResult 메서드 사용
+    socketService.sendGameResult({
+      ...data,
+      canvas_id: effectiveCanvasId,
+    });
+  };
 
   return { sendPixel, sendGameResult };
 };
