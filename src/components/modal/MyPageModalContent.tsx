@@ -103,11 +103,6 @@ export default function MyPageModalContent() {
                           <p className='font-semibold text-white'>
                             {canvas.title}
                           </p>
-                          {canvas.own_count !== null && (
-                            <span className='rounded-full bg-red-600 px-2 py-1 text-xs text-white'>
-                              종료됨
-                            </span>
-                          )}
                         </div>
 
                         <p className='mt-1 text-xs text-gray-400'>
@@ -120,20 +115,22 @@ export default function MyPageModalContent() {
                             {new Date(canvas.ended_at).toLocaleDateString()}
                           </p>
                         )}
-                        <p className='text-xs text-gray-400'>
-                          시도 횟수: {canvas.try_count}
-                        </p>
-                        {canvas.canvasId !== 1 &&
-                          (canvas.own_count !== null ? (
-                            <p className='text-xs text-gray-400'>
-                              점유 픽셀 수 : {canvas.own_count}
-                            </p>
-                          ) : (
-                            <p className='flex items-center text-xs text-gray-400'>
-                              점유 픽셀 수 : 집계중
-                              <span className='ml-1 inline-block h-3 w-3 animate-spin rounded-full border-2 border-solid border-gray-400 border-r-transparent'></span>
-                            </p>
-                          ))}
+                        {canvas.canvasId !== 1 ? (
+                          <p className='text-xs text-gray-400'>
+                            시도 : {canvas.try_count} / 점유 : {
+                              canvas.own_count !== null ? 
+                              canvas.own_count : 
+                              <span className='flex items-center inline'>
+                                집계중
+                                <span className='ml-1 inline-block h-3 w-3 animate-spin rounded-full border-2 border-solid border-gray-400 border-r-transparent'></span>
+                              </span>
+                            }
+                          </p>
+                        ) : (
+                          <p className='text-xs text-gray-400'>
+                            시도 : {canvas.try_count}
+                          </p>
+                        )}
                       </div>
                     </li>
                   ))}

@@ -312,7 +312,7 @@ export default function CanvasUIPC({
                 </svg>
               </button>
               <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
-                앨범
+                갤러리
               </span>
             </div>
             {/* BGM 버튼 */}

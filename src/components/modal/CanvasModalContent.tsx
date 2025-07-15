@@ -732,14 +732,7 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
           <div>
             <div className='mb-3 flex items-center justify-between'>
               <h3 className='text-sm font-medium text-gray-400'>
-                이벤트 캔버스 (
-                {
-                  eventCanvases.filter(
-                    (canvas) =>
-                      !isCanvasExpired(canvas.ended_at, canvas.started_at)
-                  ).length
-                }
-                개)
+                이벤트 캔버스
               </h3>
               {eventCanvases.length > 2 && (
                 <div className='flex gap-2'>
