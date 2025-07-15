@@ -331,7 +331,7 @@ export default function CanvasUIMobile({
                   />
                 </svg>
               </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs text-white transition-all group-hover:scale-100'>
+              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
                 {isLoggedIn ? '마이페이지' : '로그인'}
               </span>
             </div>
@@ -356,7 +356,7 @@ export default function CanvasUIMobile({
                   />
                 </svg>
               </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs text-white transition-all group-hover:scale-100'>
+              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
                 캔버스
               </span>
             </div>
@@ -381,7 +381,7 @@ export default function CanvasUIMobile({
                   />
                 </svg>
               </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs text-white transition-all group-hover:scale-100'>
+              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
                 앨범
               </span>
             </div>
@@ -407,7 +407,7 @@ export default function CanvasUIMobile({
                   />
                 </svg>
               </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs text-white transition-all group-hover:scale-100'>
+              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
                 그룹
               </span>
             </div>
@@ -450,7 +450,7 @@ export default function CanvasUIMobile({
                   </svg>
                 )}
               </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs text-white transition-all group-hover:scale-100'>
+              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
                 {isBgmPlaying ? 'BGM 끄기' : 'BGM 켜기'}
               </span>
             </div>
@@ -475,6 +475,9 @@ export default function CanvasUIMobile({
                   />
                 </svg>
               </button>
+              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
+                도움말
+              </span>
             </div>
           </div>
         )}

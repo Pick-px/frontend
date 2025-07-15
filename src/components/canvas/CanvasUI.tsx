@@ -4,7 +4,7 @@ import useSound from 'use-sound';
 import CanvasUIPC from './CanvasUIPC';
 import CanvasUIMobile from './CanvasUIMobile';
 import { useBgmStore } from '../../store/bgmStore';
-import type { CanvasType } from './canvasConstants';
+import { CanvasType } from './canvasConstants';
 
 type CanvasUIProps = {
   onConfirm: () => void;
@@ -22,7 +22,10 @@ export default function CanvasUI(props: CanvasUIProps) {
   const { canvasType } = props;
   const isDesktopOrLaptop = useMediaQuery({ query: '(min-width: 480px)' });
   const { isPlaying, setIsPlaying } = useBgmStore();
-  const bgmFile = canvasType === 'event' ? '/event_bgm.mp3' : '/main_bgm.mp3';
+  const bgmFile =
+    canvasType === CanvasType.EVENT_COMMON || CanvasType.EVENT_COLORLIMIT
+      ? '/event_bgm.mp3'
+      : '/main_bgm.mp3';
   const [play, { stop }] = useSound(bgmFile, { loop: true, volume: 0.1 });
 
   useEffect(() => {

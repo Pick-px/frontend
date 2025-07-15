@@ -6,6 +6,10 @@ export interface AlbumItemData {
   ended_at: string;
   size_x: number;
   size_y: number;
-  mostPaintedUser: string;
-  topPainter: string;
+  participant_count: number;
+  total_try_count: number;
+  top_try_user_name: string;
+  top_try_user_count: number;
+  top_own_user_name: string;
+  top_own_user_count: number;
 }

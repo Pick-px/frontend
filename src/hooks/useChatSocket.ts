@@ -15,9 +15,9 @@ interface ChatError {
 export const useChatSocket = (
   onMessageReceived: (message: any) => void,
   onChatError: (error: ChatError) => void,
-  onImageReceived?: (imageData: any) => void,
   group_id: string,
-  user_id: string
+  user_id: string,
+  onImageReceived?: (imageData: any) => void
 ) => {
   useEffect(() => {
     // 유효하지 않은 group_id이면 소켓 연결 안 함
@@ -29,7 +29,7 @@ export const useChatSocket = (
     // 채팅 이벤트 리스너 등록
     socketService.onChatMessage(onMessageReceived);
     socketService.onChatError(onChatError);
-    
+
     // 이미지 업로드 알림 이벤트 리스너 등록
     if (onImageReceived) {
       socketService.onSendImage(onImageReceived);
@@ -43,13 +43,13 @@ export const useChatSocket = (
       // 클린업 시 이벤트 리스너 제거
       socketService.offChatMessage(onMessageReceived);
       socketService.offChatError(onChatError);
-      
+
       // 이미지 업로드 알림 이벤트 리스너 제거
       if (onImageReceived) {
         socketService.offSendImage(onImageReceived);
       }
     };
-  }, [group_id, user_id,  onChatError]);
+  }, [group_id, user_id, onChatError]);
 
   const sendMessage = useCallback(
     (message: string) => {
@@ -60,15 +60,21 @@ export const useChatSocket = (
     },
     [group_id]
   );
-  
+
   const sendImageMessage = useCallback(
-    (imageData: { url: string; x: number; y: number; width: number; height: number }) => {
+    (imageData: {
+      url: string;
+      x: number;
+      y: number;
+      group_id: string;
+      width: number;
+      height: number;
+    }) => {
       if (!group_id) return;
-      
+
       // 이미지 업로드 소켓 전송
       socketService.sendImageMessage({
-        group_id,
-        ...imageData
+        ...imageData,
       });
     },
     [group_id]

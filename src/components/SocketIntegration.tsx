@@ -6,7 +6,10 @@ interface SocketIntegrationProps {
   sourceCanvasRef: React.RefObject<HTMLCanvasElement>;
   draw: () => void;
   canvas_id: string;
-  onCooldownReceived?: (cooldown: { cooldown: boolean; remaining: number }) => void;
+  onCooldownReceived?: (cooldown: {
+    cooldown: boolean;
+    remaining: number;
+  }) => void;
 }
 
 interface ChatSocketProps {
@@ -39,7 +42,11 @@ export const usePixelSocket = ({
     [sourceCanvasRef, draw]
   );
 
-  const { sendPixel } = useSocket(handlePixelReceived, canvas_id, onCooldownReceived);
+  const { sendPixel } = useSocket(
+    handlePixelReceived,
+    canvas_id,
+    onCooldownReceived
+  );
 
   return { sendPixel };
 };
@@ -57,9 +64,9 @@ export const useChatSocket = ({
   const { sendMessage, sendImageMessage, leaveChat } = useChatSocketHook(
     onMessageReceived,
     handleChatError,
-    onImageReceived,
     group_id,
-    user_id
+    user_id,
+    onImageReceived
   );
 
   return { sendMessage, sendImageMessage, leaveChat };

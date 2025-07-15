@@ -236,61 +236,10 @@ export default function CanvasUIPC({
                   />
                 </svg>
               </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs text-white transition-all group-hover:scale-100'>
+              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
                 {isLoggedIn ? '마이페이지' : '로그인'}
               </span>
             </div>
-            {/* 캔버스 버튼 */}
-            <div className='group relative'>
-              <button
-                onClick={isLoggedIn ? openCanvasModal : openLoginModal}
-                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
-              >
-                <svg
-                  className='h-6 w-6'
-                  xmlns='http://www.w3.org/2000/svg'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  strokeWidth={1.5}
-                  stroke='currentColor'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    d='M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125'
-                  />
-                </svg>
-              </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs text-white transition-all group-hover:scale-100'>
-                캔버스
-              </span>
-            </div>
-            {/* 앨범 버튼 */}
-            <div className='group relative'>
-              <button
-                onClick={openAlbumModal}
-                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
-              >
-                <svg
-                  className='h-6 w-6'
-                  xmlns='http://www.w3.org/2000/svg'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  strokeWidth={1.5}
-                  stroke='currentColor'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    d='M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z'
-                  />
-                </svg>
-              </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs text-white transition-all group-hover:scale-100'>
-                앨범
-              </span>
-            </div>
-
             {/* 그룹 버튼 */}
             <div className='group relative'>
               <button
@@ -312,11 +261,60 @@ export default function CanvasUIPC({
                   />
                 </svg>
               </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs text-white transition-all group-hover:scale-100'>
+              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
                 그룹
               </span>
             </div>
-
+            {/* 캔버스 버튼 */}
+            <div className='group relative'>
+              <button
+                onClick={openCanvasModal}
+                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
+              >
+                <svg
+                  className='h-6 w-6'
+                  xmlns='http://www.w3.org/2000/svg'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  strokeWidth={1.5}
+                  stroke='currentColor'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    d='M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125'
+                  />
+                </svg>
+              </button>
+              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
+                캔버스
+              </span>
+            </div>
+            {/* 갤러리 버튼 */}
+            <div className='group relative'>
+              <button
+                onClick={openAlbumModal}
+                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
+              >
+                <svg
+                  className='h-6 w-6'
+                  xmlns='http://www.w3.org/2000/svg'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  strokeWidth={1.5}
+                  stroke='currentColor'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    d='M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z'
+                  />
+                </svg>
+              </button>
+              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
+                앨범
+              </span>
+            </div>
             {/* BGM 버튼 */}
             <div className='group relative'>
               <button
@@ -355,12 +353,12 @@ export default function CanvasUIPC({
                   </svg>
                 )}
               </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs text-white transition-all group-hover:scale-100'>
+              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
                 {isBgmPlaying ? 'BGM 끄기' : 'BGM 켜기'}
               </span>
             </div>
             {/* 도움말 버튼 */}
-            <div>
+            <div className='group relative'>
               <button
                 onClick={openHelpModal}
                 className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
@@ -380,6 +378,9 @@ export default function CanvasUIPC({
                   />
                 </svg>
               </button>
+              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
+                도움말
+              </span>
             </div>
           </div>
         )}
