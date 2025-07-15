@@ -3,6 +3,36 @@ import { toast } from 'react-toastify';
 import type { AlbumItemData } from '../album/albumTypes';
 import { albumServices } from '../album/albumAPI';
 
+// CSS 애니메이션 스타일 정의
+const awardStyles = `
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+  
+  @keyframes glow {
+    0%, 100% {
+      box-shadow: 0 0 5px rgba(251, 191, 36, 0.3);
+    }
+    50% {
+      box-shadow: 0 0 15px rgba(251, 191, 36, 0.6);
+    }
+  }
+  
+  .award-name {
+    background-size: 200% auto;
+    animation: shimmer 3s linear infinite;
+  }
+  
+  .award-container {
+    animation: glow 2s infinite;
+  }
+`;
+
 type AlbumModalContentProps = {
   onClose?: () => void;
 };
@@ -14,7 +44,7 @@ interface ApiResponse {
   data: AlbumItemData[];
 }
 
-const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
+const AlbumModalContent: React.FC<AlbumModalContentProps> = () => {
   const [albums, setAlbums] = useState<AlbumItemData[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,11 +81,20 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
       setError(null);
 
       // api 호출
-      const response = await albumServices.getAlbumList();
+      const response: ApiResponse = await albumServices.getAlbumList();
 
       if (response.isSuccess) {
-        const albumsData: AlbumItemData[] = response.data.map(
-          (canvas: AlbumItemData) => ({
+        const albumsData: AlbumItemData[] = response.data
+          .filter((canvas: AlbumItemData) => {
+            // 필터링: top_try_user_name, top_try_user_count, top_own_user_name, top_own_user_count 중 하나라도 null이면 제외
+            return (
+              canvas.top_try_user_name !== null &&
+              canvas.top_try_user_count !== null &&
+              canvas.top_own_user_name !== null &&
+              canvas.top_own_user_count !== null
+            );
+          })
+          .map((canvas: AlbumItemData) => ({
             image_url: canvas.image_url,
             title: canvas.title,
             type: canvas.type,
@@ -69,8 +108,7 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
             top_try_user_count: canvas.top_try_user_count,
             top_own_user_name: canvas.top_own_user_name,
             top_own_user_count: canvas.top_own_user_count,
-          })
-        );
+          }));
         setAlbums(albumsData);
       } else {
         setError(response.message || '앨범 목록을 불러오는데 실패했습니다.');
@@ -260,6 +298,9 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
 
   return (
     <div className='flex max-h-[90vh] min-h-[60vh] flex-col'>
+      {/* CSS 애니메이션 스타일 */}
+      <style dangerouslySetInnerHTML={{ __html: awardStyles }} />
+      
       {/* 헤더 */}
       <div className='flex-shrink-0 border-b border-white/20 p-3 sm:p-4'>
         <div className='flex items-center justify-between'>
@@ -404,17 +445,32 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
                       </span>
                     </div>
                     <div className='flex items-center justify-between'>
-                      <span className='text-xs text-gray-400'>참여왕 🔥</span>
-                      <span className='text-xs font-semibold text-white sm:text-sm'>
-                        {`${album.top_try_user_name}(${album.top_try_user_count}회)`}
+                      <span className='text-xs text-gray-400'>참여왕</span>
+                      <span className='text-xs font-semibold sm:text-sm'>
+                        <span className='inline-flex items-center gap-1 rounded-md bg-blue-500/10 px-2 py-1'>
+                          <span className='text-yellow-400'>🎨</span>
+                          <span className='bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent font-bold'>
+                            {album.top_try_user_name}
+                          </span>
+                          <span className='text-white'>({album.top_try_user_count}회)</span>
+                        </span>
                       </span>
                     </div>
                     <div className='flex items-center justify-between'>
-                      <span className='text-xs text-gray-400'>
-                        최다 기여자 🏅
-                      </span>
-                      <span className='text-xs font-semibold text-white sm:text-sm'>
-                        {`${album.top_own_user_name}(${album.top_own_user_count}회)`}
+                      <span className='text-xs text-gray-400'>점유왕</span>
+                      <span className='text-xs font-semibold sm:text-sm'>
+                        <span 
+                          className='inline-flex items-center gap-1 rounded-md bg-gradient-to-r from-amber-500/20 to-red-500/20 px-2 py-1 relative award-container'
+                        >
+                          <span className='text-yellow-400'>👑</span>
+                          <span 
+                            className='bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 bg-clip-text text-transparent font-bold award-name'
+                          >
+                            {album.top_own_user_name}
+                          </span>
+                          <span className='text-white'>({album.top_own_user_count}회)</span>
+                          <span className='absolute -inset-[1px] rounded-md bg-yellow-400/10 blur-[2px] -z-10'></span>
+                        </span>
                       </span>
                     </div>
                     <div className='flex items-center justify-between'>
