@@ -29,7 +29,7 @@ export const COLORS = [
 
 export enum CanvasType {
   PUBLIC = 'public',
-  EVENT_COMMON = 'event',
+  EVENT_COMMON = 'event_common',
   EVENT_COLORLIMIT = 'event_colorlimit',
   GAME_CALCULATION = 'game_calculation',
 }
