@@ -26,3 +26,10 @@ export const COLORS = [
   '#ffd700',
   '#87cefa',
 ];
+
+export enum CanvasType {
+  PUBLIC = 'public',
+  EVENT_COMMON = 'event_common',
+  EVENT_COLORLIMIT = 'event_colorlimit',
+  GAME_CALCULATION = 'game_calculation',
+}

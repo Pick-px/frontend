@@ -7,6 +7,8 @@ import { useAuthStore } from '../../store/authStrore';
 import { useModalStore } from '../../store/modalStore';
 import { showInstructionsToast } from '../toast/InstructionsToast';
 import { useCanvasUiStore } from '../../store/canvasUiStore';
+import UserCount from './UserCount';
+import { CanvasType } from './canvasConstants';
 
 // type HoverPos = { x: number; y: number } | null;
 
@@ -17,6 +19,9 @@ type CanvasUIProps = {
   onImageDelete: () => void;
   hasImage: boolean;
   colors: string[];
+  isBgmPlaying: boolean;
+  toggleBgm: () => void;
+  canvasType: CanvasType;
 };
 
 export default function CanvasUIPC({
@@ -26,6 +31,9 @@ export default function CanvasUIPC({
   onImageDelete,
   hasImage,
   colors,
+  isBgmPlaying,
+  toggleBgm,
+  canvasType,
 }: CanvasUIProps) {
   const [isPressed, setIsPressed] = useState(false);
   const [showConfirmEffect, setShowConfirmEffect] = useState(false);
@@ -54,15 +62,16 @@ export default function CanvasUIPC({
     openAlbumModal,
     openMyPageModal,
     openGroupModal,
+    openHelpModal,
   } = useModalStore();
 
   // 드롭다움 열림, 닫힘 상태
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    showInstructionsToast();
-  }, []);
+  // useEffect(() => {
+  //   showInstructionsToast();
+  // }, []);
 
   useEffect(() => {
     if (!isMenuOpen) return;
@@ -80,27 +89,18 @@ export default function CanvasUIPC({
     };
   }, [isMenuOpen]);
 
+  console.log(canvasType);
+
   return (
     <>
       <ToastContainer />
-      {/* 컬러 피커 */}
-      <div className='pointer-events-auto fixed top-[10px] left-[10px] z-[9999] flex gap-2'>
-        <input
-          type='color'
-          value={color}
-          onChange={(e) => {
-            const newColor = e.target.value;
-            setColor(newColor);
-            onSelectColor(newColor);
-          }}
-          className='h-[40px] w-[40px] cursor-pointer rounded-[4px] border-2 border-solid border-white p-0'
-          title='색상 선택'
-        />
+      {/* 이미지 업로드 */}
+      <div className='pointer-events-auto fixed bottom-4 left-14 z-[100] flex gap-2'>
         {onImageAttach && (
           <div className='flex flex-col gap-1'>
             <div className='flex items-center gap-2'>
               <label
-                className='flex h-[40px] w-[40px] cursor-pointer items-center justify-center rounded-[4px] border-2 border-solid border-white bg-gray-700 text-white transition-colors duration-200 hover:bg-gray-600'
+                className='flex h-[40px] w-[40px] cursor-pointer items-center justify-center rounded-full bg-gray-700 text-white transition-colors duration-200 hover:bg-gray-600'
                 title='이미지 첨부 (JPG, PNG, GIF, WebP)'
               >
                 <svg
@@ -140,7 +140,7 @@ export default function CanvasUIPC({
                       </span>
                       <input
                         type='range'
-                        min='0.1'
+                        min='0'
                         max='1'
                         step='0.1'
                         value={imageTransparency}
@@ -183,9 +183,10 @@ export default function CanvasUIPC({
           </div>
         )}
       </div>
+
       <div
         ref={menuRef}
-        className='pointer-events-auto fixed top-[60px] left-[10px] z-60'
+        className='pointer-events-auto fixed top-[10px] left-[10px] z-60'
       >
         {/* 항상 보이는 메뉴 토글 버튼 (햄버거 아이콘) */}
         <button
@@ -235,61 +236,10 @@ export default function CanvasUIPC({
                   />
                 </svg>
               </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs text-white transition-all group-hover:scale-100'>
+              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
                 {isLoggedIn ? '마이페이지' : '로그인'}
               </span>
             </div>
-            {/* 캔버스 버튼 */}
-            <div className='group relative'>
-              <button
-                onClick={isLoggedIn ? openCanvasModal : openLoginModal}
-                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
-              >
-                <svg
-                  className='h-6 w-6'
-                  xmlns='http://www.w3.org/2000/svg'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  strokeWidth={1.5}
-                  stroke='currentColor'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    d='M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125'
-                  />
-                </svg>
-              </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs text-white transition-all group-hover:scale-100'>
-                캔버스
-              </span>
-            </div>
-            {/* 앨범 버튼 */}
-            <div className='group relative'>
-              <button
-                onClick={openAlbumModal}
-                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
-              >
-                <svg
-                  className='h-6 w-6'
-                  xmlns='http://www.w3.org/2000/svg'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  strokeWidth={1.5}
-                  stroke='currentColor'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    d='M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z'
-                  />
-                </svg>
-              </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs text-white transition-all group-hover:scale-100'>
-                앨범
-              </span>
-            </div>
-
             {/* 그룹 버튼 */}
             <div className='group relative'>
               <button
@@ -311,26 +261,156 @@ export default function CanvasUIPC({
                   />
                 </svg>
               </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs text-white transition-all group-hover:scale-100'>
+              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
                 그룹
+              </span>
+            </div>
+            {/* 캔버스 버튼 */}
+            <div className='group relative'>
+              <button
+                onClick={openCanvasModal}
+                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
+              >
+                <svg
+                  className='h-6 w-6'
+                  xmlns='http://www.w3.org/2000/svg'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  strokeWidth={1.5}
+                  stroke='currentColor'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    d='M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125'
+                  />
+                </svg>
+              </button>
+              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
+                캔버스
+              </span>
+            </div>
+            {/* 갤러리 버튼 */}
+            <div className='group relative'>
+              <button
+                onClick={openAlbumModal}
+                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
+              >
+                <svg
+                  className='h-6 w-6'
+                  xmlns='http://www.w3.org/2000/svg'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  strokeWidth={1.5}
+                  stroke='currentColor'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    d='M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z'
+                  />
+                </svg>
+              </button>
+              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
+                갤러리
+              </span>
+            </div>
+            {/* BGM 버튼 */}
+            <div className='group relative'>
+              <button
+                onClick={toggleBgm}
+                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
+              >
+                {isBgmPlaying ? (
+                  <svg
+                    className='h-6 w-6'
+                    xmlns='http://www.w3.org/2000/svg'
+                    fill='none'
+                    viewBox='0 0 24 24'
+                    strokeWidth={1.5}
+                    stroke='currentColor'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      d='M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z'
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    className='h-6 w-6'
+                    xmlns='http://www.w3.org/2000/svg'
+                    fill='none'
+                    viewBox='0 0 24 24'
+                    strokeWidth={1.5}
+                    stroke='currentColor'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      d='M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z'
+                    />
+                  </svg>
+                )}
+              </button>
+              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
+                {isBgmPlaying ? 'BGM 끄기' : 'BGM 켜기'}
+              </span>
+            </div>
+            {/* 도움말 버튼 */}
+            <div className='group relative'>
+              <button
+                onClick={openHelpModal}
+                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
+                title='게임 가이드'
+              >
+                <svg
+                  className='h-5 w-5'
+                  fill='none'
+                  stroke='currentColor'
+                  viewBox='0 0 24 24'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+                  />
+                </svg>
+              </button>
+              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
+                도움말
               </span>
             </div>
           </div>
         )}
       </div>
-      {/* 좌표 표시창 */}
-      <div className='pointer-events-none fixed right-[20px] bottom-[20px] z-[9999] rounded-[8px] bg-[rgba(0,0,0,0.8)] p-[10px] text-white'>
-        {hoverPos ? `(${hoverPos.x}, ${hoverPos.y})` : 'OutSide'}
-      </div>
-
       {/* 팔레트 */}
       <div
-        className={`pointer-events-auto fixed top-[100px] z-[9999] rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-900/90 to-black/80 p-5 shadow-2xl backdrop-blur-xl transition-all duration-500 ease-out ${
+        className={`pointer-events-auto fixed top-1/2 z-[9999] -translate-y-1/2 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-900/90 to-black/80 p-5 shadow-2xl backdrop-blur-xl transition-all duration-500 ease-out ${
           showPalette
             ? 'right-[20px] scale-100 opacity-100'
             : 'right-[-300px] scale-95 opacity-0'
         }`}
       >
+        {/* 좌표 표시창 */}
+        <div className='pointer-events-none top-[100px] right-[20px] z-[9999] w-20 rounded-[8px] bg-transparent p-[10px] text-center text-xs font-bold text-white'>
+          {hoverPos ? `(${hoverPos.x},${hoverPos.y})` : 'OutSide'}
+        </div>
+        {canvasType !== CanvasType.EVENT_COLORLIMIT && (
+          <input
+            type='color'
+            value={color}
+            onChange={(e) => {
+              const newColor = e.target.value;
+              setColor(newColor);
+              onSelectColor(newColor);
+            }}
+            id='color-picker'
+            className='mb-3 h-[40px] w-20 cursor-pointer rounded-[4px] border-2 border-solid border-white p-0'
+            title='색상 선택'
+          />
+        )}
         <button
           onClick={clearSelectedPixel}
           className='absolute top-0 right-1 cursor-pointer p-1 text-gray-400 transition-colors hover:text-white'
@@ -420,13 +500,15 @@ export default function CanvasUIPC({
               <path
                 strokeLinecap='round'
                 strokeLinejoin='round'
-                strokeWidth={3}
-                d='M13 10V3L4 14h7v7l9-11h-7z'
+                strokeWidth={2}
+                d='M5 13L9 17L19 7'
               />
             </svg>
           )}
         </button>
       </div>
+      {/* 접속자수 표시 */}
+      <UserCount />
 
       {/* 쿨타임 창 : 쿨타임 중에만 표시*/}
       {cooldown && (

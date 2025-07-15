@@ -1,12 +1,21 @@
 @import 'tailwindcss';
-body,
 html,
-#root {
+body {
+  overflow: hidden; /* 스크롤바를 숨기고 스크롤 동작을 비활성화 */
+  overscroll-behavior: none; /* 오버스크롤 효과도 비활성화 */
+  touch-action: none; /* 혹시 모를 경우를 대비해 전역적으로 추가 */
   width: 100%;
   height: 100%;
   margin: 0;
   padding: 0;
   background-color: #1e293b; /* Tailwind CSS의 slate-800 색상입니다. */
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 /* Custom Scrollbar for Webkit browsers */
@@ -29,4 +38,13 @@ html,
 /* For the scrollbar thumb on hover */
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.5);
+}
+
+#color-picker {
+  /* border-radius: 30px; */
+  border: 0.3px solid #1e293b;
+}
+
+#color-picker::-webkit-color-swatch {
+  border: none;
 }

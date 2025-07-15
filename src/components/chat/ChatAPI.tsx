@@ -1,4 +1,5 @@
 import apiClient from '../../services/apiClient';
+import { useAuthStore } from '../../store/authStrore';
 
 export const chatService = {
   /**
@@ -23,7 +24,15 @@ export const chatService = {
           new Date(a.timestamp || a.created_at).getTime() -
           new Date(b.timestamp || b.created_at).getTime()
       );
-      return { defaultGroupId, groups, messages: sortedMessages };
+      const sortedGroups = groups.sort(
+        (a: { group_id: string }, b: { group_id: string }) =>
+          Number(a.group_id) - Number(b.group_id)
+      );
+      return {
+        defaultGroupId,
+        groups: sortedGroups,
+        messages: sortedMessages,
+      };
     } catch (error) {
       console.error(`Failed to fetch message for chat ${canvasId}:`, error);
       throw error;
@@ -41,9 +50,8 @@ export const chatService = {
         params: { group_id: groupId, limit },
       });
       // 실제 API에서는 data.messages 형태로 올 수 있습니다.
-      const messages = response.data.data.messages;
-      // 메시지를 시간순으로 정렬
-      return messages.sort(
+      console.log(response.data.data);
+      const newMessages = response.data.data.messages.sort(
         (
           a: { timestamp: any; created_at: any },
           b: { timestamp: any; created_at: any }
@@ -51,8 +59,43 @@ export const chatService = {
           new Date(a.timestamp || a.created_at).getTime() -
           new Date(b.timestamp || b.created_at).getTime()
       );
+      const madeBy = response.data.data.group.made_by;
+
+      // 메시지를 시간순으로 정렬
+      return { newMessages, madeBy };
     } catch (error) {
       console.error(`Failed to fetch messages for group ${groupId}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * 그룹 이미지 업로드를 위한 URL 요청
+   * @param groupId - 그룹 ID
+   * @param contentType - 이미지 타입 (예: image/png)
+   */
+  async getGroupImageUploadUrl(groupId: string, contentType: string) {
+    try {
+      // authStore에서 토큰 가져오기
+      const { accessToken } = useAuthStore.getState();
+      const response = await apiClient.post(
+        '/group/upload',
+        {
+          group_id: groupId,
+          contentType: contentType,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      return response.data.url;
+    } catch (error) {
+      console.error(
+        `Failed to get image upload URL for group ${groupId}:`,
+        error
+      );
       throw error;
     }
   },

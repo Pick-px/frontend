@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import socketService from '../services/socketService';
 import { useAuthStore } from '../store/authStrore';
 import { toast } from 'react-toastify';
+import { useToastStore } from '../store/toastStore'; // 추가
+import { useTimeSyncStore } from '../store/timeSyncStore';
 
 interface PixelData {
   x: number;
@@ -24,12 +26,15 @@ export const useSocket = (
   const pixelCallbackRef = useRef(onPixelReceived);
   const cooldownCallbackRef = useRef(onCooldownReceived);
   const [isConnected, setIsConnected] = useState(false);
+  const showToast = useToastStore((state) => state.showToast);
 
   // 콜백 함수 업데이트
   pixelCallbackRef.current = onPixelReceived;
   cooldownCallbackRef.current = onCooldownReceived;
 
   useEffect(() => {
+    const { updateServerTimeOffset } = useTimeSyncStore.getState();
+
     if (!canvas_id) return;
 
     // 이미 연결된 경우 중복 연결 방지
@@ -51,6 +56,50 @@ export const useSocket = (
         cooldownCallbackRef.current?.(cooldown);
       });
     }
+
+    // canvas_open_alarm 이벤트 리스너 추가
+    socketService.onCanvasOpenAlarm(
+      (data: {
+        canvas_id: number;
+        title: string;
+        started_at: string;
+        remain_time: number;
+      }) => {
+        console.log('onCanvasOpenAlarm:', data);
+        updateServerTimeOffset(
+          data.started_at,
+          data.remain_time ?? 0, // Ensure remaining_time is a number
+          Date.now()
+        );
+        showToast(
+          `게임 시작 30초 전: ${data.title}`,
+          String(data.canvas_id),
+          25000
+        ); // 25초 후 자동 사라짐
+      }
+    );
+
+    socketService.onCanvasCloseAlarm(
+      (data: {
+        canvas_id: number;
+        title: string;
+        ended_at: string;
+        server_time: string;
+        remain_time: number;
+      }) => {
+        console.log('onCanvasCloseAlarm:', data);
+        updateServerTimeOffset(
+          data.ended_at,
+          data.remain_time ?? 0, // Ensure remaining_time is a number
+          Date.now()
+        );
+        showToast(
+          `곧 게임이 종료됩니다!: ${data.title}`,
+          String(data.canvas_id),
+          2000
+        ); // 25초 후 자동 사라짐
+      }
+    );
 
     // 인증 에러 이벤트 리스너
     socketService.onAuthError((error) => {
@@ -78,7 +127,7 @@ export const useSocket = (
       socketService.disconnect();
       setIsConnected(false);
     };
-  }, [canvas_id, accessToken, user]);
+  }, [canvas_id, accessToken, showToast]); // showToast 의존성 추가
 
   const sendPixel = (pixel: PixelData) => {
     if (!canvas_id) return;

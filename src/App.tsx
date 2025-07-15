@@ -1,6 +1,8 @@
 // App.tsx
 
 import PixelCanvas from './components/canvas/PixelCanvas';
+import GameCanvas from './components/game/GameCanvas';
+import { isGameCanvas, isGameCanvasById } from './utils/canvasTypeUtils';
 
 import React, { useRef, useEffect, useCallback, useState } from 'react'; // UI 상태 관리를 위해 import
 import { useLocation } from 'react-router-dom';
@@ -17,6 +19,11 @@ import GroupModalContent from './components/modal/GroupModalContent';
 import CanvasModalContent from './components/modal/CanvasModalContent';
 import { toast } from 'react-toastify';
 import { jwtDecode } from 'jwt-decode';
+import AlbumModalContent from './components/modal/AlbumModalContent';
+import HelpModalContent from './components/modal/HelpModalContent';
+import CanvasEndedModal from './components/modal/CanvasEndedModal'; // CanvasEndedModal import 추가
+import NotificationToast from './components/toast/NotificationToast'; // NotificationToast import 추가
+import { useToastStore } from './store/toastStore'; // useToastStore import 추가
 
 type DecodedToken = {
   sub: {
@@ -30,8 +37,13 @@ type DecodedToken = {
 
 function App() {
   // URL에서 ?canvas_id= 값을 읽어온다
-  const { search } = useLocation();
+  const { search, state } = useLocation(); // state도 함께 가져옴
   const canvas_id = new URLSearchParams(search).get('canvas_id') || '';
+
+  // state에서 isGame 정보를 가져오거나, 기존 isGameCanvasById로 판단
+  const isGameFromState = state?.isGame || false;
+  // const isGame = isGameFromState || isGameCanvasById(canvas_id); // state 정보 우선 사용
+  const isGame = isGameFromState;
 
   const {
     isLoginModalOpen,
@@ -42,15 +54,32 @@ function App() {
     closeGroupModal,
     isCanvasModalOpen,
     closeCanvasModal,
+    isAlbumModalOpen,
+    closeAlbumModal,
+    isHelpModalOpen, // 스토어의 isHelpModalOpen을 직접 사용
+    closeHelpModal,
+    isCanvasEndedModalOpen, // isCanvasEndedModalOpen 상태 가져오기
+    openHelpModal, // openHelpModal 액션 가져오기
   } = useModalStore();
 
-  // if (!canvas_id) {
-  //   return <div className='text-red-500'> canvas_id 쿼리가 필요합니다.</div>;
-  // }
+  useEffect(() => {
+    const hasSeenHelpModal = localStorage.getItem('hasSeenHelpModal');
+    if (hasSeenHelpModal === null || hasSeenHelpModal === 'false') {
+      openHelpModal(); // 첫 접속 시 또는 명시적으로 false인 경우 모달 열기
+      localStorage.setItem('hasSeenHelpModal', 'true');
+    }
+  }, [openHelpModal]);
+
+  const handleCloseHelpModal = useCallback(() => {
+    closeHelpModal(); // 스토어의 상태만 업데이트
+  }, [closeHelpModal]);
 
   const { isLoggedIn, setAuth, clearAuth } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
   const [canvasLoading, setCanvasLoading] = useState(true);
+
+  // useToastStore 훅 사용
+  const showToast = useToastStore((state) => state.showToast);
 
   useEffect(() => {
     //=======canvas_id 파싱
@@ -91,13 +120,29 @@ function App() {
     }
   }, [setAuth, clearAuth]);
 
+  if (isLoading) {
+    return (
+      <main className='flex h-screen w-screen items-center justify-center bg-[#2d3748]'>
+        <div className='h-16 w-16 animate-spin rounded-full border-t-4 border-b-4 border-cyan-400'></div>
+      </main>
+    );
+  }
+
   return (
-    <main className='flex h-screen w-screen items-center justify-center bg-[#2d3748]'>
-      <PixelCanvas
-        canvas_id={canvas_id}
-        key={canvas_id}
-        onLoadingChange={setCanvasLoading}
-      />
+    <main className='touch-action-none flex h-screen w-screen items-center justify-center bg-[#2d3748]'>
+      {isGame ? (
+        <GameCanvas
+          canvas_id={canvas_id}
+          key={canvas_id}
+          onLoadingChange={setCanvasLoading}
+        />
+      ) : (
+        <PixelCanvas
+          canvas_id={canvas_id}
+          key={canvas_id}
+          onLoadingChange={setCanvasLoading}
+        />
+      )}
       <Modal isOpen={isLoginModalOpen} onClose={closeLoginModal}>
         <LoginModalContent onClose={closeLoginModal} />
       </Modal>
@@ -110,9 +155,19 @@ function App() {
       <Modal isOpen={isCanvasModalOpen} onClose={closeCanvasModal}>
         <CanvasModalContent onClose={closeCanvasModal} />
       </Modal>
+      <Modal isOpen={isAlbumModalOpen} onClose={closeAlbumModal}>
+        <AlbumModalContent onClose={closeAlbumModal} />
+      </Modal>
+      <Modal isOpen={isHelpModalOpen} onClose={handleCloseHelpModal}>
+        <HelpModalContent />
+      </Modal>
+      {isCanvasEndedModalOpen && <CanvasEndedModal />}
+      {/* NotificationToast 컴포넌트 추가 */}
+      <NotificationToast />
       {/* 로딩 완료 후 채팅 컴포넌트 표시 */}
       {!isLoading &&
         !canvasLoading &&
+        !isGame &&
         (() => {
           try {
             return <Chat />;

@@ -7,12 +7,17 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { useChatSocket } from '../SocketIntegration';
 import { useAuthStore } from '../../store/authStrore';
 import { useModalStore } from '../../store/modalStore';
+import { useCanvasUiStore } from '../../store/canvasUiStore';
+import { useChatStore } from '../../store/chatStore';
+import { toast } from 'react-toastify';
+import socketService from '../../services/socketService';
 
 // 임시로 사용할 가짜 메시지 데이터
 
 export type Group = {
   group_id: string;
   group_title: string;
+  made_by: string;
 };
 
 function Chat() {
@@ -24,15 +29,23 @@ function Chat() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [currentGroupId, setCurrentGroupId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false); // 로딩 상태 추가
-
   const canvas_id = useCanvasStore((state) => state.canvas_id);
+  const { leader, setLeader, isSyncEnabled, setIsSyncEnabled } = useChatStore();
   const { user, isLoggedIn } = useAuthStore();
-  const { openLoginModal, isGroupModalOpen } = useModalStore();
+  const { openLoginModal, isGroupModalOpen, openChat, closeChat } =
+    useModalStore();
 
   // 채팅 소켓 연결 - 유효한 group_id가 있을 때만
-  const { sendMessage: sendSocketMessage, leaveChat } = useChatSocket({
+  const {
+    sendMessage: sendChatMessage,
+    sendImageMessage,
+    leaveChat,
+  } = useChatSocket({
+    // 일반 채팅 메시지 수신
     onMessageReceived: (message) => {
-      console.log('메시지 수신:', message);
+      console.log('채팅 메시지 수신:', message);
+
+      // 일반 메시지 처리
       const newMessage: Message = {
         messageId: message.id.toString(),
         user: {
@@ -45,11 +58,42 @@ function Chat() {
       setMessages((prev) => [...prev, newMessage]);
     },
 
+    // 이미지 업로드 알림 수신
+    onImageReceived: (message) => {
+      console.log('이미지 업로드 알림 수신:', message);
+      // 이미지 정보 추출
+      const { url, x, y, width, height } = message;
+      const syncState = useChatStore.getState().isSyncEnabled;
+      console.log('현재 동기화 상태:', syncState);
+
+      // 새로운 메시지 추가 - 방장이 이미지를 업로드했음을 알리는 메시지
+      const newMessage: Message = {
+        messageId: Date.now().toString(),
+        user: {
+          userId: '',
+          name: '공지',
+        },
+        content: syncState
+          ? ` 📣 방장이 새로운 이미지를 업로드했습니다. 화면에 표시됩니다.`
+          : ` 📣 방장이 새로운 이미지를 업로드했습니다. 동기화 버튼을 클릭하여 화면에 표시하세요.`,
+        timestamp: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, newMessage]);
+
+      // 동기화 상태일 때만 이미지 반영
+      if (syncState) {
+        // 이미지 반영
+        document.dispatchEvent(
+          new CustomEvent('group-image-received', {
+            detail: { url, x, y, width, height },
+          })
+        );
+      }
+    },
+
     group_id: currentGroupId || '0', // 유효하지 않은 group_id 사용
     user_id: user?.userId || '',
   });
-
-  // const {getChatMessages} = chatService();
 
   // 그룹 변경 핸들러 함수
   const handleGroupChange = async (groupId: string) => {
@@ -58,7 +102,11 @@ function Chat() {
     try {
       setCurrentGroupId(groupId);
       setIsLoading(true); // 로딩 시작
-      const newMessages = await chatService.getChatMessages(groupId);
+      // 그룹 변경 시 동기화 상태 비활성화
+      setIsSyncEnabled(false);
+      const { newMessages, madeBy } =
+        await chatService.getChatMessages(groupId);
+      setLeader(madeBy);
       setMessages(newMessages); // 메시지 상태 업데이트
     } catch (error) {
       console.error(
@@ -85,7 +133,7 @@ function Chat() {
       userId: user?.userId,
     });
     if (currentGroupId && user?.userId) {
-      sendSocketMessage(text);
+      sendChatMessage(text);
     }
   };
 
@@ -97,8 +145,17 @@ function Chat() {
   useEffect(() => {
     if (isOpen && (isGroupModalOpen || !isLoggedIn)) {
       setIsOpen(false);
+      closeChat();
     }
-  }, [isGroupModalOpen, isLoggedIn, isOpen]);
+  }, [isGroupModalOpen, isLoggedIn, isOpen, closeChat]);
+
+  // 컴포넌트 최상단
+  useEffect(() => {
+    if (isSyncEnabled && currentGroupId) {
+      console.log('동기화 시작됨: ', isSyncEnabled);
+      socketService.joinImg({ group_id: currentGroupId });
+    }
+  }, [isSyncEnabled, currentGroupId]);
 
   // isOpen True 시, canvasId 변경시
   useEffect(() => {
@@ -107,13 +164,16 @@ function Chat() {
       const fetchInitialData = async () => {
         console.log(`start fetch, ${canvas_id}`);
         setIsLoading(true); // 로딩 시작
+        // 채팅창 열 때 동기화 상태 초기화
+        setIsSyncEnabled(false);
+        setLeader('');
         try {
           const {
             defaultGroupId,
             groups: fetchedGroups,
             messages: initialMessages,
           } = await chatService.getChatInitMessages(canvas_id);
-
+          // defaultGroupId 저장
           setGroups(fetchedGroups);
           setCurrentGroupId(defaultGroupId);
           setMessages(initialMessages);
@@ -129,17 +189,162 @@ function Chat() {
   }, [isOpen, canvas_id]);
 
   return (
-    <div className={`fixed bottom-4 left-2 z-50 flex flex-col items-start ${!isOpen ? 'pointer-events-none' : ''}`}>
+    <div
+      className={`fixed bottom-4 left-2 z-50 flex flex-col items-start ${!isOpen ? 'pointer-events-none' : ''}`}
+    >
       {/* 채팅창 UI */}
       <div
         className={`mb-2 flex h-[500px] w-80 flex-col rounded-xl border border-white/30 bg-black/30 shadow-2xl backdrop-blur-md transition-all duration-300 ease-in-out ${isOpen ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'}`}
       >
         <div className='flex h-full flex-col'>
           {/* 헤더: 동적 제목 표시 */}
-          <div className='flex-shrink-0 border-b border-white/30 p-3'>
+          <div className='flex flex-shrink-0 items-center justify-between border-b border-white/30 p-3'>
             <h3 className='text-md font-semibold text-ellipsis text-white'>
               {chatTitle}
             </h3>
+
+            <div className='flex space-x-2'>
+              {leader === user?.userId && (
+                <label
+                  className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white/10 text-white/70 transition-all duration-300 hover:bg-white/20 hover:text-white'
+                  title='이미지 업로드'
+                >
+                  <svg
+                    xmlns='http://www.w3.org/2000/svg'
+                    className='h-5 w-5'
+                    fill='none'
+                    viewBox='0 0 24 24'
+                    stroke='currentColor'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'
+                    />
+                  </svg>
+                  <input
+                    type='file'
+                    accept='image/jpeg,image/jpg,image/png,image/gif,image/webp'
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        // 이미지 첨부 처리
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          const img = new Image();
+                          img.onload = () => {
+                            // 이미지 로드 완료 후 처리
+                            useCanvasUiStore.getState().setShowPalette(false);
+
+                            // 이미지 첨부 이벤트 발생 - 메인 화면과 동일한 기능
+                            document.dispatchEvent(
+                              new CustomEvent('canvas-image-attach', {
+                                detail: {
+                                  file,
+                                  // 그룹 이미지 업로드를 위한 추가 정보
+                                  groupUpload: true,
+                                  groupId: currentGroupId,
+                                  onConfirm: async (imageData: {
+                                    x: number;
+                                    y: number;
+                                    width: number;
+                                    height: number;
+                                  }) => {
+                                    if (!currentGroupId) return;
+
+                                    try {
+                                      // 1. 업로드 URL 요청
+                                      const uploadUrl =
+                                        await chatService.getGroupImageUploadUrl(
+                                          currentGroupId,
+                                          file.type
+                                        );
+
+                                      // 2. 해당 URL에 이미지 업로드
+                                      await fetch(uploadUrl, {
+                                        method: 'PUT',
+                                        body: file,
+                                        headers: {
+                                          'Content-Type': file.type,
+                                        },
+                                      });
+
+                                      // 3. 소켓으로 이미지 정보 전송
+                                      const imageUrl = uploadUrl.split('?')[0]; // URL에서 쿼리 파라미터 제거
+
+                                      // 소켓으로 이미지 정보 전송
+                                      sendImageMessage({
+                                        url: imageUrl,
+                                        group_id: currentGroupId,
+                                        x: imageData.x,
+                                        y: imageData.y,
+                                        width: imageData.width,
+                                        height: imageData.height,
+                                      });
+                                    } catch (error) {
+                                      console.error(
+                                        '그룹 이미지 업로드 실패:',
+                                        error
+                                      );
+                                    }
+                                  },
+                                },
+                              })
+                            );
+                          };
+                          img.src = event.target?.result as string;
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                      e.target.value = '';
+                    }}
+                    className='hidden'
+                  />
+                </label>
+              )}
+              <button
+                className={`flex h-8 w-8 items-center justify-center rounded-full transition-all duration-300 ${isSyncEnabled ? 'scale-110 animate-pulse bg-green-500 text-white shadow-lg' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white'}`}
+                title='이미지 동기화'
+                onClick={() => {
+                  toast.info('이미지 동기화 중...');
+                  // 동기화 상태 활성화
+                  setIsSyncEnabled(true);
+                }}
+              >
+                {isSyncEnabled ? (
+                  <svg
+                    xmlns='http://www.w3.org/2000/svg'
+                    className='h-5 w-5'
+                    fill='none'
+                    viewBox='0 0 24 24'
+                    stroke='currentColor'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns='http://www.w3.org/2000/svg'
+                    className='h-5 w-5'
+                    fill='none'
+                    viewBox='0 0 24 24'
+                    stroke='currentColor'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'
+                    />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* 그룹 목록 탭 */}
@@ -154,9 +359,13 @@ function Chat() {
                     : 'bg-white/10 text-gray-200 hover:bg-white/20'
                 }`}
               >
-                {group.group_title.length > 10
-                  ? `${group.group_title.substring(0, 10)}...`
-                  : group.group_title}
+                {group.made_by === user?.userId
+                  ? group.group_title.length > 5
+                    ? `👑 ${group.group_title.substring(0, 5)}...`
+                    : `👑 ${group.group_title}`
+                  : group.group_title.length > 5
+                    ? `${group.group_title.substring(0, 5)}...`
+                    : group.group_title}
               </button>
             ))}
           </div>
@@ -188,11 +397,14 @@ function Chat() {
           }
 
           if (isOpen) {
-            leaveChat();
+            setIsOpen(false);
+            closeChat(); // Synchronize with modal store
+          } else {
+            setIsOpen(true);
+            openChat(); // Synchronize with modal store
           }
-          setIsOpen(!isOpen);
         }}
-        className='flex h-10 w-10 items-center justify-center rounded-full bg-blue-500 text-white shadow-xl transition-transform hover:bg-blue-600 active:scale-90 pointer-events-auto'
+        className='pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full bg-blue-500 text-white shadow-xl transition-transform hover:bg-blue-600 active:scale-90'
       >
         {isOpen ? (
           // 닫기 아이콘 (X)
