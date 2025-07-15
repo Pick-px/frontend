@@ -63,12 +63,12 @@ export const useSocket = (
         canvas_id: number;
         title: string;
         started_at: string;
-        remaining_time: number;
+        remain_time: number;
       }) => {
         console.log('onCanvasOpenAlarm:', data);
         updateServerTimeOffset(
           data.started_at,
-          data.remaining_time,
+          data.remain_time ?? 0, // Ensure remaining_time is a number
           Date.now()
         );
         showToast(
