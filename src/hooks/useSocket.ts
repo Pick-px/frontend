@@ -83,12 +83,13 @@ export const useSocket = (
       (data: {
         canvas_id: number;
         title: string;
-        started_at: string;
+        ended_at: string;
+        server_time: string;
         remain_time: number;
       }) => {
         console.log('onCanvasCloseAlarm:', data);
         updateServerTimeOffset(
-          data.started_at,
+          data.ended_at,
           data.remain_time ?? 0, // Ensure remaining_time is a number
           Date.now()
         );

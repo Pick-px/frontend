@@ -35,7 +35,8 @@ export const useGameSocketIntegration = ({
   onDeadPixels,
   onDeadNotice,
   onGameResult,
-}: GameSocketProps) => {
+  onCanvasCloseAlarm,
+}) => {
   const handlePixelReceived = useCallback(
     (pixel: { x: number; y: number; color: string }) => {
       const sourceCtx = sourceCanvasRef.current?.getContext('2d');
@@ -53,7 +54,8 @@ export const useGameSocketIntegration = ({
     canvas_id,
     onDeadPixels,
     onDeadNotice,
-    onGameResult
+    onGameResult,
+    onCanvasCloseAlarm
   );
 
   return { sendGameResult };

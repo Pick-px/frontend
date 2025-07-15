@@ -344,6 +344,16 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
       }
     }
 
+    if (selectedCanvas && selectedCanvas.type.startsWith('game_')) {
+      if (onClose) {
+        onClose();
+      }
+      navigate(`/canvas/pixels?canvas_id=${canvasId}`, {
+        state: { isGame: true },
+      });
+      return;
+    }
+
     if (onClose) {
       onClose();
     }
