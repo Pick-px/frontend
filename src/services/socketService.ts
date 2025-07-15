@@ -233,6 +233,40 @@ class SocketService {
       this.socket.off('dead_notice', callback);
     }
   }
+  
+  // 게임 결과 이벤트 수신
+  onGameResult(
+    callback: (data: {
+      results: Array<{
+        username: string;
+        rank: number;
+        own_count: number;
+        try_count: number;
+        dead: boolean;
+      }>;
+    }) => void
+  ) {
+    if (this.socket) {
+      this.socket.on('game_result', callback);
+    }
+  }
+  
+  // 게임 결과 이벤트 리스너 제거
+  offGameResult(
+    callback: (data: {
+      results: Array<{
+        username: string;
+        rank: number;
+        own_count: number;
+        try_count: number;
+        dead: boolean;
+      }>;
+    }) => void
+  ) {
+    if (this.socket) {
+      this.socket.off('game_result', callback);
+    }
+  }
 
   // 게임 픽셀 업데이트 리스너 제거
   offGamePixelUpdate(callback: (pixelData: PixelData) => void) {

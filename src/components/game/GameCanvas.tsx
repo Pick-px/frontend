@@ -13,6 +13,10 @@ import useSound from 'use-sound';
 import { useGameSocketIntegration } from '../gameSocketIntegration';
 import { useNavigate } from 'react-router-dom';
 import GameTimer from './GameTimer'; // GameTimer import 추가
+import GameResultModal from '../modal/GameResultModal'; // 게임 결과 모달 import
+import DeathModal from '../modal/DeathModal'; // 사망 모달 import
+import QuestionModal from '../modal/QuestionModal'; // 문제 모달 import
+import ExitModal from '../modal/ExitModal'; // 나가기 모달 import
 
 import {
   INITIAL_POSITION,
@@ -35,21 +39,33 @@ interface GameQuestion {
 const GAME_QUESTIONS: GameQuestion[] = [
   {
     id: '1',
-    question: '다음 중 JavaScript의 원시 타입이 아닌 것은?',
-    options: ['String', 'Number', 'Boolean', 'Array'],
+    question: '지원이가 좋아하는 음식은?',
+    options: ['불닭', '엽떡', '마라탕', '삼겹살'],
     answer: 3,
   },
   {
     id: '2',
-    question: 'React의 핵심 개념이 아닌 것은?',
-    options: ['Component', 'Props', 'State', 'Database'],
-    answer: 3,
+    question: '성현이가 좋아하는 음식은?',
+    options: ['후레쉬', '맛참', '진로', '이세상 모든 소주'],
+    answer: 4,
   },
   {
     id: '3',
-    question: 'HTML에서 CSS를 연결하는 태그는?',
-    options: ['<script>', '<link>', '<style>', '<css>'],
+    question: '유민이가 좋아하는 음식은?',
+    options: ['등산후막걸리', '치킨', '소주', '만두'],
+    answer: 4,
+  },
+  {
+    id: '4',
+    question: '완기가 좋아하는 음식은?',
+    options: ['해장라면', '피자', '엔초', '소주'],
     answer: 1,
+  },
+  {
+    id: '5',
+    question: '창현이가 좋아하는 음식은?',
+    options: ['마라탕', '마라샹궈', '마라떡볶이', '하지마라'],
+    answer: 2,
   },
 ];
 
@@ -67,19 +83,42 @@ function GameCanvas({
   const [assignedColor, setAssignedColor] = useState<string | undefined>(
     undefined
   );
-  const [remainingTime, setRemainingTime] = useState<number | undefined>(
-    undefined
-  );
+  const [readyTime, setReadyTime] = useState<number | undefined>(undefined); // 대기 모달 카운트다운
+  const [gameTime, setGameTime] = useState<number>(90); // 실제 게임 시간 (초)
   const [lives, setLives] = useState(2); // 사용자 생명 (2개)
 
   const navigate = useNavigate();
   const { canvas_id, setCanvasId } = useCanvasStore();
   const { user } = useAuthStore(); // 현재 사용자 정보 가져오기
-  const [isPlayerDead, setIsPlayerDead] = useState(false); // 플레이어 사망 상태
+  const [showDeathModal, setShowDeathModal] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false); // 나가기 모달 상태
+  const [isGameEnded, setIsGameEnded] = useState(false); // 게임 종료 상태
+  const [isWaitingForResults, setIsWaitingForResults] = useState(false); // 결과 대기 상태
+  const [gameResults, setGameResults] = useState<Array<{
+    username: string;
+    rank: number;
+    own_count: number;
+    try_count: number;
+    dead: boolean;
+  }> | null>(null); // 게임 결과
   const [userColor, setUserColor] = useState<string>('#FF5733'); // 사용자 색상 (서버에서 받아올 예정)
   const [playExplosion] = useSound('/explosion.mp3', {
     volume: 0.2,
+  });
+
+  // 게임 대기 모달창 배경음악
+  const [playAdventureMusic, { stop: stopAdventureMusic }] = useSound(
+    '/adventure.mp3',
+    {
+      volume: 0.15,
+      loop: true,
+    }
+  );
+
+  // 게임 시작 배경음악
+  const [playGameMusic, { stop: stopGameMusic }] = useSound('/game.mp3', {
+    volume: 0.25,
+    loop: true,
   });
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -104,7 +143,6 @@ function GameCanvas({
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
   const [hasError, setHasError] = useState(false);
   const [canvasType, setCanvasType] = useState<string | null>(null);
-  const [endedAt, setEndedAt] = useState<string | null>(null); // 추가: 캔버스 종료 시간
   const [showQuestionModal, setShowQuestionModal] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState<GameQuestion | null>(
     null
@@ -326,45 +364,14 @@ function GameCanvas({
     [draw]
   );
 
-  // 본인 사망 처리 (dead_notice 이벤트)
   const onDeadNotice = useCallback(
     (data: { message: string }) => {
-      // 플레이어 사망 상태로 설정
-      setIsPlayerDead(true);
-
-      // 화면 중앙에 큰 사망 모달 표시
-      const myDeathModal = document.createElement('div');
-      myDeathModal.className =
-        'fixed inset-0 z-[9999] flex items-center justify-center bg-black/80';
-      myDeathModal.innerHTML = `
-      <div class="w-full max-w-md rounded-xl bg-gradient-to-b from-red-900/90 to-black/90 p-8 shadow-2xl border-2 border-red-500 text-center">
-        <div class="text-8xl mb-4">☠️</div>
-        <h2 class="text-4xl font-bold mb-6 text-red-400 animate-pulse">당신은 탈락했습니다!</h2>
-        <p class="text-xl mb-8 text-white">모든 생명을 잃었습니다.</p>
-        <p class="text-lg mb-8 text-gray-300">전장이 마무리될 때까지 잠시만 기다려주세요.</p>
-      </div>
-    `;
-      document.body.appendChild(myDeathModal);
-
-      // 화면 진동 효과 (더 강하게)
-      const root = rootRef.current;
-      if (root) {
-        root.animate(
-          [
-            { transform: 'translate(0, 0)' },
-            { transform: 'translate(-10px, 10px)' },
-            { transform: 'translate(10px, -10px)' },
-            { transform: 'translate(-10px, -10px)' },
-            { transform: 'translate(10px, 10px)' },
-            { transform: 'translate(-5px, 5px)' },
-            { transform: 'translate(5px, -5px)' },
-            { transform: 'translate(0, 0)' },
-          ],
-          { duration: 800, easing: 'ease-in-out' }
-        );
-      }
+      playExplosion();
+      stopGameMusic();
+      // React로 모달 열기
+      setShowDeathModal(true);
     },
-    [playExplosion, setIsPlayerDead]
+    [playExplosion, stopGameMusic]
   );
 
   // 폭발 효과 생성 함수
@@ -499,12 +506,35 @@ function GameCanvas({
     }, 600);
   }, []);
 
-  const { sendPixel, sendGameResult } = useGameSocketIntegration({
+  // 게임 결과 처리
+  const onGameResult = useCallback(
+    (data: {
+      results: Array<{
+        username: string;
+        rank: number;
+        own_count: number;
+        try_count: number;
+        dead: boolean;
+      }>;
+    }) => {
+      // 배경음악 중지
+      stopGameMusic();
+
+      // 결과 저장 및 결과 모달 표시
+      setGameResults(data.results);
+      setIsWaitingForResults(false);
+      setIsGameEnded(true);
+    },
+    [stopGameMusic]
+  );
+
+  const { sendGameResult } = useGameSocketIntegration({
     sourceCanvasRef,
     draw,
     canvas_id,
     onDeadPixels,
     onDeadNotice,
+    onGameResult,
   });
 
   const updateOverlay = useCallback(
@@ -617,7 +647,7 @@ function GameCanvas({
       setQuestionTimeLeft(10); // 문제 타이머 10초로 초기화
       setShowQuestionModal(true);
     }
-  }, [userColor, draw, sendPixel, startCooldown, setQuestionTimeLeft]);
+  }, [userColor, draw, sendGameResult, startCooldown, setQuestionTimeLeft]);
 
   // 문제 답변 제출
   const submitAnswer = useCallback(() => {
@@ -627,7 +657,7 @@ function GameCanvas({
     setIsCorrect(answerCorrect);
     setShowResult(true);
 
-    // 3초 후에 결과 화면 닫기
+    // 1초 후에 결과 화면 닫기
     setTimeout(() => {
       setShowQuestionModal(false);
       setShowResult(false);
@@ -661,15 +691,6 @@ function GameCanvas({
         setLives((prev) => Math.max(0, prev - 1));
         startCooldown(1);
 
-        // 생명이 0이 되면 토스트 메시지만 표시
-        if (lives <= 1) {
-          toast.error('생명이 모두 소진되었습니다!', {
-            position: 'top-center',
-            autoClose: 3000,
-          });
-          // 게임 종료하지 않고 계속 진행
-        }
-
         sendGameResult({
           x: currentPixel.x,
           y: currentPixel.y,
@@ -679,7 +700,7 @@ function GameCanvas({
       }
 
       setCurrentPixel(null);
-    }, 2000);
+    }, 1000);
   }, [
     currentQuestion,
     selectedAnswer,
@@ -721,26 +742,155 @@ function GameCanvas({
 
   // 색상 배정 받아오는 로직 여기서 처리
   useEffect(() => {
+    // 게임 대기 모달창이 표시될 때 대기 음악 재생
+    playAdventureMusic();
+
     setTimeout(() => {
       setAssignedColor('#00FF00'); // Example color
-      setRemainingTime(10);
+      setReadyTime(5);
     }, 2000);
-  }, []);
+
+    // 컴포넌트 언마운트 시 음악 중지
+    return () => {
+      stopAdventureMusic();
+      stopGameMusic();
+    };
+  }, [playAdventureMusic, stopAdventureMusic, stopGameMusic]);
 
   // 시작시간 받아오기 여기서 처리
   useEffect(() => {
-    if (remainingTime === undefined) return;
+    if (readyTime === undefined) return;
 
-    if (remainingTime > 0) {
+    if (readyTime > 0) {
       const timer = setInterval(() => {
-        setRemainingTime((prev) => (prev ? prev - 1 : 0));
+        setReadyTime((prev) => (prev ? prev - 1 : 0));
       }, 1000);
       return () => clearInterval(timer);
-    } else if (remainingTime === 0) {
+    } else if (readyTime <= 1) {
+      // 0이하로 변경하여 어떤 경우라도 게임 종료 처리
+      // 게임 시작 시 대기 음악 중지하고 게임 음악 재생
+      stopAdventureMusic();
+      playGameMusic();
+
       setIsGameStarted(true);
       setIsReadyModalOpen(false);
     }
-  }, [remainingTime]);
+  }, [readyTime]);
+
+  // 게임 타이머 처리
+  useEffect(() => {
+    if (!isGameStarted) return;
+
+    if (gameTime > 0) {
+      const timer = setInterval(() => {
+        setGameTime((prev) => (prev ? prev - 1 : 0));
+      }, 1000);
+      return () => clearInterval(timer);
+    } else if (gameTime <= 1) {
+      // 게임 시간이 종료되면 결과 화면 표시
+      stopGameMusic();
+      playAdventureMusic();
+      setIsWaitingForResults(true);
+
+      // 사망 모달이 표시되어 있다면 닫기
+      setShowDeathModal(false);
+
+      //====게임 결과 데이터 (실제로는 서버에서 받아옴)
+      setTimeout(() => {
+        // 테스트용 데이터 - 여러 참가자 추가
+        const testResults = [
+          {
+            username: '플레이어1',
+            rank: 1,
+            own_count: 15,
+            try_count: 20,
+            dead: false,
+          },
+          {
+            username: '플레이어2',
+            rank: 2,
+            own_count: 10,
+            try_count: 15,
+            dead: false,
+          },
+          {
+            username: user?.nickname || '나',
+            rank: 3,
+            own_count: 5,
+            try_count: 10,
+            dead: false,
+          },
+          {
+            username: '백지원',
+            rank: 4,
+            own_count: 4,
+            try_count: 8,
+            dead: false,
+          },
+          {
+            username: '박성현',
+            rank: 5,
+            own_count: 3,
+            try_count: 7,
+            dead: true,
+          },
+          {
+            username: '조완기',
+            rank: 6,
+            own_count: 2,
+            try_count: 6,
+            dead: false,
+          },
+          {
+            username: '박창현',
+            rank: 7,
+            own_count: 1,
+            try_count: 5,
+            dead: true,
+          },
+          {
+            username: '이유민',
+            rank: 8,
+            own_count: 0,
+            try_count: 4,
+            dead: true,
+          },
+          {
+            username: '플레이어9',
+            rank: 9,
+            own_count: 0,
+            try_count: 3,
+            dead: true,
+          },
+          {
+            username: '플레이어10',
+            rank: 10,
+            own_count: 0,
+            try_count: 2,
+            dead: true,
+          },
+          {
+            username: '플레이어11',
+            rank: 11,
+            own_count: 0,
+            try_count: 1,
+            dead: true,
+          },
+          {
+            username: '플레이어12',
+            rank: 12,
+            own_count: 0,
+            try_count: 0,
+            dead: true,
+          },
+        ];
+
+        setGameResults(testResults);
+        setIsWaitingForResults(false);
+        setIsGameEnded(true);
+      }, 2000);
+    }
+  }, [isGameStarted, gameTime, stopGameMusic, user?.nickname]);
 
   // 캔버스 데이터 가져오기
   useEffect(() => {
@@ -755,7 +905,7 @@ function GameCanvas({
       setShowCanvas,
       INITIAL_BACKGROUND_COLOR,
       setCanvasType,
-      setEndedAt,
+      setEndedAt: () => {},
     });
 
     // 사용자 색상 가져오기 (실제로는 API에서 가져올 예정)
@@ -767,6 +917,7 @@ function GameCanvas({
     setIsLoading,
     onLoadingChange,
     setShowCanvas,
+    setCanvasType,
   ]);
 
   useEffect(() => {
@@ -863,9 +1014,13 @@ function GameCanvas({
 
   // 게임 나가기 확인 핸들러
   const confirmExit = useCallback(() => {
+    // 모든 음악 중지
+    stopAdventureMusic();
+    stopGameMusic();
+
     setShowExitModal(false);
     navigate('/canvas/pixels'); // 홈페이지로 이동
-  }, [navigate]);
+  }, [navigate, stopAdventureMusic, stopGameMusic]);
 
   // 게임 나가기 취소 핸들러
   const cancelExit = useCallback(() => {
@@ -887,7 +1042,7 @@ function GameCanvas({
         isOpen={isReadyModalOpen}
         onClose={() => setIsReadyModalOpen(false)}
         color={assignedColor}
-        remainingTime={remainingTime}
+        remainingTime={readyTime}
       />
       {isGameStarted && (
         <>
@@ -1071,7 +1226,7 @@ function GameCanvas({
               </button>
 
               {/* 테스트 버튼 */}
-              <div className="flex flex-col gap-2">
+              <div className='flex flex-col gap-2'>
                 <button
                   onClick={() => {
                     // 다른 유저 사망 테스트 (dead_user 이벤트)
@@ -1079,7 +1234,7 @@ function GameCanvas({
                     const centerY = Math.floor(canvasSize.height / 2);
 
                     // 5x5 픽셀 패턴 생성
-                    const pixels = [];
+                    const pixels: Array<{ x: number; y: number; color: string }> = [];
                     for (let i = -2; i <= 2; i++) {
                       for (let j = -2; j <= 2; j++) {
                         pixels.push({
@@ -1100,7 +1255,7 @@ function GameCanvas({
                 >
                   다른 유저 사망 테스트
                 </button>
-                
+
                 <button
                   onClick={() => {
                     // 본인 사망 테스트 (dead_notice 이벤트)
@@ -1115,135 +1270,37 @@ function GameCanvas({
           )}
 
           {/* 문제 모달 */}
-          {showQuestionModal && currentQuestion && (
-            <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/70'>
-              <div className='w-full max-w-md rounded-xl bg-gray-900 p-6 shadow-2xl'>
-                <div className='mb-4 flex items-center justify-between'>
-                  <h3 className='text-xl font-bold text-white'>문제</h3>
-                  <div className='flex items-center gap-2'>
-                    {/* 생명 하트 표시 */}
-                    <div className='flex items-center gap-1'>
-                      {[...Array(2)].map((_, i) => (
-                        <div key={i} className='h-6 w-6'>
-                          {i < lives ? (
-                            <svg
-                              xmlns='http://www.w3.org/2000/svg'
-                              viewBox='0 0 24 24'
-                              fill='#ef4444'
-                              className='h-6 w-6'
-                            >
-                              <path d='m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z' />
-                            </svg>
-                          ) : (
-                            <svg
-                              xmlns='http://www.w3.org/2000/svg'
-                              fill='none'
-                              viewBox='0 0 24 24'
-                              strokeWidth={1.5}
-                              stroke='#ef4444'
-                              className='h-6 w-6'
-                            >
-                              <path
-                                strokeLinecap='round'
-                                strokeLinejoin='round'
-                                d='M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z'
-                              />
-                            </svg>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                    <div className='rounded-full bg-red-500 px-3 py-1 text-sm font-bold text-white'>
-                      {questionTimeLeft}초
-                    </div>
-                  </div>
-                </div>
-
-                {showResult ? (
-                  <div
-                    className={`mb-6 rounded-lg p-4 text-center ${isCorrect ? 'bg-green-500/20' : 'bg-red-500/20'}`}
-                  >
-                    <p
-                      className={`text-2xl font-bold ${isCorrect ? 'text-green-400' : 'text-red-400'}`}
-                    >
-                      {isCorrect ? '✅ 정답입니다!' : '❌ 오답입니다!'}
-                    </p>
-                    {!isCorrect && (
-                      <p className='mt-2 text-white'>생명이 1 감소합니다.</p>
-                    )}
-                  </div>
-                ) : (
-                  <>
-                    <p className='mb-6 text-lg text-white'>
-                      {currentQuestion.question}
-                    </p>
-
-                    <div className='space-y-3'>
-                      {currentQuestion.options.map((option, index) => (
-                        <button
-                          key={index}
-                          className={`w-full rounded-lg border border-gray-700 p-3 text-left transition-all ${
-                            selectedAnswer === index
-                              ? 'border-blue-500 bg-blue-500/20 text-blue-300'
-                              : 'text-gray-300 hover:bg-gray-800'
-                          }`}
-                          onClick={() => setSelectedAnswer(index)}
-                        >
-                          {option}
-                        </button>
-                      ))}
-                    </div>
-
-                    <button
-                      className={`mt-6 w-full rounded-lg py-3 text-center font-bold ${
-                        selectedAnswer !== null
-                          ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
-                          : 'bg-gray-700 text-gray-400'
-                      }`}
-                      onClick={submitAnswer}
-                      disabled={selectedAnswer === null}
-                    >
-                      제출하기
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
+          <QuestionModal
+            isOpen={showQuestionModal}
+            currentQuestion={currentQuestion}
+            questionTimeLeft={questionTimeLeft}
+            lives={lives}
+            selectedAnswer={selectedAnswer}
+            showResult={showResult}
+            isCorrect={isCorrect}
+            setSelectedAnswer={setSelectedAnswer}
+            submitAnswer={submitAnswer}
+          />
 
           {/* 나가기 확인 모달 */}
-          {showExitModal && (
-            <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/70'>
-              <div className='w-full max-w-md rounded-xl bg-gray-900 p-6 shadow-2xl'>
-                <div className='mb-4 flex items-center justify-between'>
-                  <h3 className='text-xl font-bold text-white'>게임 탈락</h3>
-                  <div className='rounded-full bg-red-500 px-3 py-1 text-sm font-bold text-white'>
-                    주의
-                  </div>
-                </div>
+          <ExitModal
+            isOpen={showExitModal}
+            onCancel={cancelExit}
+            onConfirm={confirmExit}
+          />
 
-                <p className='mb-6 text-lg text-white'>
-                  정말 게임을 포기하시겠습니까? 지금 나가면 모든 진행 상황이
-                  사라집니다! 😱
-                </p>
+          {/* 사망 모달 */}
+          <DeathModal
+            isOpen={showDeathModal && !isGameEnded && !isWaitingForResults}
+          />
 
-                <div className='flex gap-4'>
-                  <button
-                    className='flex-1 rounded-lg bg-gray-700 py-3 font-bold text-gray-300 transition-all hover:bg-gray-600'
-                    onClick={cancelExit}
-                  >
-                    계속하기
-                  </button>
-                  <button
-                    className='flex-1 rounded-lg bg-gradient-to-r from-red-500 to-red-700 py-3 font-bold text-white transition-all hover:from-red-600 hover:to-red-800'
-                    onClick={confirmExit}
-                  >
-                    나가기
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* 게임 결과 모달 */}
+          <GameResultModal
+            isOpen={isWaitingForResults || isGameEnded}
+            isWaiting={isWaitingForResults}
+            results={gameResults}
+            currentUsername={user?.nickname}
+          />
         </>
       )}
     </div>

@@ -17,18 +17,29 @@ export const useGameSocket = (
     pixels: Array<{ x: number; y: number; color: string }>;
     username: string;
   }) => void,
-  onDeadNotice?: (data: { message: string }) => void
+  onDeadNotice?: (data: { message: string }) => void,
+  onGameResult?: (data: {
+    results: Array<{
+      username: string;
+      rank: number;
+      own_count: number;
+      try_count: number;
+      dead: boolean;
+    }>;
+  }) => void
 ) => {
   // 디버깅: useGameSocket 후크에서 canvas_id 값 확인
   const { accessToken, user } = useAuthStore();
   const pixelCallbackRef = useRef(onPixelReceived);
   const deadPixelsCallbackRef = useRef(onDeadPixels);
   const deadNoticeCallbackRef = useRef(onDeadNotice);
+  const gameResultCallbackRef = useRef(onGameResult);
 
   // 콜백 함수 업데이트
   pixelCallbackRef.current = onPixelReceived;
   deadPixelsCallbackRef.current = onDeadPixels;
   deadNoticeCallbackRef.current = onDeadNotice;
+  gameResultCallbackRef.current = onGameResult;
 
   useEffect(() => {
     // 스토어에서 최신 canvas_id 가져오기
@@ -55,6 +66,13 @@ export const useGameSocket = (
     if (deadNoticeCallbackRef.current) {
       socketService.onDeadNotice((data) => {
         deadNoticeCallbackRef.current?.(data);
+      });
+    }
+    
+    // 게임 결과 이벤트 리스너
+    if (gameResultCallbackRef.current) {
+      socketService.onGameResult((data) => {
+        gameResultCallbackRef.current?.(data);
       });
     }
 
@@ -84,6 +102,9 @@ export const useGameSocket = (
       if (deadNoticeCallbackRef.current) {
         socketService.offDeadNotice(deadNoticeCallbackRef.current);
       }
+      if (gameResultCallbackRef.current) {
+        socketService.offGameResult(gameResultCallbackRef.current);
+      }
       socketService.offAuthError(() => {});
       socketService.offPixelError(() => {});
 
@@ -91,20 +112,6 @@ export const useGameSocket = (
       socketService.disconnect();
     };
   }, [canvas_id, accessToken, user, useCanvasStore.getState().canvas_id]);
-
-  const sendPixel = (pixel: PixelData) => {
-    // 스토어에서 최신 canvas_id 가져오기
-    const storeCanvasId = useCanvasStore.getState().canvas_id;
-    // props로 전달된 canvas_id가 없으면 스토어의 값 사용
-    const effectiveCanvasId = canvas_id || storeCanvasId;
-
-    // 소켓이 연결되어 있는지 확인
-    if (!socketService.socket) {
-      socketService.connect(effectiveCanvasId);
-      return;
-    }
-    socketService.drawPixel({ ...pixel, canvas_id: effectiveCanvasId });
-  };
 
   const sendGameResult = (data: {
     x: number;
@@ -129,5 +136,5 @@ export const useGameSocket = (
     });
   };
 
-  return { sendPixel, sendGameResult };
+  return { sendGameResult };
 };
