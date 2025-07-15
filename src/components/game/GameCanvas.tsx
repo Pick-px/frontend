@@ -1039,10 +1039,11 @@ function GameCanvas({
       }}
     >
       <GameReadyModal
+        canvasId={initialCanvasId}
         isOpen={isReadyModalOpen}
         onClose={() => setIsReadyModalOpen(false)}
-        color={assignedColor}
-        remainingTime={readyTime}
+        // color={assignedColor}
+        // remainingTime={readyTime}
       />
       {isGameStarted && (
         <>
@@ -1234,7 +1235,11 @@ function GameCanvas({
                     const centerY = Math.floor(canvasSize.height / 2);
 
                     // 5x5 픽셀 패턴 생성
-                    const pixels: Array<{ x: number; y: number; color: string }> = [];
+                    const pixels: Array<{
+                      x: number;
+                      y: number;
+                      color: string;
+                    }> = [];
                     for (let i = -2; i <= 2; i++) {
                       for (let j = -2; j <= 2; j++) {
                         pixels.push({

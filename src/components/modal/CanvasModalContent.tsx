@@ -152,7 +152,10 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
           startTime = new Date(startedAt);
         }
 
-        if (!isNaN(startTime.getTime()) && startTime.getTime() > now.getTime()) {
+        if (
+          !isNaN(startTime.getTime()) &&
+          startTime.getTime() > now.getTime()
+        ) {
           targetTime = startTime;
           prefix = '시작까지';
           isUpcomingCanvas = true;
@@ -160,9 +163,16 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
       }
 
       // 2. If not an upcoming canvas (startedAt not provided, or in the past/invalid), use endedAt
-      if (!targetTime) { // If targetTime was not set by startedAt logic
+      if (!targetTime) {
+        // If targetTime was not set by startedAt logic
         if (!endedAt || endedAt === 'null' || endedAt === 'undefined') {
-          return { text: '종료 시간 없음', isExpired: false, isUrgent: false, isUpcoming: false, targetDate: undefined };
+          return {
+            text: '종료 시간 없음',
+            isExpired: false,
+            isUrgent: false,
+            isUpcoming: false,
+            targetDate: undefined,
+          };
         }
 
         if (endedAt.includes('T')) {
@@ -178,13 +188,24 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
       // Handle invalid targetTime after all attempts
       if (!targetTime || isNaN(targetTime.getTime())) {
         console.warn('Invalid date:', endedAt, startedAt);
-        return { text: '날짜 오류', isExpired: false, isUrgent: false, isUpcoming: false, targetDate: undefined };
+        return {
+          text: '날짜 오류',
+          isExpired: false,
+          isUrgent: false,
+          isUpcoming: false,
+          targetDate: undefined,
+        };
       }
 
       const timeDiff = targetTime.getTime() - now.getTime();
 
       if (timeDiff <= 0) {
-        return { text: isUpcomingCanvas ? '시작됨' : '종료됨', isExpired: true, isUpcoming: false, targetDate: targetTime };
+        return {
+          text: isUpcomingCanvas ? '시작됨' : '종료됨',
+          isExpired: true,
+          isUpcoming: false,
+          targetDate: targetTime,
+        };
       }
 
       const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
@@ -210,7 +231,13 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
         isUrgent = true;
       }
 
-      return { text, isExpired: false, isUrgent, isUpcoming: isUpcomingCanvas, targetDate: targetTime };
+      return {
+        text,
+        isExpired: false,
+        isUrgent,
+        isUpcoming: isUpcomingCanvas,
+        targetDate: targetTime,
+      };
     } catch (error) {
       console.error(
         'Error calculating time remaining:',
@@ -220,7 +247,13 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
         'startedAt:',
         startedAt
       );
-      return { text: '계산 오류', isExpired: false, isUrgent: false, isUpcoming: false, targetDate: undefined };
+      return {
+        text: '계산 오류',
+        isExpired: false,
+        isUrgent: false,
+        isUpcoming: false,
+        targetDate: undefined,
+      };
     }
   };
 
@@ -562,9 +595,6 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
                           {canvas.canvasId === Number(canvas_id) &&
                             '(현재 캔버스)'}
                         </h3>
-                        <p className='mb-2 text-xs text-gray-400 group-hover:text-gray-300'>
-                          {formatDate(canvas.created_at)}
-                        </p>
                         <div className='flex flex-col gap-1'>
                           <span className='rounded bg-white/10 px-2 py-1 text-center text-xs text-gray-300 group-hover:bg-gray-800/60 group-hover:text-gray-200'>
                             {canvas.size_x} × {canvas.size_y}
@@ -574,6 +604,9 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
                               {canvas.status}
                             </span>
                           )}
+                          <span className='text-white-400 group-hover:text-white-100 rounded bg-gray-800/20 px-2 py-1 text-center text-xs group-hover:bg-gray-600/30'>
+                            {canvas.type}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -650,7 +683,10 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
             >
               {canvases
                 .filter((canvas) => canvas.type !== 'public')
-                .filter((canvas) => !isCanvasExpired(canvas.ended_at, canvas.started_at)) // 종료된 캔버스 제외
+                .filter(
+                  (canvas) =>
+                    !isCanvasExpired(canvas.ended_at, canvas.started_at)
+                ) // 종료된 캔버스 제외
                 .map((canvas) => {
                   const timeInfo = canvas.ended_at
                     ? getTimeRemaining(canvas.ended_at, canvas.started_at)
@@ -668,7 +704,10 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
 
                   // If both are upcoming or both are not upcoming, sort by targetDate
                   if (a.timeInfo?.targetDate && b.timeInfo?.targetDate) {
-                    return a.timeInfo.targetDate.getTime() - b.timeInfo.targetDate.getTime();
+                    return (
+                      a.timeInfo.targetDate.getTime() -
+                      b.timeInfo.targetDate.getTime()
+                    );
                   }
                   return 0; // Should not happen if targetDate is always present when timeInfo is not null
                 })
@@ -679,7 +718,7 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
                       onClick={(e) => handleCanvasSelect(e, canvas.canvasId)}
                       className={`group block min-w-[200px] cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-gray-900/20 ${
                         timeInfo?.isUpcoming
-                          ? 'grayscale opacity-50 cursor-not-allowed'
+                          ? 'cursor-not-allowed opacity-50 grayscale'
                           : 'canvas-rainbow-border'
                       }`}
                     >
