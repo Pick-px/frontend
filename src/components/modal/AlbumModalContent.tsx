@@ -50,59 +50,8 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
       setLoading(true);
       setError(null);
 
-      // const response = await albumServices.getAlbumList();
-      const response: ApiResponse = {
-        isSuccess: true,
-        code: '200',
-        message: '요청에 성공하였습니다.',
-        data: [
-          {
-            image_url: 'https://s3.amazonaws.com/bucket/history/1/image.png',
-            title: '고양이캔버스',
-            type: 'event',
-            created_at: '2025-07-20T09:30:00Z',
-            ended_at: '2025-07-20T09:30:00Z',
-            size_x: 200,
-            size_y: 150,
-            participant_count: 10,
-            total_try_count: 1500,
-            top_try_user_name: 'user123',
-            top_try_user_count: 45,
-            top_own_user_name: 'user456',
-            top_own_user_count: 23,
-          },
-          {
-            image_url: 'https://s3.amazonaws.com/bucket/history/1/image.png',
-            title: '고양이캔버스',
-            type: 'event',
-            created_at: '2025-07-20T09:30:00Z',
-            ended_at: '2025-07-20T09:30:00Z',
-            size_x: 200,
-            size_y: 150,
-            participant_count: 10,
-            total_try_count: 1500,
-            top_try_user_name: 'user123',
-            top_try_user_count: 45,
-            top_own_user_name: 'user456',
-            top_own_user_count: 23,
-          },
-          {
-            image_url: 'https://s3.amazonaws.com/bucket/history/1/image.png',
-            title: '고양이캔버스',
-            type: 'event',
-            created_at: '2025-07-20T09:30:00Z',
-            ended_at: '2025-07-20T09:30:00Z',
-            size_x: 200,
-            size_y: 150,
-            participant_count: 10,
-            total_try_count: 1500,
-            top_try_user_name: 'user123',
-            top_try_user_count: 45,
-            top_own_user_name: 'user456',
-            top_own_user_count: 23,
-          },
-        ],
-      };
+      // api 호출
+      const response = await albumServices.getAlbumList();
 
       if (response.isSuccess) {
         const albumsData: AlbumItemData[] = response.data.map(
@@ -455,20 +404,22 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = ({ onClose }) => {
                       </span>
                     </div>
                     <div className='flex items-center justify-between'>
-                      <span className='text-xs text-gray-400'>최다 시도상</span>
+                      <span className='text-xs text-gray-400'>참여왕 🔥</span>
                       <span className='text-xs font-semibold text-white sm:text-sm'>
                         {`${album.top_try_user_name}(${album.top_try_user_count}회)`}
                       </span>
                     </div>
                     <div className='flex items-center justify-between'>
-                      <span className='text-xs text-gray-400'>최다 기여상</span>
+                      <span className='text-xs text-gray-400'>
+                        최다 기여자 🏅
+                      </span>
                       <span className='text-xs font-semibold text-white sm:text-sm'>
                         {`${album.top_own_user_name}(${album.top_own_user_count}회)`}
                       </span>
                     </div>
                     <div className='flex items-center justify-between'>
                       <span className='text-xs text-gray-400'>
-                        전체 픽셀 수 / 참여자
+                        전체 픽셀 수 / 전체 참여자
                       </span>
                       <span className='text-xs font-semibold text-white sm:text-sm'>
                         {`${album.total_try_count} / ${album.participant_count}회`}

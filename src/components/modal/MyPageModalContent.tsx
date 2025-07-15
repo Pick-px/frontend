@@ -8,7 +8,6 @@ import {
   myPageService,
   type UserInfoResponse,
 } from '../../services/myPageService';
-import { useCanvasStore } from '../../store/canvasStore';
 
 export default function MyPageModalContent() {
   const { isLoggedIn, clearAuth } = useAuthStore();
@@ -16,7 +15,6 @@ export default function MyPageModalContent() {
   const [userInfo, setUserInfo] = useState<UserInfoResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { canvas_id } = useCanvasStore();
 
   useEffect(() => {
     const fetchMyPageData = async () => {
