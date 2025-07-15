@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GameAPI, type WaitingRoomData } from '../../api/GameAPI';
-import { useToastStore } from '../../store/toastStore'; // useToastStore 임포트
+import { useToastStore } from '../../store/toastStore';
+import { useTimeSyncStore } from '../../store/timeSyncStore'; // 추가
 
 interface GameReadyModalProps {
   isOpen: boolean;
@@ -11,7 +12,8 @@ interface GameReadyModalProps {
 
 const GameReadyModal = ({ isOpen, onClose, canvasId }: GameReadyModalProps) => {
   const navigate = useNavigate();
-  const { showToast } = useToastStore(); // showToast 가져오기
+  const { showToast } = useToastStore();
+  const { getSynchronizedServerTime } = useTimeSyncStore(); // 추가
   const [waitingRoomData, setWaitingRoomData] =
     useState<WaitingRoomData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -33,55 +35,48 @@ const GameReadyModal = ({ isOpen, onClose, canvasId }: GameReadyModalProps) => {
 
         setWaitingRoomData(data);
 
+        // timeSyncStore에서 동기화된 시간을 사용
         const startTime = new Date(data.startedAt).getTime();
-        const now = Date.now();
-        // 시작까지 남은 시간
-        let initialTimeLeft = Math.max(0, Math.ceil((startTime - now) / 1000));
+        const now = getSynchronizedServerTime();
+        const initialTimeLeft = Math.max(0, Math.ceil((startTime - now) / 1000));
+
+        setTimeUntilStart(initialTimeLeft);
 
         if (initialTimeLeft <= 0) {
-          setTimeUntilStart(0);
-          setTimeout(() => {
-            onClose(data);
-          }, 3000);
-        } else {
-          setTimeUntilStart(initialTimeLeft);
+          // 이미 시작되었거나 시간이 다 된 경우
+          setTimeout(() => onClose(data), 1000); // 1초 후 모달 닫기
         }
       } catch (err) {
         setError('게임 정보를 불러오는 데 실패했습니다.');
         console.error(err);
-        // 에러 발생 시 모달 닫고 토스트 메시지 표시
-        // showToast('게임 정보를 불러오는 데 실패했습니다.', null, 3000);
-        // onClose(); // 모달 닫기 (데이터 없이)
-        // navigate('/'); // 메인 페이지로 리다이렉트
       } finally {
         setLoading(false);
       }
     };
 
     fetchWaitingRoomInfo();
-  }, [isOpen, canvasId, onClose, navigate, showToast]); // showToast 의존성 추가
+  }, [isOpen, canvasId, getSynchronizedServerTime, onClose]);
 
   useEffect(() => {
-    if (timeUntilStart === null || timeUntilStart <= 0) {
+    if (timeUntilStart === null || !waitingRoomData) {
       return;
     }
 
     const timer = setInterval(() => {
-      setTimeUntilStart((prev) => {
-        if (prev === null) return null;
-        if (prev <= 1) {
-          clearInterval(timer);
-          if (waitingRoomData) {
-            onClose(waitingRoomData);
-          }
-          return 0;
-        }
-        return prev - 1;
-      });
+      const startTime = new Date(waitingRoomData.startedAt).getTime();
+      const now = getSynchronizedServerTime();
+      const newTimeLeft = Math.max(0, Math.ceil((startTime - now) / 1000));
+
+      setTimeUntilStart(newTimeLeft);
+
+      if (newTimeLeft <= 0) {
+        clearInterval(timer);
+        onClose(waitingRoomData);
+      }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [timeUntilStart, onClose, waitingRoomData]);
+  }, [timeUntilStart, waitingRoomData, getSynchronizedServerTime, onClose]);
 
   const handleExit = () => {
     onClose();
