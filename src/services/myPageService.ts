@@ -1,7 +1,7 @@
 import apiClient from './apiClient';
 
 type Canvas = {
-  canvasId: string;
+  canvasId: number;
   title: string;
   created_at: string;
   started_at: string;

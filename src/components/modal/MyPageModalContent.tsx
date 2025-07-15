@@ -113,9 +113,9 @@ export default function MyPageModalContent() {
                         <p className='mt-1 text-xs text-gray-400'>
                           크기 : {canvas.size_x}x{canvas.size_y}
                         </p>
-                        {canvas.own_count !== null && canvas.ended_at && (
+                        {canvas.canvasId !== 1 && (
                           <p className='text-xs text-gray-400'>
-                            진행 기간:{' '}
+                            진행 기간 :{' '}
                             {new Date(canvas.created_at).toLocaleDateString()} ~{' '}
                             {new Date(canvas.ended_at).toLocaleDateString()}
                           </p>
@@ -123,11 +123,17 @@ export default function MyPageModalContent() {
                         <p className='text-xs text-gray-400'>
                           시도 횟수: {canvas.try_count}
                         </p>
-                        {canvas.own_count !== null && (
-                          <p className='text-xs text-gray-400'>
-                            점유 픽셀 수: {canvas.own_count}
-                          </p>
-                        )}
+                        {canvas.canvasId !== 1 &&
+                          (canvas.own_count !== null ? (
+                            <p className='text-xs text-gray-400'>
+                              점유 픽셀 수 : {canvas.own_count}
+                            </p>
+                          ) : (
+                            <p className='flex items-center text-xs text-gray-400'>
+                              점유 픽셀 수 : 집계중
+                              <span className='ml-1 inline-block h-3 w-3 animate-spin rounded-full border-2 border-solid border-gray-400 border-r-transparent'></span>
+                            </p>
+                          ))}
                       </div>
                     </li>
                   ))}
