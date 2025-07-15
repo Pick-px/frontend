@@ -106,6 +106,14 @@ function App() {
     }
   }, [setAuth, clearAuth]);
 
+  if (isLoading) {
+    return (
+      <main className="flex h-screen w-screen items-center justify-center bg-[#2d3748]">
+        <div className="h-16 w-16 animate-spin rounded-full border-b-4 border-t-4 border-cyan-400"></div>
+      </main>
+    );
+  }
+
   return (
     <main className='touch-action-none flex h-screen w-screen items-center justify-center bg-[#2d3748]'>
       {isGame ? (
