@@ -424,7 +424,6 @@ function GameCanvas({
     for (let i = 0; i < particleCount; i++) {
       const particle = document.createElement('div');
 
-      // 랜덤 형태 (동그라미 또는 사각형)
       const isCircle = Math.random() > 0.3;
       particle.className = `absolute z-40 ${isCircle ? 'rounded-full' : ''}`;
 
@@ -794,131 +793,8 @@ function GameCanvas({
 
       // 사망 모달이 표시되어 있다면 닫기
       setShowDeathModal(false);
-
-      //====게임 결과 데이터 (실제로는 서버에서 받아옴)
-      setTimeout(() => {
-        // 테스트용 데이터 - 여러 참가자 추가
-        const testResults = [
-          {
-            username: '플레이어1',
-            rank: 1,
-            own_count: 15,
-            try_count: 20,
-            dead: false,
-          },
-          {
-            username: '플레이어2',
-            rank: 2,
-            own_count: 10,
-            try_count: 15,
-            dead: false,
-          },
-          {
-            username: user?.nickname || '나',
-            rank: 3,
-            own_count: 5,
-            try_count: 10,
-            dead: false,
-          },
-          {
-            username: '백지원',
-            rank: 4,
-            own_count: 4,
-            try_count: 8,
-            dead: false,
-          },
-          {
-            username: '박성현',
-            rank: 5,
-            own_count: 3,
-            try_count: 7,
-            dead: true,
-          },
-          {
-            username: '조완기',
-            rank: 6,
-            own_count: 2,
-            try_count: 6,
-            dead: false,
-          },
-          {
-            username: '박창현',
-            rank: 7,
-            own_count: 1,
-            try_count: 5,
-            dead: true,
-          },
-          {
-            username: '이유민',
-            rank: 8,
-            own_count: 0,
-            try_count: 4,
-            dead: true,
-          },
-          {
-            username: '플레이어9',
-            rank: 9,
-            own_count: 0,
-            try_count: 3,
-            dead: true,
-          },
-          {
-            username: '플레이어10',
-            rank: 10,
-            own_count: 0,
-            try_count: 2,
-            dead: true,
-          },
-          {
-            username: '플레이어11',
-            rank: 11,
-            own_count: 0,
-            try_count: 1,
-            dead: true,
-          },
-          {
-            username: '플레이어12',
-            rank: 12,
-            own_count: 0,
-            try_count: 0,
-            dead: true,
-          },
-        ];
-
-        setGameResults(testResults);
-        setIsWaitingForResults(false);
-        setIsGameEnded(true);
-      }, 2000);
     }
   }, [isGameStarted, gameTime, stopGameMusic, user?.nickname]);
-
-  // 캔버스 데이터 가져오기
-  useEffect(() => {
-    fetchCanvasDataUtil({
-      id: initialCanvasId,
-      setIsLoading,
-      setHasError,
-      setCanvasId,
-      setCanvasSize,
-      sourceCanvasRef,
-      onLoadingChange,
-      setShowCanvas,
-      INITIAL_BACKGROUND_COLOR,
-      setCanvasType,
-      setEndedAt: () => {},
-    });
-
-    // 사용자 색상 가져오기 (실제로는 API에서 가져올 예정)
-    const randomColor = '#' + Math.floor(Math.random() * 16777215).toString(16);
-    setUserColor(randomColor);
-  }, [
-    initialCanvasId,
-    setCanvasId,
-    setIsLoading,
-    onLoadingChange,
-    setShowCanvas,
-    setCanvasType,
-  ]);
 
   useEffect(() => {
     if (initialCanvasId && initialCanvasId !== canvas_id) {
@@ -1039,10 +915,11 @@ function GameCanvas({
       }}
     >
       <GameReadyModal
+        canvasId={initialCanvasId}
         isOpen={isReadyModalOpen}
         onClose={() => setIsReadyModalOpen(false)}
-        color={assignedColor}
-        remainingTime={readyTime}
+        // color={assignedColor}
+        // remainingTime={readyTime}
       />
       {isGameStarted && (
         <>
@@ -1234,7 +1111,11 @@ function GameCanvas({
                     const centerY = Math.floor(canvasSize.height / 2);
 
                     // 5x5 픽셀 패턴 생성
-                    const pixels: Array<{ x: number; y: number; color: string }> = [];
+                    const pixels: Array<{
+                      x: number;
+                      y: number;
+                      color: string;
+                    }> = [];
                     for (let i = -2; i <= 2; i++) {
                       for (let j = -2; j <= 2; j++) {
                         pixels.push({

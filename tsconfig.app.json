@@ -23,5 +23,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src", "test/useSocket.test.ts"]
+  "include": ["src", "test/useSocket.test.ts", "test/GameAPI.test.ts"]
 }

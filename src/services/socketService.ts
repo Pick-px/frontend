@@ -321,6 +321,7 @@ class SocketService {
       canvas_id: number;
       title: string;
       started_at: string;
+      remaining_time: number;
     }) => void
   ) {
     if (this.socket) {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useToastStore } from '../../store/toastStore';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const NotificationToast: React.FC = () => {
   const { isOpen, message, canvasId, startedAt, hideToast } = useToastStore();
@@ -27,7 +27,9 @@ const NotificationToast: React.FC = () => {
 
   const handleGoToCanvas = () => {
     if (canvasId) {
-      navigate(`/canvas/pixels?canvas_id=${canvasId}`, { state: { isGame: true } });
+      navigate(`/canvas/pixels?canvas_id=${canvasId}`, {
+        state: { isGame: true },
+      });
       hideToast();
     }
   };

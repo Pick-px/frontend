@@ -67,11 +67,6 @@ function App() {
   // useToastStore 훅 사용
   const showToast = useToastStore((state) => state.showToast);
 
-  // 개발용 토스트 트리거 함수
-  const handleTestToast = () => {
-    showToast('게임 시작 30초 전: 테스트 캔버스', '3', 10000); // 10초 후 사라짐
-  };
-
   useEffect(() => {
     //=======canvas_id 파싱
     const { search } = window.location;
@@ -110,6 +105,14 @@ function App() {
       checkLoginStatus();
     }
   }, [setAuth, clearAuth]);
+
+  if (isLoading) {
+    return (
+      <main className="flex h-screen w-screen items-center justify-center bg-[#2d3748]">
+        <div className="h-16 w-16 animate-spin rounded-full border-b-4 border-t-4 border-cyan-400"></div>
+      </main>
+    );
+  }
 
   return (
     <main className='touch-action-none flex h-screen w-screen items-center justify-center bg-[#2d3748]'>

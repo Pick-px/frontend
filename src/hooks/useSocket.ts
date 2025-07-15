@@ -3,6 +3,7 @@ import socketService from '../services/socketService';
 import { useAuthStore } from '../store/authStrore';
 import { toast } from 'react-toastify';
 import { useToastStore } from '../store/toastStore'; // 추가
+import { useTimeSyncStore } from '../store/timeSyncStore';
 
 interface PixelData {
   x: number;
@@ -32,6 +33,8 @@ export const useSocket = (
   cooldownCallbackRef.current = onCooldownReceived;
 
   useEffect(() => {
+    const { updateServerTimeOffset } = useTimeSyncStore.getState();
+
     if (!canvas_id) return;
 
     // 이미 연결된 경우 중복 연결 방지
@@ -56,8 +59,18 @@ export const useSocket = (
 
     // canvas_open_alarm 이벤트 리스너 추가
     socketService.onCanvasOpenAlarm(
-      (data: { canvas_id: number; title: string; started_at: string }) => {
+      (data: {
+        canvas_id: number;
+        title: string;
+        started_at: string;
+        remaining_time: number;
+      }) => {
         console.log('onCanvasOpenAlarm:', data);
+        updateServerTimeOffset(
+          data.started_at,
+          data.remaining_time,
+          Date.now()
+        );
         showToast(
           `게임 시작 30초 전: ${data.title}`,
           String(data.canvas_id),
