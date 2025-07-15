@@ -56,10 +56,23 @@ function App() {
     closeCanvasModal,
     isAlbumModalOpen,
     closeAlbumModal,
-    isHelpModalOpen,
+    isHelpModalOpen, // 스토어의 isHelpModalOpen을 직접 사용
     closeHelpModal,
     isCanvasEndedModalOpen, // isCanvasEndedModalOpen 상태 가져오기
+    openHelpModal, // openHelpModal 액션 가져오기
   } = useModalStore();
+
+  useEffect(() => {
+    const hasSeenHelpModal = localStorage.getItem('hasSeenHelpModal');
+    if (hasSeenHelpModal === null || hasSeenHelpModal === 'false') {
+      openHelpModal(); // 첫 접속 시 또는 명시적으로 false인 경우 모달 열기
+      localStorage.setItem('hasSeenHelpModal', 'true');
+    }
+  }, [openHelpModal]);
+
+  const handleCloseHelpModal = useCallback(() => {
+    closeHelpModal(); // 스토어의 상태만 업데이트
+  }, [closeHelpModal]);
 
   const { isLoggedIn, setAuth, clearAuth } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
@@ -145,7 +158,7 @@ function App() {
       <Modal isOpen={isAlbumModalOpen} onClose={closeAlbumModal}>
         <AlbumModalContent onClose={closeAlbumModal} />
       </Modal>
-      <Modal isOpen={isHelpModalOpen} onClose={closeHelpModal}>
+      <Modal isOpen={isHelpModalOpen} onClose={handleCloseHelpModal}>
         <HelpModalContent />
       </Modal>
       {isCanvasEndedModalOpen && <CanvasEndedModal />}
