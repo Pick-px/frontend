@@ -321,11 +321,27 @@ class SocketService {
       canvas_id: number;
       title: string;
       started_at: string;
+      server_time: string;
       remain_time: number;
     }) => void
   ) {
     if (this.socket) {
       this.socket.on('canvas_open_alarm', callback);
+    }
+  }
+
+  // 캔버스 닫힘 공지
+  onCanvasCloseAlarm(
+    callback: (data: {
+      canvas_id: number;
+      title: string;
+      started_at: string;
+      server_time: string;
+      remain_time: number;
+    }) => void
+  ) {
+    if (this.socket) {
+      this.socket.on('canvas_close_alarm', callback);
     }
   }
 }

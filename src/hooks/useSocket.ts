@@ -79,6 +79,27 @@ export const useSocket = (
       }
     );
 
+    socketService.onCanvasCloseAlarm(
+      (data: {
+        canvas_id: number;
+        title: string;
+        started_at: string;
+        remain_time: number;
+      }) => {
+        console.log('onCanvasCloseAlarm:', data);
+        updateServerTimeOffset(
+          data.started_at,
+          data.remain_time ?? 0, // Ensure remaining_time is a number
+          Date.now()
+        );
+        showToast(
+          `곧 게임이 종료됩니다!: ${data.title}`,
+          String(data.canvas_id),
+          2000
+        ); // 25초 후 자동 사라짐
+      }
+    );
+
     // 인증 에러 이벤트 리스너
     socketService.onAuthError((error) => {
       toast.error(`인증 오류: ${error.message}`);

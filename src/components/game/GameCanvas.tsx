@@ -54,6 +54,7 @@ function GameCanvas({
   );
   const [readyTime, setReadyTime] = useState<number | undefined>(undefined); // 대기 모달 카운트다운
   const [gameTime, setGameTime] = useState<number>(90); // 실제 게임 시간 (초)
+  const [totalGameDuration, setTotalGameDuration] = useState<number>(90); // 전체 게임 시간 (초)
   const [lives, setLives] = useState(2); // 사용자 생명 (2개)
 
   const navigate = useNavigate();
@@ -504,6 +505,18 @@ function GameCanvas({
     onDeadPixels,
     onDeadNotice,
     onGameResult,
+    onCanvasCloseAlarm: useCallback(
+      (data: {
+        canvas_id: number;
+        title: string;
+        ended_at: string;
+        server_time: string;
+        remain_time: number;
+      }) => {
+        setGameTime(data.remain_time);
+      },
+      []
+    ),
   });
 
   const updateOverlay = useCallback(
@@ -739,7 +752,7 @@ function GameCanvas({
 
   // 게임 데이터 및 캔버스 초기화
   const { getSynchronizedServerTime } = useTimeSyncStore();
-  
+
   useEffect(() => {
     // 게임 대기 모달창이 표시될 때 대기 음악 재생
     playAdventureMusic();
@@ -775,6 +788,12 @@ function GameCanvas({
             Math.floor((startTime - now) / 1000)
           );
           setReadyTime(timeUntilStart);
+
+          // 게임 총 시간 계산 및 설정
+          const endTime = new Date(gameData.endedAt).getTime();
+          const calculatedTotalGameDuration = Math.floor((endTime - startTime) / 1000);
+          setTotalGameDuration(calculatedTotalGameDuration);
+          setGameTime(calculatedTotalGameDuration);
 
           // 캔버스 표시
           setShowCanvas(true);
@@ -1038,7 +1057,7 @@ function GameCanvas({
               ))}
             </div>
           </div>
-          <GameTimer />
+          <GameTimer currentTime={gameTime} totalTime={totalGameDuration} />
           <style>{`
         @keyframes gradientBG {
           0% {
