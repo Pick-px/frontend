@@ -42,7 +42,8 @@ function App() {
 
   // state에서 isGame 정보를 가져오거나, 기존 isGameCanvasById로 판단
   const isGameFromState = state?.isGame || false;
-  const isGame = isGameFromState || isGameCanvasById(canvas_id); // state 정보 우선 사용
+  // const isGame = isGameFromState || isGameCanvasById(canvas_id); // state 정보 우선 사용
+  const isGame = isGameFromState;
 
   const {
     isLoginModalOpen,
@@ -108,8 +109,8 @@ function App() {
 
   if (isLoading) {
     return (
-      <main className="flex h-screen w-screen items-center justify-center bg-[#2d3748]">
-        <div className="h-16 w-16 animate-spin rounded-full border-b-4 border-t-4 border-cyan-400"></div>
+      <main className='flex h-screen w-screen items-center justify-center bg-[#2d3748]'>
+        <div className='h-16 w-16 animate-spin rounded-full border-t-4 border-b-4 border-cyan-400'></div>
       </main>
     );
   }

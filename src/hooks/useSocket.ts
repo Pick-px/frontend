@@ -63,18 +63,40 @@ export const useSocket = (
         canvas_id: number;
         title: string;
         started_at: string;
-        remaining_time: number;
+        remain_time: number;
       }) => {
         console.log('onCanvasOpenAlarm:', data);
         updateServerTimeOffset(
           data.started_at,
-          data.remaining_time,
+          data.remain_time ?? 0, // Ensure remaining_time is a number
           Date.now()
         );
         showToast(
           `게임 시작 30초 전: ${data.title}`,
           String(data.canvas_id),
           25000
+        ); // 25초 후 자동 사라짐
+      }
+    );
+
+    socketService.onCanvasCloseAlarm(
+      (data: {
+        canvas_id: number;
+        title: string;
+        ended_at: string;
+        server_time: string;
+        remain_time: number;
+      }) => {
+        console.log('onCanvasCloseAlarm:', data);
+        updateServerTimeOffset(
+          data.ended_at,
+          data.remain_time ?? 0, // Ensure remaining_time is a number
+          Date.now()
+        );
+        showToast(
+          `곧 게임이 종료됩니다!: ${data.title}`,
+          String(data.canvas_id),
+          2000
         ); // 25초 후 자동 사라짐
       }
     );

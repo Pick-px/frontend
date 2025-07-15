@@ -12,7 +12,7 @@ interface TimeSyncState {
    */
   updateServerTimeOffset: (
     eventTimestampString: string,
-    remainingTime: number,
+    remain_time: number,
     clientReceiveTimestamp: number
   ) => void;
 }
@@ -27,12 +27,12 @@ export const useTimeSyncStore = create<TimeSyncState>((set, get) => ({
 
   updateServerTimeOffset: (
     eventTimestampString,
-    remainingTime,
+    remain_time,
     clientReceiveTimestamp
   ) => {
     const eventTimeMs = new Date(eventTimestampString).getTime();
 
-    const serverTimeAtSend = eventTimeMs - remainingTime * 1000;
+    const serverTimeAtSend = eventTimeMs - remain_time * 1000;
     const newOffset = serverTimeAtSend - clientReceiveTimestamp;
 
     set({
@@ -41,7 +41,7 @@ export const useTimeSyncStore = create<TimeSyncState>((set, get) => ({
     });
 
     console.log(`TimeSync: Event Timestamp: ${eventTimestampString}`);
-    console.log(`TimeSync: Remaining Time (server): ${remainingTime}s`);
+    console.log(`TimeSync: Remaining Time (server): ${remain_time}s`);
     console.log(
       `TimeSync: Server Time at Send (calculated): ${new Date(serverTimeAtSend).toISOString()}`
     );

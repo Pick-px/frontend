@@ -19,6 +19,13 @@ interface GameSocketProps {
       dead: boolean;
     }>;
   }) => void;
+  onCanvasCloseAlarm: (data: {
+    canvas_id: number;
+    title: string;
+    ended_at: string;
+    server_time: string;
+    remain_time: number;
+  }) => void;
 }
 
 export const useGameSocketIntegration = ({
@@ -28,7 +35,8 @@ export const useGameSocketIntegration = ({
   onDeadPixels,
   onDeadNotice,
   onGameResult,
-}: GameSocketProps) => {
+  onCanvasCloseAlarm,
+}) => {
   const handlePixelReceived = useCallback(
     (pixel: { x: number; y: number; color: string }) => {
       const sourceCtx = sourceCanvasRef.current?.getContext('2d');
@@ -41,13 +49,14 @@ export const useGameSocketIntegration = ({
     [sourceCanvasRef, draw]
   );
 
-  const {sendGameResult } = useGameSocket(
+  const { sendGameResult } = useGameSocket(
     handlePixelReceived,
     canvas_id,
     onDeadPixels,
     onDeadNotice,
-    onGameResult
+    onGameResult,
+    onCanvasCloseAlarm
   );
 
-  return {sendGameResult };
+  return { sendGameResult };
 };

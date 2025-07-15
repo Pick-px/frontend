@@ -219,21 +219,21 @@ class SocketService {
       this.socket.on('dead_user', callback);
     }
   }
-  
+
   // 사망 알림 이벤트 수신 (본인 사망 시)
   onDeadNotice(callback: (data: { message: string }) => void) {
     if (this.socket) {
       this.socket.on('dead_notice', callback);
     }
   }
-  
+
   // 사망 알림 이벤트 리스너 제거
   offDeadNotice(callback: (data: { message: string }) => void) {
     if (this.socket) {
       this.socket.off('dead_notice', callback);
     }
   }
-  
+
   // 게임 결과 이벤트 수신
   onGameResult(
     callback: (data: {
@@ -250,7 +250,7 @@ class SocketService {
       this.socket.on('game_result', callback);
     }
   }
-  
+
   // 게임 결과 이벤트 리스너 제거
   offGameResult(
     callback: (data: {
@@ -321,11 +321,42 @@ class SocketService {
       canvas_id: number;
       title: string;
       started_at: string;
-      remaining_time: number;
+      server_time: string;
+      remain_time: number;
     }) => void
   ) {
     if (this.socket) {
       this.socket.on('canvas_open_alarm', callback);
+    }
+  }
+
+  // 캔버스 닫힘 공지
+  onCanvasCloseAlarm(
+    callback: (data: {
+      canvas_id: number;
+      title: string;
+      ended_at: string;
+      server_time: string;
+      remain_time: number;
+    }) => void
+  ) {
+    if (this.socket) {
+      this.socket.on('canvas_close_alarm', callback);
+    }
+  }
+
+  // 캔버스 닫힘 공지 리스너 제거
+  offCanvasCloseAlarm(
+    callback: (data: {
+      canvas_id: number;
+      title: string;
+      ended_at: string;
+      server_time: string;
+      remain_time: number;
+    }) => void
+  ) {
+    if (this.socket) {
+      this.socket.off('canvas_close_alarm', callback);
     }
   }
 }

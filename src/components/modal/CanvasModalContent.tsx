@@ -299,10 +299,6 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
 
     const selectedCanvas = canvases.find((c) => c.canvasId === canvasId);
 
-    // ==================================================================
-    // 변경점 1: 'event_' 타입 캔버스에만 시작 시간 체크 로직 적용
-    // 이제 'game_' 타입 캔버스는 시작 전에도 이 로직을 통과합니다.
-    // ==================================================================
     if (selectedCanvas && selectedCanvas.type.startsWith('event_')) {
       const now = getSynchronizedServerTime();
       if (selectedCanvas.started_at) {
@@ -346,6 +342,16 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
           return;
         }
       }
+    }
+
+    if (selectedCanvas && selectedCanvas.type.startsWith('game_')) {
+      if (onClose) {
+        onClose();
+      }
+      navigate(`/canvas/pixels?canvas_id=${canvasId}`, {
+        state: { isGame: true },
+      });
+      return;
     }
 
     if (onClose) {

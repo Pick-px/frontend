@@ -26,6 +26,13 @@ export const useGameSocket = (
       try_count: number;
       dead: boolean;
     }>;
+  }) => void,
+  onCanvasCloseAlarm?: (data: {
+    canvas_id: number;
+    title: string;
+    ended_at: string;
+    server_time: string;
+    remain_time: number;
   }) => void
 ) => {
   // 디버깅: useGameSocket 후크에서 canvas_id 값 확인
@@ -34,12 +41,14 @@ export const useGameSocket = (
   const deadPixelsCallbackRef = useRef(onDeadPixels);
   const deadNoticeCallbackRef = useRef(onDeadNotice);
   const gameResultCallbackRef = useRef(onGameResult);
+  const canvasCloseAlarmCallbackRef = useRef(onCanvasCloseAlarm);
 
   // 콜백 함수 업데이트
   pixelCallbackRef.current = onPixelReceived;
   deadPixelsCallbackRef.current = onDeadPixels;
   deadNoticeCallbackRef.current = onDeadNotice;
   gameResultCallbackRef.current = onGameResult;
+  canvasCloseAlarmCallbackRef.current = onCanvasCloseAlarm;
 
   useEffect(() => {
     // 스토어에서 최신 canvas_id 가져오기
@@ -76,6 +85,13 @@ export const useGameSocket = (
       });
     }
 
+    // 캔버스 종료 알림 이벤트 리스너
+    if (canvasCloseAlarmCallbackRef.current) {
+      socketService.onCanvasCloseAlarm((data) => {
+        canvasCloseAlarmCallbackRef.current?.(data);
+      });
+    }
+
     // 인증 에러 이벤트 리스너
     socketService.onAuthError((error) => {
       toast.error(`인증 오류: ${error.message}`);
@@ -105,13 +121,16 @@ export const useGameSocket = (
       if (gameResultCallbackRef.current) {
         socketService.offGameResult(gameResultCallbackRef.current);
       }
+      if (canvasCloseAlarmCallbackRef.current) {
+        socketService.offCanvasCloseAlarm(canvasCloseAlarmCallbackRef.current);
+      }
       socketService.offAuthError(() => {});
       socketService.offPixelError(() => {});
 
       // 소켓 연결 해제
       socketService.disconnect();
     };
-  }, [canvas_id, accessToken, user, useCanvasStore.getState().canvas_id]);
+  }, [canvas_id, accessToken, user, useCanvasStore.getState().canvas_id, onCanvasCloseAlarm]);
 
   const sendGameResult = (data: {
     x: number;

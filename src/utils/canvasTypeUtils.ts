@@ -10,7 +10,7 @@ export const isGameCanvas = (
   return canvasType === CanvasType.GAME_CALCULATION;
 };
 
-// canvas_id로 게임 캔버스 여부를 확인하는 함수 (백엔드에서 type 정보를 받아오기 전에 임시로 사용)
+// // canvas_id로 게임 캔버스 여부를 확인하는 함수 (백엔드에서 type 정보를 받아오기 전에 임시로 사용)
 export const isGameCanvasById = (canvasId: string | undefined): boolean => {
   if (!canvasId) return false;
 
