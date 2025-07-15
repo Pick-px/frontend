@@ -1,82 +1,66 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GameAPI, type WaitingRoomData } from '../../api/GameAPI';
+import type { WaitingRoomData } from '../../api/GameAPI';
+import { useTimeSyncStore } from '../../store/timeSyncStore';
 import { useToastStore } from '../../store/toastStore';
-import { useTimeSyncStore } from '../../store/timeSyncStore'; // 추가
+
 
 interface GameReadyModalProps {
   isOpen: boolean;
   onClose: (data?: WaitingRoomData) => void;
   canvasId: string;
+  color?: string;
+  remainingTime?: number;
 }
 
-const GameReadyModal = ({ isOpen, onClose, canvasId }: GameReadyModalProps) => {
+const GameReadyModal = ({ isOpen, onClose, canvasId, color, remainingTime }: GameReadyModalProps) => {
   const navigate = useNavigate();
   const { showToast } = useToastStore();
-  const { getSynchronizedServerTime } = useTimeSyncStore(); // 추가
-  const [waitingRoomData, setWaitingRoomData] =
-    useState<WaitingRoomData | null>(null);
+  const { getSynchronizedServerTime } = useTimeSyncStore();
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [timeUntilStart, setTimeUntilStart] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!isOpen || !canvasId) {
+    if (!isOpen) {
       return;
     }
-
-    const fetchWaitingRoomInfo = async () => {
-      console.log('게임정보 fetch 시작');
-      setLoading(true);
-      setError(null);
-      try {
-        const data = await GameAPI.getWaitingRoomInfo(canvasId);
-        console.log(data);
-
-        setWaitingRoomData(data);
-
-        // timeSyncStore에서 동기화된 시간을 사용
-        const startTime = new Date(data.startedAt).getTime();
-        const now = getSynchronizedServerTime();
-        const initialTimeLeft = Math.max(0, Math.ceil((startTime - now) / 1000));
-
-        setTimeUntilStart(initialTimeLeft);
-
-        if (initialTimeLeft <= 0) {
-          // 이미 시작되었거나 시간이 다 된 경우
-          setTimeout(() => onClose(data), 1000); // 1초 후 모달 닫기
-        }
-      } catch (err) {
-        setError('게임 정보를 불러오는 데 실패했습니다.');
-        console.error(err);
-      } finally {
-        setLoading(false);
+    
+    // 부모 컴포넌트에서 전달받은 remainingTime 사용
+    if (remainingTime !== undefined) {
+      setTimeUntilStart(remainingTime);
+      setLoading(false);
+      
+      // 시간이 0이하인 경우 모달 닫기
+      if (remainingTime <= 0) {
+        setTimeout(() => onClose(), 1000); // 1초 후 모달 닫기
       }
-    };
-
-    fetchWaitingRoomInfo();
-  }, [isOpen, canvasId, getSynchronizedServerTime, onClose]);
+    } else {
+      setLoading(false);
+    }
+  }, [isOpen, onClose, remainingTime]);
 
   useEffect(() => {
-    if (timeUntilStart === null || !waitingRoomData) {
+    if (timeUntilStart === null || timeUntilStart <= 0) {
       return;
     }
 
     const timer = setInterval(() => {
-      const startTime = new Date(waitingRoomData.startedAt).getTime();
-      const now = getSynchronizedServerTime();
-      const newTimeLeft = Math.max(0, Math.ceil((startTime - now) / 1000));
-
-      setTimeUntilStart(newTimeLeft);
-
-      if (newTimeLeft <= 0) {
-        clearInterval(timer);
-        onClose(waitingRoomData);
+      // useTimeSyncStore를 사용하여 더 정확한 시간 계산
+      if (remainingTime === undefined) {
+        setTimeUntilStart(prev => {
+          const newValue = prev !== null ? prev - 1 : 0;
+          if (newValue <= 0) {
+            clearInterval(timer);
+            onClose();
+          }
+          return newValue;
+        });
       }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [timeUntilStart, waitingRoomData, getSynchronizedServerTime, onClose]);
+  }, [timeUntilStart, onClose, remainingTime]);
 
   const handleExit = () => {
     onClose();
@@ -130,7 +114,7 @@ const GameReadyModal = ({ isOpen, onClose, canvasId }: GameReadyModalProps) => {
             </div>
           )}
 
-          {!loading && !error && waitingRoomData && (
+          {!loading && !error && (
             <>
               <div className='flex justify-start'>
                 <div className='max-w-[80%] rounded-lg bg-black/20 p-3'>
@@ -143,22 +127,7 @@ const GameReadyModal = ({ isOpen, onClose, canvasId }: GameReadyModalProps) => {
               <div className='flex justify-start'>
                 <div className='max-w-[80%] rounded-lg bg-black/20 p-3'>
                   <p className='text-sm text-gray-300'>
-                    캔버스 제목: {waitingRoomData.title}
-                  </p>
-                  <p className='text-sm text-gray-300'>
-                    캔버스 크기: {waitingRoomData.canvasSize.width}x
-                    {waitingRoomData.canvasSize.height}
-                  </p>
-                  <p className='text-sm text-gray-300'>
-                    시작 시간:{' '}
-                    {new Date(waitingRoomData.startedAt).toLocaleString()}
-                  </p>
-                  <p className='text-sm text-gray-300'>
-                    종료 시간:{' '}
-                    {new Date(waitingRoomData.endedAt).toLocaleString()}
-                  </p>
-                  <p className='text-sm text-gray-300'>
-                    할당된 색상: {waitingRoomData.color}
+                    할당된 색상: {color || '로딩 중...'}
                   </p>
                 </div>
               </div>
@@ -172,8 +141,8 @@ const GameReadyModal = ({ isOpen, onClose, canvasId }: GameReadyModalProps) => {
                   <div
                     className='my-4 h-16 w-16 rounded-full border-2 border-white/50'
                     style={{
-                      backgroundColor: waitingRoomData.color,
-                      boxShadow: `0 0 20px ${waitingRoomData.color}, 0 0 8px white`,
+                      backgroundColor: color || '#CCCCCC',
+                      boxShadow: `0 0 20px ${color || '#CCCCCC'}, 0 0 8px white`,
                     }}
                   ></div>
                   <div className='relative mt-4'>
@@ -190,9 +159,9 @@ const GameReadyModal = ({ isOpen, onClose, canvasId }: GameReadyModalProps) => {
                     ></div>
                     <div className='absolute inset-3 flex animate-pulse items-center justify-center rounded-full border border-green-400/60 bg-gradient-to-br from-green-900/80 to-black/70 shadow-2xl backdrop-blur-xl'>
                       <span className='animate-pulse font-mono text-3xl font-bold tracking-wider text-green-300'>
-                        {timeUntilStart !== null && timeUntilStart > 0
-                          ? `${timeUntilStart}`
-                          : '시작!'}
+                        {remainingTime !== undefined && remainingTime > 0 ? `${remainingTime}` : 
+                         timeUntilStart !== null && timeUntilStart > 0 ? `${timeUntilStart}` : 
+                         '시작!'}
                       </span>
                     </div>
                     <div className='absolute inset-0 animate-ping rounded-full bg-green-500/15'></div>

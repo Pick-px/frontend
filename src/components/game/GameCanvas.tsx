@@ -6,7 +6,9 @@ import Preloader from '../Preloader';
 import { useCanvasStore } from '../../store/canvasStore';
 import { useAuthStore } from '../../store/authStrore';
 import { toast } from 'react-toastify';
-import { fetchCanvasData as fetchCanvasDataUtil } from '../../api/canvasFetch';
+import { GameAPI } from '../../api/GameAPI';
+import type { WaitingRoomData } from '../../api/GameAPI';
+import { useTimeSyncStore } from '../../store/timeSyncStore';
 import NotFoundPage from '../../pages/NotFoundPage';
 import { useCanvasInteraction } from '../../hooks/useCanvasInteraction';
 import useSound from 'use-sound';
@@ -35,40 +37,6 @@ interface GameQuestion {
   answer: number;
 }
 
-// 게임 문제 목록 (실제로는 별도 파일이나 API에서 가져올 예정)
-const GAME_QUESTIONS: GameQuestion[] = [
-  {
-    id: '1',
-    question: '지원이가 좋아하는 음식은?',
-    options: ['불닭', '엽떡', '마라탕', '삼겹살'],
-    answer: 3,
-  },
-  {
-    id: '2',
-    question: '성현이가 좋아하는 음식은?',
-    options: ['후레쉬', '맛참', '진로', '이세상 모든 소주'],
-    answer: 4,
-  },
-  {
-    id: '3',
-    question: '유민이가 좋아하는 음식은?',
-    options: ['등산후막걸리', '치킨', '소주', '만두'],
-    answer: 4,
-  },
-  {
-    id: '4',
-    question: '완기가 좋아하는 음식은?',
-    options: ['해장라면', '피자', '엔초', '소주'],
-    answer: 1,
-  },
-  {
-    id: '5',
-    question: '창현이가 좋아하는 음식은?',
-    options: ['마라탕', '마라샹궈', '마라떡볶이', '하지마라'],
-    answer: 2,
-  },
-];
-
 type GameCanvasProps = {
   canvas_id: string;
   onLoadingChange?: (loading: boolean) => void;
@@ -78,6 +46,7 @@ function GameCanvas({
   canvas_id: initialCanvasId,
   onLoadingChange,
 }: GameCanvasProps) {
+  const [waitingData, setWaitingData] = useState<WaitingRoomData | null>(null); // API에서 가져온 게임 데이터
   const [isGameStarted, setIsGameStarted] = useState(false); // 게임 시작 상태
   const [isReadyModalOpen, setIsReadyModalOpen] = useState(true); // 모달 표시 상태
   const [assignedColor, setAssignedColor] = useState<string | undefined>(
@@ -120,6 +89,7 @@ function GameCanvas({
     volume: 0.25,
     loop: true,
   });
+  const [playClick] = useSound('/click.mp3', { volume: 0.7 });
 
   const rootRef = useRef<HTMLDivElement>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -639,14 +609,42 @@ function GameCanvas({
     } else {
       // 검은색이 아니면 문제 모달 표시
       setCurrentPixel({ x: pos.x, y: pos.y, color: userColor });
-      const randomQuestion =
-        GAME_QUESTIONS[Math.floor(Math.random() * GAME_QUESTIONS.length)];
-      setCurrentQuestion(randomQuestion);
+
+      // API에서 가져온 문제 사용
+      if (
+        waitingData &&
+        waitingData.questions &&
+        waitingData.questions.length > 0
+      ) {
+        // 랜덤하게 문제 선택
+        const randomIndex = Math.floor(
+          Math.random() * waitingData.questions.length
+        );
+        const question = waitingData.questions[randomIndex];
+        setCurrentQuestion(question);
+      } else {
+        // 문제가 없는 경우 기본 문제 사용
+        const defaultQuestion = {
+          id: '1',
+          question: '기본 문제',
+          options: ['옵션 1', '옵션 2', '옵션 3', '옵션 4'],
+          answer: 0,
+        };
+        setCurrentQuestion(defaultQuestion);
+      }
+
       setSelectedAnswer(null);
       setQuestionTimeLeft(10); // 문제 타이머 10초로 초기화
       setShowQuestionModal(true);
     }
-  }, [userColor, draw, sendGameResult, startCooldown, setQuestionTimeLeft]);
+  }, [
+    userColor,
+    draw,
+    sendGameResult,
+    startCooldown,
+    setQuestionTimeLeft,
+    waitingData,
+  ]);
 
   // 문제 답변 제출
   const submitAnswer = useCallback(() => {
@@ -739,22 +737,99 @@ function GameCanvas({
     };
   }, [showQuestionModal, questionTimeLeft, submitAnswer]);
 
-  // 색상 배정 받아오는 로직 여기서 처리
+  // 게임 데이터 및 캔버스 초기화
+  const { getSynchronizedServerTime } = useTimeSyncStore();
+  
   useEffect(() => {
     // 게임 대기 모달창이 표시될 때 대기 음악 재생
     playAdventureMusic();
 
-    setTimeout(() => {
-      setAssignedColor('#00FF00'); // Example color
-      setReadyTime(5);
-    }, 2000);
+    // 게임 데이터 가져오기
+    const fetchGameData = async () => {
+      try {
+        setIsLoading(true);
+        const gameData = await GameAPI.fetchGameCanvasData(initialCanvasId);
+
+        if (gameData) {
+          // 게임 데이터 저장
+          setWaitingData(gameData);
+
+          // 색상 설정
+          setAssignedColor(gameData.color);
+          setUserColor(gameData.color);
+
+          // 캔버스 크기 설정
+          setCanvasSize(gameData.canvasSize);
+
+          // 소스 캔버스 초기화 (모든 픽셀을 검은색으로 설정)
+          initializeSourceCanvas(
+            gameData.canvasSize.width,
+            gameData.canvasSize.height
+          );
+
+          // 시작 시간에서 현재 시간을 빼서 대기 시간 계산 (useTimeSyncStore 사용)
+          const startTime = new Date(gameData.startedAt).getTime();
+          const now = getSynchronizedServerTime();
+          const timeUntilStart = Math.max(
+            0,
+            Math.floor((startTime - now) / 1000)
+          );
+          setReadyTime(timeUntilStart);
+
+          // 캔버스 표시
+          setShowCanvas(true);
+        }
+      } catch (error) {
+        console.error('게임 데이터 가져오기 실패:', error);
+        toast.error('게임 데이터를 불러오는데 실패했습니다.');
+        setHasError(true);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchGameData();
 
     // 컴포넌트 언마운트 시 음악 중지
     return () => {
       stopAdventureMusic();
       stopGameMusic();
     };
-  }, [playAdventureMusic, stopAdventureMusic, stopGameMusic]);
+  }, [
+    initialCanvasId,
+    playAdventureMusic,
+    stopAdventureMusic,
+    stopGameMusic,
+    setIsLoading,
+    setShowCanvas,
+    getSynchronizedServerTime,
+  ]);
+
+  // 소스 캔버스 초기화 함수 (모든 픽셀을 검은색으로 설정)
+  const initializeSourceCanvas = useCallback(
+    (width: number, height: number) => {
+      if (!sourceCanvasRef.current) {
+        sourceCanvasRef.current = document.createElement('canvas');
+      }
+
+      const canvas = sourceCanvasRef.current;
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        // 검은색 배경으로 초기화
+        ctx.fillStyle = INITIAL_BACKGROUND_COLOR;
+        ctx.fillRect(0, 0, width, height);
+      }
+
+      // 캔버스 크기 설정 후 중앙 정렬
+      setTimeout(() => {
+        resetAndCenter();
+      }, 100);
+    },
+    [resetAndCenter]
+  );
 
   // 시작시간 받아오기 여기서 처리
   useEffect(() => {
@@ -918,8 +993,8 @@ function GameCanvas({
         canvasId={initialCanvasId}
         isOpen={isReadyModalOpen}
         onClose={() => setIsReadyModalOpen(false)}
-        // color={assignedColor}
-        // remainingTime={readyTime}
+        color={assignedColor}
+        remainingTime={readyTime}
       />
       {isGameStarted && (
         <>
@@ -1048,7 +1123,10 @@ function GameCanvas({
             <canvas
               ref={interactionCanvasRef}
               className='absolute top-0 left-0'
-              onMouseDown={handleMouseDown}
+              onMouseDown={(e) => {
+                playClick();
+                handleMouseDown(e);
+              }}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseLeave}
@@ -1101,52 +1179,6 @@ function GameCanvas({
                   '확정'
                 )}
               </button>
-
-              {/* 테스트 버튼 */}
-              <div className='flex flex-col gap-2'>
-                <button
-                  onClick={() => {
-                    // 다른 유저 사망 테스트 (dead_user 이벤트)
-                    const centerX = Math.floor(canvasSize.width / 2);
-                    const centerY = Math.floor(canvasSize.height / 2);
-
-                    // 5x5 픽셀 패턴 생성
-                    const pixels: Array<{
-                      x: number;
-                      y: number;
-                      color: string;
-                    }> = [];
-                    for (let i = -2; i <= 2; i++) {
-                      for (let j = -2; j <= 2; j++) {
-                        pixels.push({
-                          x: centerX + i,
-                          y: centerY + j,
-                          color: '#000000',
-                        });
-                      }
-                    }
-
-                    // onDeadPixels 호출
-                    onDeadPixels({
-                      pixels: pixels,
-                      username: '이유민',
-                    });
-                  }}
-                  className='rounded-lg bg-gray-700 px-3 py-2 text-xs font-medium text-white shadow-lg hover:bg-gray-600 active:scale-95'
-                >
-                  다른 유저 사망 테스트
-                </button>
-
-                <button
-                  onClick={() => {
-                    // 본인 사망 테스트 (dead_notice 이벤트)
-                    onDeadNotice({ message: '사망하셨습니다.' });
-                  }}
-                  className='rounded-lg bg-red-700 px-3 py-2 text-xs font-medium text-white shadow-lg hover:bg-red-600 active:scale-95'
-                >
-                  본인 사망 테스트
-                </button>
-              </div>
             </div>
           )}
 
