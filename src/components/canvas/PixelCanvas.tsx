@@ -72,6 +72,7 @@ function PixelCanvas({
   const [playCountDown, { stop: stopCountDown }] = useSound('/count_down.mp3', {
     volume: 0.3,
   });
+  const [playClick] = useSound('/click.mp3', { volume: 0.7 });
 
   const filteredColors =
     canvasType === CanvasType.EVENT_COLORLIMIT
@@ -1120,7 +1121,10 @@ function PixelCanvas({
         <canvas
           ref={interactionCanvasRef}
           className='absolute top-0 left-0'
-          onMouseDown={handleMouseDown}
+          onMouseDown={(e) => {
+            playClick();
+            handleMouseDown(e);
+          }}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseLeave}

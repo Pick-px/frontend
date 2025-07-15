@@ -14,6 +14,6 @@ export const isGameCanvas = (
 export const isGameCanvasById = (canvasId: string | undefined): boolean => {
   if (!canvasId) return false;
 
-  // 현재는 ID 3을 게임 캔버스로 설정
-  return canvasId === '6';
+  // 현재는 ID 2를 게임 캔버스로 설정
+  return canvasId === '11';
 };
