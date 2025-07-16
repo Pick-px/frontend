@@ -740,15 +740,29 @@ function GameCanvas({
         });
       }, 1000);
     } else if (questionTimeLeft === 0 && showQuestionModal) {
-      // 시간 초과 시 자동 제출
-      submitAnswer();
-      setShowQuestionModal(false);
+      // 시간 초과 시 자동으로 오답 처리
+      if (currentPixel) {
+        // 시간 초과시 자동으로 false 결과 전송
+        startCooldown(1);
+        setLives((prev) => Math.max(0, prev - 1));
+        
+        sendGameResult({
+          x: currentPixel.x,
+          y: currentPixel.y,
+          color: currentPixel.color,
+          result: false,
+        });
+        
+        setShowQuestionModal(false);
+        setShowResult(false);
+        setCurrentPixel(null);
+      }
     }
 
     return () => {
       clearInterval(timerId);
     };
-  }, [showQuestionModal, questionTimeLeft, submitAnswer]);
+  }, [showQuestionModal, questionTimeLeft, currentPixel, startCooldown, setLives, sendGameResult]);
 
   // 게임 데이터 및 캔버스 초기화
   const { getSynchronizedServerTime } = useTimeSyncStore();

@@ -32,8 +32,18 @@ const QuestionModal: React.FC<QuestionModalProps> = ({
 }) => {
   if (!isOpen || !currentQuestion) return null;
 
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Enter') {
+      event.preventDefault(); // 엔터 키 기본 동작 방지
+      event.stopPropagation(); // 이벤트 전파 중단
+    }
+  };
+
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/70'>
+    <div
+      className='fixed inset-0 z-50 flex items-center justify-center bg-black/70'
+      onKeyDown={handleKeyDown} // 엔터 키 이벤트 핸들러 추가
+    >
       <div className='w-full max-w-md rounded-xl bg-gray-900 p-6 shadow-2xl'>
         <div className='mb-4 flex items-center justify-between'>
           <h3 className='text-xl font-bold text-white'>문제</h3>
