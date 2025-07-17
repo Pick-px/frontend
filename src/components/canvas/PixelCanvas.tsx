@@ -731,7 +731,7 @@ function PixelCanvas({
   );
 
   const handleCooltime = useCallback(() => {
-    startCooldown(10);
+    startCooldown(3);
   }, [startCooldown]);
 
   const handleConfirm = useCallback(() => {
