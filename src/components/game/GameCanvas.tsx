@@ -15,9 +15,9 @@ import useSound from 'use-sound';
 import { useGameSocketIntegration } from '../gameSocketIntegration';
 import { useNavigate } from 'react-router-dom';
 import GameTimer from './GameTimer'; // GameTimer import 추가
-import GameResultModal from '../modal/GameResultModal'; // 게임 결과 모달 import
+import GameResultModal from './GameResultModal'; // 게임 결과 모달 import
 import DeathModal from '../modal/DeathModal'; // 사망 모달 import
-import QuestionModal from '../modal/QuestionModal'; // 문제 모달 import
+import QuestionModal from './QuestionModal'; // 문제 모달 import
 import ExitModal from '../modal/ExitModal'; // 나가기 모달 import
 
 import {
@@ -28,6 +28,7 @@ import {
   VIEWPORT_BACKGROUND_COLOR,
 } from '../canvas/canvasConstants';
 import GameReadyModal from './GameReadyModal';
+import { useViewport } from '../../hooks/useViewport';
 
 // 게임 문제 타입 정의
 interface GameQuestion {
@@ -109,6 +110,9 @@ function GameCanvas({
     color: string;
   } | null>(null);
   const flashingPixelRef = useRef<{ x: number; y: number } | null>(null);
+
+  const { width } = useViewport();
+  const isMobile = width <= 768;
 
   // 상태 관리
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
@@ -745,14 +749,14 @@ function GameCanvas({
         // 시간 초과시 자동으로 false 결과 전송
         startCooldown(1);
         setLives((prev) => Math.max(0, prev - 1));
-        
+
         sendGameResult({
           x: currentPixel.x,
           y: currentPixel.y,
           color: currentPixel.color,
           result: false,
         });
-        
+
         setShowQuestionModal(false);
         setShowResult(false);
         setCurrentPixel(null);
@@ -762,7 +766,14 @@ function GameCanvas({
     return () => {
       clearInterval(timerId);
     };
-  }, [showQuestionModal, questionTimeLeft, currentPixel, startCooldown, setLives, sendGameResult]);
+  }, [
+    showQuestionModal,
+    questionTimeLeft,
+    currentPixel,
+    startCooldown,
+    setLives,
+    sendGameResult,
+  ]);
 
   // 게임 데이터 및 캔버스 초기화
   const { getSynchronizedServerTime } = useTimeSyncStore();
@@ -805,7 +816,9 @@ function GameCanvas({
 
           // 게임 총 시간 계산 및 설정
           const endTime = new Date(gameData.endedAt).getTime();
-          const calculatedTotalGameDuration = Math.floor((endTime - startTime) / 1000);
+          const calculatedTotalGameDuration = Math.floor(
+            (endTime - startTime) / 1000
+          );
           setTotalGameDuration(calculatedTotalGameDuration);
           setGameTime(calculatedTotalGameDuration);
 
@@ -1032,7 +1045,11 @@ function GameCanvas({
       {isGameStarted && (
         <>
           {/* 나가기 버튼 및 생명 표시 */}
-          <div className='absolute top-4 left-4 z-50 flex items-center gap-3'>
+          <div
+            className={`absolute z-50 flex items-center gap-3 ${
+              isMobile ? 'bottom-4 left-4 flex-col' : 'top-4 left-4'
+            }`}
+          >
             <button
               onClick={handleExit}
               className='rounded-lg bg-red-600 px-4 py-2 font-bold text-white shadow-lg transition-all hover:bg-red-700 active:scale-95'
