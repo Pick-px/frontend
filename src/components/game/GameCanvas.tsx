@@ -29,6 +29,7 @@ import {
 } from '../canvas/canvasConstants';
 import GameReadyModal from './GameReadyModal';
 import { useViewport } from '../../hooks/useViewport';
+import LifeIndicator from './LifeIndicator';
 
 // 게임 문제 타입 정의
 interface GameQuestion {
@@ -57,6 +58,7 @@ function GameCanvas({
   const [gameTime, setGameTime] = useState<number>(90); // 실제 게임 시간 (초)
   const [totalGameDuration, setTotalGameDuration] = useState<number>(90); // 전체 게임 시간 (초)
   const [lives, setLives] = useState(2); // 사용자 생명 (2개)
+  const [isLifeDecreasing, setIsLifeDecreasing] = useState(false); // 생명 차감 애니메이션 상태
 
   const navigate = useNavigate();
   const { canvas_id, setCanvasId } = useCanvasStore();
@@ -742,6 +744,28 @@ function GameCanvas({
         setLives((prev) => Math.max(0, prev - 1));
         startCooldown(1);
 
+        // 생명 차감 애니메이션 및 알림 표시
+        setIsLifeDecreasing(true);
+
+        // 생명 차감 알림 메시지 표시
+        const messageDiv = document.createElement('div');
+        messageDiv.className =
+          'fixed top-4 left-1/2 z-[9999] -translate-x-1/2 transform rounded-lg bg-red-500 px-4 py-2 text-white shadow-lg';
+        messageDiv.textContent = '오답입니다! 생명이 차감되었습니다.';
+        document.body.appendChild(messageDiv);
+
+        // 애니메이션 완료 후 상태 초기화
+        setTimeout(() => {
+          setIsLifeDecreasing(false);
+        }, 1000);
+
+        // 2초 후 메시지 제거
+        setTimeout(() => {
+          if (document.body.contains(messageDiv)) {
+            document.body.removeChild(messageDiv);
+          }
+        }, 2000);
+
         sendGameResult({
           x: currentPixel.x,
           y: currentPixel.y,
@@ -762,6 +786,7 @@ function GameCanvas({
     setQuestionTimeLeft,
     lives,
     setLives,
+    setIsLifeDecreasing,
   ]);
 
   // 문제 타이머 효과
@@ -783,21 +808,31 @@ function GameCanvas({
     } else if (questionTimeLeft === 0 && showQuestionModal) {
       // 시간 초과 시 자동으로 오답 처리
       if (currentPixel) {
+        // 시간 초과시 자동으로 false 결과 전송
+        startCooldown(1);
+        setLives((prev) => Math.max(0, prev - 1));
+
+        // 생명 차감 애니메이션 및 알림 표시
+        setIsLifeDecreasing(true);
+
+        // 생명 차감 알림 메시지 표시
         const messageDiv = document.createElement('div');
         messageDiv.className =
           'fixed top-4 left-1/2 z-[9999] -translate-x-1/2 transform rounded-lg bg-red-500 px-4 py-2 text-white shadow-lg';
         messageDiv.textContent = '⏰ 시간 초과! 자동으로 오답 처리되었습니다.';
         document.body.appendChild(messageDiv);
 
-        // 3초 후 메시지 제거
+        // 애니메이션 완료 후 상태 초기화
+        setTimeout(() => {
+          setIsLifeDecreasing(false);
+        }, 1000);
+
+        // 2초 후 메시지 제거
         setTimeout(() => {
           if (document.body.contains(messageDiv)) {
             document.body.removeChild(messageDiv);
           }
         }, 1000);
-        // 시간 초과시 자동으로 false 결과 전송
-        startCooldown(1);
-        setLives((prev) => Math.max(0, prev - 1));
 
         sendGameResult({
           x: currentPixel.x,
@@ -1105,37 +1140,11 @@ function GameCanvas({
             >
               나가기
             </button>
-            <div className='flex items-center gap-1 rounded-lg bg-gray-900/80 px-3 py-2 backdrop-blur-sm'>
-              {[...Array(2)].map((_, i) => (
-                <div key={i} className='h-6 w-6'>
-                  {i < lives ? (
-                    <svg
-                      xmlns='http://www.w3.org/2000/svg'
-                      viewBox='0 0 24 24'
-                      fill='#ef4444'
-                      className='h-6 w-6'
-                    >
-                      <path d='m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z' />
-                    </svg>
-                  ) : (
-                    <svg
-                      xmlns='http://www.w3.org/2000/svg'
-                      fill='none'
-                      viewBox='0 0 24 24'
-                      strokeWidth={1.5}
-                      stroke='#ef4444'
-                      className='h-6 w-6'
-                    >
-                      <path
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                        d='M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z'
-                      />
-                    </svg>
-                  )}
-                </div>
-              ))}
-            </div>
+            <LifeIndicator
+              lives={lives}
+              maxLives={2}
+              isLifeDecreasing={isLifeDecreasing}
+            />
           </div>
           <GameTimer currentTime={gameTime} totalTime={totalGameDuration} />
           <style>{`
