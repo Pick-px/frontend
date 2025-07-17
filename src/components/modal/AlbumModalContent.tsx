@@ -86,12 +86,9 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = () => {
       if (response.isSuccess) {
         const albumsData: AlbumItemData[] = response.data
           .filter((canvas: AlbumItemData) => {
-            // 필터링: top_try_user_name, top_try_user_count, top_own_user_name, top_own_user_count 중 하나라도 null이면 제외
             return (
               canvas.top_try_user_name !== null &&
-              canvas.top_try_user_count !== null &&
-              canvas.top_own_user_name !== null &&
-              canvas.top_own_user_count !== null
+              canvas.top_try_user_count !== null
             );
           })
           .map((canvas: AlbumItemData) => ({
@@ -294,13 +291,11 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = () => {
     );
   }
 
-  const currentAlbum = albums[currentIndex];
-
   return (
     <div className='flex max-h-[90vh] min-h-[60vh] flex-col'>
       {/* CSS 애니메이션 스타일 */}
       <style dangerouslySetInnerHTML={{ __html: awardStyles }} />
-      
+
       {/* 헤더 */}
       <div className='flex-shrink-0 border-b border-white/20 p-3 sm:p-4'>
         <div className='flex items-center justify-between'>
@@ -444,41 +439,60 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = () => {
                         {`${formatDate(album.created_at)} ~ ${formatDate(album.ended_at)}(${calculateDuration(album.created_at, album.ended_at)})`}
                       </span>
                     </div>
-                    <div className='flex items-center justify-between'>
-                      <span className='text-xs text-gray-400'>참여왕</span>
-                      <span className='text-xs font-semibold sm:text-sm'>
-                        <span className='inline-flex items-center gap-1 rounded-md bg-blue-500/10 px-2 py-1'>
-                          <span className='text-yellow-400'>🎨</span>
-                          <span className='bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent font-bold'>
-                            {album.top_try_user_name}
+                    {album.top_try_user_name && (
+                      <div className='flex items-center justify-between'>
+                        <span className='text-xs text-gray-400'>참여왕</span>
+                        <span className='text-xs font-semibold sm:text-sm'>
+                          <span className='inline-flex items-center gap-1 rounded-md bg-blue-500/10 px-2 py-1'>
+                            <span className='text-yellow-400'>🎨</span>
+                            <span className='bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text font-bold text-transparent'>
+                              {album.top_try_user_name}
+                            </span>
+                            <span className='text-white'>
+                              ({album.top_try_user_count}회)
+                            </span>
                           </span>
-                          <span className='text-white'>({album.top_try_user_count}회)</span>
                         </span>
-                      </span>
-                    </div>
-                    <div className='flex items-center justify-between'>
-                      <span className='text-xs text-gray-400'>점유왕</span>
-                      <span className='text-xs font-semibold sm:text-sm'>
-                        <span 
-                          className='inline-flex items-center gap-1 rounded-md bg-gradient-to-r from-amber-500/20 to-red-500/20 px-2 py-1 relative award-container'
-                        >
-                          <span className='text-yellow-400'>👑</span>
-                          <span 
-                            className='bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 bg-clip-text text-transparent font-bold award-name'
-                          >
-                            {album.top_own_user_name}
+                      </div>
+                    )}
+                    {album.top_own_user_name ? (
+                      <div className='flex items-center justify-between'>
+                        <span className='text-xs text-gray-400'>점유왕</span>
+                        <span className='text-xs font-semibold sm:text-sm'>
+                          <span className='award-container relative inline-flex items-center gap-1 rounded-md bg-gradient-to-r from-amber-500/20 to-red-500/20 px-2 py-1'>
+                            <span className='text-yellow-400'>👑</span>
+                            <span className='award-name bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 bg-clip-text font-bold text-transparent'>
+                              {album.top_own_user_name}
+                            </span>
+                            <span className='text-white'>
+                              ({album.top_own_user_count}회)
+                            </span>
+                            <span className='absolute -inset-[1px] -z-10 rounded-md bg-yellow-400/10 blur-[2px]'></span>
                           </span>
-                          <span className='text-white'>({album.top_own_user_count}회)</span>
-                          <span className='absolute -inset-[1px] rounded-md bg-yellow-400/10 blur-[2px] -z-10'></span>
                         </span>
-                      </span>
-                    </div>
+                      </div>
+                    ) : (
+                      <div className='flex items-center justify-between'>
+                        <span className='text-xs text-gray-400'>점유왕</span>
+                        <span className='text-xs font-semibold sm:text-sm'>
+                          <span className='award-container relative inline-flex items-center gap-1 rounded-md bg-gradient-to-r from-amber-500/20 to-red-500/20 px-2 py-1'>
+                            <span className='text-yellow-400'></span>
+                            <span className='award-name bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 bg-clip-text font-bold text-transparent'>
+                              승자 없음
+                            </span>
+
+                            <span className='absolute -inset-[1px] -z-10 rounded-md bg-yellow-400/10 blur-[2px]'></span>
+                          </span>
+                        </span>
+                      </div>
+                    )}
+
                     <div className='flex items-center justify-between'>
                       <span className='text-xs text-gray-400'>
-                        전체 픽셀 수 / 전체 참여자
+                        총 시도 픽셀 수 / 총 참여자
                       </span>
                       <span className='text-xs font-semibold text-white sm:text-sm'>
-                        {`${album.total_try_count} / ${album.participant_count}회`}
+                        {`${album.total_try_count}개 / ${album.participant_count}명`}
                       </span>
                     </div>
                   </div>
