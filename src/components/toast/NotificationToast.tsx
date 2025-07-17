@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useToastStore } from '../../store/toastStore';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const NotificationToast: React.FC = () => {
   const { isOpen, message, canvasId, startedAt, hideToast } = useToastStore();
   const navigate = useNavigate();
-  const [countdown, setCountdown] = useState(30); // 초기 카운트다운 값
+  const [countdown, setCountdown] = useState(30);
 
   useEffect(() => {
     if (isOpen && startedAt) {
@@ -21,7 +21,7 @@ const NotificationToast: React.FC = () => {
 
       return () => clearInterval(interval);
     } else {
-      setCountdown(30); // 토스트가 닫히거나 시작 시간이 없으면 카운트다운 초기화
+      setCountdown(30);
     }
   }, [isOpen, startedAt]);
 
@@ -34,47 +34,73 @@ const NotificationToast: React.FC = () => {
     }
   };
 
-  if (!isOpen) return null;
-
-  // 메시지에서 '30'을 찾아 카운트다운 값으로 대체
   const displayMessage = message.replace('30', countdown.toString());
 
   return (
     <>
       <style>
         {`
+          @keyframes fadeInDown {
+            from {
+              opacity: 0;
+              transform: translate(-50%, -20px);
+            }
+            to {
+              opacity: 1;
+              transform: translate(-50%, 0);
+            }
+          }
+          @keyframes fadeOutUp {
+            from {
+              opacity: 1;
+              transform: translate(-50%, 0);
+            }
+            to {
+              opacity: 0;
+              transform: translate(-50%, -20px);
+            }
+          }
+          .toast-enter {
+            animation: fadeInDown 0.3s ease-out forwards;
+          }
+          .toast-exit {
+            animation: fadeOutUp 0.3s ease-in forwards;
+          }
           @keyframes pulse-siren {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
+            0%, 100% { box-shadow: 0 0 8px 2px rgba(239, 68, 68, 0.7); }
+            50% { box-shadow: 0 0 12px 4px rgba(239, 68, 68, 1); }
           }
           .animate-pulse-siren {
-            animation: pulse-siren 1s infinite alternate;
+            animation: pulse-siren 1.5s infinite alternate;
           }
         `}
       </style>
-      <div className='fixed top-5 left-1/2 z-50 flex w-[90vw] max-w-md -translate-x-1/2 items-center gap-2 rounded-lg border border-blue-500 bg-gradient-to-br from-gray-900 to-gray-800 p-3 text-white shadow-lg shadow-blue-500/50 sm:gap-3 sm:p-4 md:p-5'>
-        {' '}
-        {/* 반응형 클래스 추가 */}
-        <div className='animate-pulse-siren h-4 w-4 rounded-full bg-red-500'></div>
-        {/* 사이렌 애니메이션 요소 */}
-        <p className='m-0 text-sm font-bold text-blue-300 sm:text-base md:text-lg'>
-          {displayMessage}
-        </p>
-        {canvasId && (
-          <button
-            onClick={handleGoToCanvas}
-            className='cursor-pointer rounded-md bg-blue-700 px-2 py-1 text-xs text-white transition-colors duration-200 hover:bg-blue-800 sm:px-3 sm:py-2 sm:text-sm'
-          >
-            이동
-          </button>
-        )}
-        <button
-          onClick={hideToast}
-          className='ml-1 cursor-pointer border-none bg-transparent text-base text-blue-300 hover:text-blue-100 sm:ml-2 sm:text-lg'
-        >
-          X
-        </button>
-      </div>
+      {isOpen && (
+        <div className='toast-enter fixed top-5 left-1/2 z-50 flex w-[90vw] max-w-lg items-center justify-between gap-3 rounded-xl border border-blue-500/30 bg-gray-900/80 p-4 text-white shadow-2xl shadow-blue-500/20 backdrop-blur-sm'>
+          <div className='flex items-center gap-3'>
+            <div className='animate-pulse-siren h-3 w-3 rounded-full bg-red-500'></div>
+            <p className='m-0 text-sm font-medium text-gray-200 sm:text-base'>
+              {displayMessage}
+            </p>
+          </div>
+          <div className='flex items-center gap-2'>
+            {canvasId && (
+              <button
+                onClick={handleGoToCanvas}
+                className='cursor-pointer rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white transition-all duration-300 hover:bg-blue-500 hover:shadow-lg hover:shadow-blue-500/50 focus:ring-2 focus:ring-blue-400 focus:outline-none sm:px-4 sm:text-sm'
+              >
+                참여하기
+              </button>
+            )}
+            <button
+              onClick={hideToast}
+              className='ml-2 cursor-pointer border-none bg-transparent text-xl text-gray-400 transition-colors hover:text-white sm:ml-3'
+            >
+              &times;
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 };

@@ -113,3 +113,29 @@ export const authService = {
     }
   },
 };
+
+// --- 비회원 로그인 ---
+export const guestLogin = async (nickname: string) => {
+  try {
+    const response = await apiClient.post('/user/signup', {
+      userName: nickname,
+    });
+    console.log(response);
+    const authHeader = response.headers['authorization'];
+    const accessToken = authHeader?.split(' ')[1];
+
+    // const accessToken = response.data.access_token;
+
+    const decodedToken = jwtDecode<DecodedToken>(accessToken);
+    const user = {
+      userId: decodedToken.sub.userId,
+      nickname: decodedToken.sub.nickName,
+    };
+
+    useAuthStore.getState().setAuth(accessToken, user);
+    toast.success(`${nickname}님 환영합니다!`);
+  } catch (error) {
+    console.error('Login failed', error);
+    toast.error('로그인에 실패했습니다.');
+  }
+};

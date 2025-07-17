@@ -191,197 +191,69 @@ export default function CanvasUIPC({
         {/* 항상 보이는 메뉴 토글 버튼 (햄버거 아이콘) */}
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
+          className='font-press-start relative inline-block bg-[#E76E55] px-6 py-2 text-xs text-white no-underline shadow-[inset_-2px_-2px_0px_0px_#8C2022] before:absolute before:-top-[4px] before:left-0 before:box-content before:h-full before:w-full before:border-t-[4px] before:border-b-[4px] before:border-gray-700 before:content-[""] after:absolute after:top-0 after:-left-[4px] after:box-content after:h-full after:w-full after:border-r-[4px] after:border-l-[4px] after:border-gray-700 after:content-[""] hover:bg-[#CE372B] hover:shadow-[inset_-3px_-3px_0px_0px_#8C2022] active:shadow-[inset_2px_2px_0px_0px_#8C2022]'
         >
-          <svg
-            className='h-6 w-6'
-            fill='none'
-            viewBox='0 0 24 24'
-            stroke='currentColor'
-          >
-            <path
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              strokeWidth={2}
-              d='M4 6h16M4 12h16M4 18h16'
-            />
-          </svg>
+          <span style={{ fontFamily: '"Press Start 2P", cursive' }}>Menu</span>
         </button>
 
         {/* isMenuOpen이 true일 때만 드롭다운 메뉴가 보입니다. */}
         {isMenuOpen && (
-          <div className='absolute top-full mt-2 flex w-auto flex-col gap-2'>
+          <div className='absolute top-full mt-3 flex w-auto flex-col gap-3'>
             {/* 로그인/마이페이지 버튼 */}
-            <div className='group relative'>
-              <button
-                onClick={isLoggedIn ? openMyPageModal : openLoginModal}
-                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
-              >
-                <svg
-                  className='h-6 w-6'
-                  xmlns='http://www.w3.org/2000/svg'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  strokeWidth={1.5}
-                  stroke='currentColor'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    d={
-                      isLoggedIn
-                        ? 'M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z'
-                        : 'M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9'
-                    }
-                  />
-                </svg>
-              </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
-                {isLoggedIn ? '마이페이지' : '로그인'}
+            <button
+              onClick={isLoggedIn ? openMyPageModal : openLoginModal}
+              className='font-press-start relative inline-block w-full bg-yellow-500 px-4 py-2 text-left text-[10px] text-white no-underline shadow-[inset_-2px_-2px_0px_0px_#92400E] before:absolute before:-top-[4px] before:left-0 before:box-content before:h-full before:w-full before:border-t-[4px] before:border-b-[4px] before:border-gray-700 before:content-[""] after:absolute after:top-0 after:-left-[4px] after:box-content after:h-full after:w-full after:border-r-[4px] after:border-l-[4px] after:border-gray-700 after:content-[""] hover:bg-yellow-600 hover:shadow-[inset_-3px_-3px_0px_0px_#713F12] active:shadow-[inset_2px_2px_0px_0px_#713F12]'
+            >
+              <span style={{ fontFamily: '"Press Start 2P", cursive' }}>
+                {isLoggedIn ? 'MyPage' : 'Login'}
               </span>
-            </div>
+            </button>
             {/* 그룹 버튼 */}
-            <div className='group relative'>
-              <button
-                onClick={isLoggedIn ? openGroupModal : openLoginModal}
-                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
-              >
-                <svg
-                  className='h-6 w-6'
-                  xmlns='http://www.w3.org/2000/svg'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  strokeWidth={1.5}
-                  stroke='currentColor'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    d='M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m-7.5-2.962a3.75 3.75 0 015.962 0L12 15.75M12 15.75l-2.47-4.772a3.75 3.75 0 015.962 0L12 15.75zM21 12a9 9 0 11-18 0 9 9 0 0118 0z'
-                  />
-                </svg>
-              </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
-                그룹
+            <button
+              onClick={isLoggedIn ? openGroupModal : openLoginModal}
+              className='font-press-start relative inline-block w-full bg-[#92CD41] px-4 py-2 text-left text-[10px] text-white no-underline shadow-[inset_-2px_-2px_0px_0px_#45841B] before:absolute before:-top-[4px] before:left-0 before:box-content before:h-full before:w-full before:border-t-[4px] before:border-b-[4px] before:border-gray-700 before:content-[""] after:absolute after:top-0 after:-left-[4px] after:box-content after:h-full after:w-full after:border-r-[4px] after:border-l-[4px] after:border-gray-700 after:content-[""] hover:bg-[#7CB342] hover:shadow-[inset_-3px_-3px_0px_0px_#366915] active:shadow-[inset_2px_2px_0px_0px_#366915]'
+            >
+              <span style={{ fontFamily: '"Press Start 2P", cursive' }}>
+                Group
               </span>
-            </div>
+            </button>
             {/* 캔버스 버튼 */}
-            <div className='group relative'>
-              <button
-                onClick={openCanvasModal}
-                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
-              >
-                <svg
-                  className='h-6 w-6'
-                  xmlns='http://www.w3.org/2000/svg'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  strokeWidth={1.5}
-                  stroke='currentColor'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    d='M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125'
-                  />
-                </svg>
-              </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
-                캔버스
+            <button
+              onClick={openCanvasModal}
+              className='font-press-start relative inline-block w-full bg-[#92CD41] px-4 py-2 text-left text-[10px] text-white no-underline shadow-[inset_-2px_-2px_0px_0px_#45841B] before:absolute before:-top-[4px] before:left-0 before:box-content before:h-full before:w-full before:border-t-[4px] before:border-b-[4px] before:border-gray-700 before:content-[""] after:absolute after:top-0 after:-left-[4px] after:box-content after:h-full after:w-full after:border-r-[4px] after:border-l-[4px] after:border-gray-700 after:content-[""] hover:bg-[#7CB342] hover:shadow-[inset_-3px_-3px_0px_0px_#366915] active:shadow-[inset_2px_2px_0px_0px_#366915]'
+            >
+              <span style={{ fontFamily: '"Press Start 2P", cursive' }}>
+                Canvas
               </span>
-            </div>
+            </button>
             {/* 갤러리 버튼 */}
-            <div className='group relative'>
-              <button
-                onClick={openAlbumModal}
-                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
-              >
-                <svg
-                  className='h-6 w-6'
-                  xmlns='http://www.w3.org/2000/svg'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  strokeWidth={1.5}
-                  stroke='currentColor'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    d='M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z'
-                  />
-                </svg>
-              </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
-                갤러리
+            <button
+              onClick={openAlbumModal}
+              className='font-press-start relative inline-block w-full bg-[#92CD41] px-4 py-2 text-left text-[10px] text-white no-underline shadow-[inset_-2px_-2px_0px_0px_#45841B] before:absolute before:-top-[4px] before:left-0 before:box-content before:h-full before:w-full before:border-t-[4px] before:border-b-[4px] before:border-gray-700 before:content-[""] after:absolute after:top-0 after:-left-[4px] after:box-content after:h-full after:w-full after:border-r-[4px] after:border-l-[4px] after:border-gray-700 after:content-[""] hover:bg-[#7CB342] hover:shadow-[inset_-3px_-3px_0px_0px_#366915] active:shadow-[inset_2px_2px_0px_0px_#366915]'
+            >
+              <span style={{ fontFamily: '"Press Start 2P", cursive' }}>
+                Album
               </span>
-            </div>
+            </button>
             {/* BGM 버튼 */}
-            <div className='group relative'>
-              <button
-                onClick={toggleBgm}
-                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
-              >
-                {isBgmPlaying ? (
-                  <svg
-                    className='h-6 w-6'
-                    xmlns='http://www.w3.org/2000/svg'
-                    fill='none'
-                    viewBox='0 0 24 24'
-                    strokeWidth={1.5}
-                    stroke='currentColor'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      d='M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z'
-                    />
-                  </svg>
-                ) : (
-                  <svg
-                    className='h-6 w-6'
-                    xmlns='http://www.w3.org/2000/svg'
-                    fill='none'
-                    viewBox='0 0 24 24'
-                    strokeWidth={1.5}
-                    stroke='currentColor'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      d='M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z'
-                    />
-                  </svg>
-                )}
-              </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
-                {isBgmPlaying ? 'BGM 끄기' : 'BGM 켜기'}
+            <button
+              onClick={toggleBgm}
+              className='font-press-start relative inline-block w-full bg-[#92CD41] px-4 py-2 text-left text-[10px] text-white no-underline shadow-[inset_-2px_-2px_0px_0px_#45841B] before:absolute before:-top-[4px] before:left-0 before:box-content before:h-full before:w-full before:border-t-[4px] before:border-b-[4px] before:border-gray-700 before:content-[""] after:absolute after:top-0 after:-left-[4px] after:box-content after:h-full after:w-full after:border-r-[4px] after:border-l-[4px] after:border-gray-700 after:content-[""] hover:bg-[#7CB342] hover:shadow-[inset_-3px_-3px_0px_0px_#366915] active:shadow-[inset_2px_2px_0px_0px_#366915]'
+            >
+              <span style={{ fontFamily: '"Press Start 2P", cursive' }}>
+                {isBgmPlaying ? 'BGM Off' : 'BGM On'}
               </span>
-            </div>
+            </button>
             {/* 도움말 버튼 */}
-            <div className='group relative'>
-              <button
-                onClick={openHelpModal}
-                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
-                title='게임 가이드'
-              >
-                <svg
-                  className='h-5 w-5'
-                  fill='none'
-                  stroke='currentColor'
-                  viewBox='0 0 24 24'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
-                  />
-                </svg>
-              </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
-                도움말
+            <button
+              onClick={openHelpModal}
+              className='font-press-start relative inline-block w-full bg-[#92CD41] px-4 py-2 text-left text-[10px] text-white no-underline shadow-[inset_-2px_-2px_0px_0px_#45841B] before:absolute before:-top-[4px] before:left-0 before:box-content before:h-full before:w-full before:border-t-[4px] before:border-b-[4px] before:border-gray-700 before:content-[""] after:absolute after:top-0 after:-left-[4px] after:box-content after:h-full after:w-full after:border-r-[4px] after:border-l-[4px] after:border-gray-700 after:content-[""] hover:bg-[#7CB342] hover:shadow-[inset_-3px_-3px_0px_0px_#366915] active:shadow-[inset_2px_2px_0px_0px_#366915]'
+              title='게임 가이드'
+            >
+              <span style={{ fontFamily: '"Press Start 2P", cursive' }}>
+                Help
               </span>
-            </div>
+            </button>
           </div>
         )}
       </div>
