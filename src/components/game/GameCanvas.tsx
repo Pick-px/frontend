@@ -28,6 +28,7 @@ import {
   VIEWPORT_BACKGROUND_COLOR,
 } from '../canvas/canvasConstants';
 import GameReadyModal from './GameReadyModal';
+import { useViewport } from '../../hooks/useViewport';
 
 // 게임 문제 타입 정의
 interface GameQuestion {
@@ -109,6 +110,9 @@ function GameCanvas({
     color: string;
   } | null>(null);
   const flashingPixelRef = useRef<{ x: number; y: number } | null>(null);
+
+  const { width } = useViewport();
+  const isMobile = width <= 768;
 
   // 상태 관리
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
@@ -1041,7 +1045,11 @@ function GameCanvas({
       {isGameStarted && (
         <>
           {/* 나가기 버튼 및 생명 표시 */}
-          <div className='absolute top-4 left-4 z-50 flex items-center gap-3'>
+          <div
+            className={`absolute z-50 flex items-center gap-3 ${
+              isMobile ? 'bottom-4 left-4 flex-col' : 'top-4 left-4'
+            }`}
+          >
             <button
               onClick={handleExit}
               className='rounded-lg bg-red-600 px-4 py-2 font-bold text-white shadow-lg transition-all hover:bg-red-700 active:scale-95'
