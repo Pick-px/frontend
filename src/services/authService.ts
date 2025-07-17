@@ -117,11 +117,14 @@ export const authService = {
 // --- 비회원 로그인 ---
 export const guestLogin = async (nickname: string) => {
   try {
-    const response = await apiClient.post('/users/signup', {
+    const response = await apiClient.post('/user/signup', {
       userName: nickname,
     });
+    console.log(response);
     const authHeader = response.headers['authorization'];
     const accessToken = authHeader?.split(' ')[1];
+
+    // const accessToken = response.data.access_token;
 
     const decodedToken = jwtDecode<DecodedToken>(accessToken);
     const user = {
