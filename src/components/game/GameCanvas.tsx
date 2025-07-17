@@ -608,6 +608,42 @@ function GameCanvas({
     const pixelData = sourceCtx.getImageData(pos.x, pos.y, 1, 1).data;
     const isBlack =
       pixelData[0] === 0 && pixelData[1] === 0 && pixelData[2] === 0;
+    // 현재 픽셀 색상이 내 색상인지 확인
+    const hexToRgb = (hex: string) => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result
+        ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16),
+          }
+        : null;
+    };
+
+    const myColor = hexToRgb(userColor);
+    const isMyColor =
+      myColor &&
+      Math.abs(pixelData[0] - myColor.r) < 5 &&
+      Math.abs(pixelData[1] - myColor.g) < 5 &&
+      Math.abs(pixelData[2] - myColor.b) < 5;
+
+    if (isMyColor) {
+      // 토스트 대신 직접 UI에 메시지 표시
+      const messageDiv = document.createElement('div');
+      messageDiv.className =
+        'fixed top-4 left-1/2 z-[9999] -translate-x-1/2 transform rounded-lg bg-blue-500 px-4 py-2 text-white shadow-lg';
+      messageDiv.textContent = '이미 내 색상으로 칠해진 픽셀입니다.';
+      document.body.appendChild(messageDiv);
+
+      // 3초 후 메시지 제거
+      setTimeout(() => {
+        if (document.body.contains(messageDiv)) {
+          document.body.removeChild(messageDiv);
+        }
+      }, 1000);
+
+      return;
+    }
 
     if (isBlack) {
       // 검은색 픽셀이면 바로 그리기 (기존 로직과 동일)
@@ -661,6 +697,7 @@ function GameCanvas({
     startCooldown,
     setQuestionTimeLeft,
     waitingData,
+    toast,
   ]);
 
   // 문제 답변 제출
@@ -746,6 +783,18 @@ function GameCanvas({
     } else if (questionTimeLeft === 0 && showQuestionModal) {
       // 시간 초과 시 자동으로 오답 처리
       if (currentPixel) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className =
+          'fixed top-4 left-1/2 z-[9999] -translate-x-1/2 transform rounded-lg bg-red-500 px-4 py-2 text-white shadow-lg';
+        messageDiv.textContent = '⏰ 시간 초과! 자동으로 오답 처리되었습니다.';
+        document.body.appendChild(messageDiv);
+
+        // 3초 후 메시지 제거
+        setTimeout(() => {
+          if (document.body.contains(messageDiv)) {
+            document.body.removeChild(messageDiv);
+          }
+        }, 1000);
         // 시간 초과시 자동으로 false 결과 전송
         startCooldown(1);
         setLives((prev) => Math.max(0, prev - 1));
