@@ -191,21 +191,9 @@ export default function CanvasUIPC({
         {/* 항상 보이는 메뉴 토글 버튼 (햄버거 아이콘) */}
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
+          className='font-press-start relative inline-block bg-[#E76E55] px-4 py-2 text-xs text-white no-underline shadow-[inset_-2px_-2px_0px_0px_#8C2022] before:absolute before:-top-[4px] before:left-0 before:box-content before:h-full before:w-full before:border-t-[4px] before:border-b-[4px] before:border-gray-700 before:content-[""] after:absolute after:top-0 after:-left-[4px] after:box-content after:h-full after:w-full after:border-r-[4px] after:border-l-[4px] after:border-gray-700 after:content-[""] hover:bg-[#CE372B] hover:shadow-[inset_-3px_-3px_0px_0px_#8C2022] active:shadow-[inset_2px_2px_0px_0px_#8C2022]'
         >
-          <svg
-            className='h-6 w-6'
-            fill='none'
-            viewBox='0 0 24 24'
-            stroke='currentColor'
-          >
-            <path
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              strokeWidth={2}
-              d='M4 6h16M4 12h16M4 18h16'
-            />
-          </svg>
+          <span style={{ fontFamily: '"Press Start 2P", cursive' }}>Menu</span>
         </button>
 
         {/* isMenuOpen이 true일 때만 드롭다운 메뉴가 보입니다. */}

@@ -15,9 +15,9 @@ import useSound from 'use-sound';
 import { useGameSocketIntegration } from '../gameSocketIntegration';
 import { useNavigate } from 'react-router-dom';
 import GameTimer from './GameTimer'; // GameTimer import 추가
-import GameResultModal from '../modal/GameResultModal'; // 게임 결과 모달 import
+import GameResultModal from './GameResultModal'; // 게임 결과 모달 import
 import DeathModal from '../modal/DeathModal'; // 사망 모달 import
-import QuestionModal from '../modal/QuestionModal'; // 문제 모달 import
+import QuestionModal from './QuestionModal'; // 문제 모달 import
 import ExitModal from '../modal/ExitModal'; // 나가기 모달 import
 
 import {
@@ -745,14 +745,14 @@ function GameCanvas({
         // 시간 초과시 자동으로 false 결과 전송
         startCooldown(1);
         setLives((prev) => Math.max(0, prev - 1));
-        
+
         sendGameResult({
           x: currentPixel.x,
           y: currentPixel.y,
           color: currentPixel.color,
           result: false,
         });
-        
+
         setShowQuestionModal(false);
         setShowResult(false);
         setCurrentPixel(null);
@@ -762,7 +762,14 @@ function GameCanvas({
     return () => {
       clearInterval(timerId);
     };
-  }, [showQuestionModal, questionTimeLeft, currentPixel, startCooldown, setLives, sendGameResult]);
+  }, [
+    showQuestionModal,
+    questionTimeLeft,
+    currentPixel,
+    startCooldown,
+    setLives,
+    sendGameResult,
+  ]);
 
   // 게임 데이터 및 캔버스 초기화
   const { getSynchronizedServerTime } = useTimeSyncStore();
@@ -805,7 +812,9 @@ function GameCanvas({
 
           // 게임 총 시간 계산 및 설정
           const endTime = new Date(gameData.endedAt).getTime();
-          const calculatedTotalGameDuration = Math.floor((endTime - startTime) / 1000);
+          const calculatedTotalGameDuration = Math.floor(
+            (endTime - startTime) / 1000
+          );
           setTotalGameDuration(calculatedTotalGameDuration);
           setGameTime(calculatedTotalGameDuration);
 

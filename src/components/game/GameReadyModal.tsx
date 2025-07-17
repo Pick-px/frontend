@@ -4,7 +4,6 @@ import type { WaitingRoomData } from '../../api/GameAPI';
 import { useTimeSyncStore } from '../../store/timeSyncStore';
 import { useToastStore } from '../../store/toastStore';
 
-
 interface GameReadyModalProps {
   isOpen: boolean;
   onClose: (data?: WaitingRoomData) => void;
@@ -13,7 +12,13 @@ interface GameReadyModalProps {
   remainingTime?: number;
 }
 
-const GameReadyModal = ({ isOpen, onClose, canvasId, color, remainingTime }: GameReadyModalProps) => {
+const GameReadyModal = ({
+  isOpen,
+  onClose,
+  canvasId,
+  color,
+  remainingTime,
+}: GameReadyModalProps) => {
   const navigate = useNavigate();
   const { showToast } = useToastStore();
   const { getSynchronizedServerTime } = useTimeSyncStore();
@@ -25,12 +30,12 @@ const GameReadyModal = ({ isOpen, onClose, canvasId, color, remainingTime }: Gam
     if (!isOpen) {
       return;
     }
-    
+
     // 부모 컴포넌트에서 전달받은 remainingTime 사용
     if (remainingTime !== undefined) {
       setTimeUntilStart(remainingTime);
       setLoading(false);
-      
+
       // 시간이 0이하인 경우 모달 닫기
       if (remainingTime <= 0) {
         setTimeout(() => onClose(), 1000); // 1초 후 모달 닫기
@@ -48,7 +53,7 @@ const GameReadyModal = ({ isOpen, onClose, canvasId, color, remainingTime }: Gam
     const timer = setInterval(() => {
       // useTimeSyncStore를 사용하여 더 정확한 시간 계산
       if (remainingTime === undefined) {
-        setTimeUntilStart(prev => {
+        setTimeUntilStart((prev) => {
           const newValue = prev !== null ? prev - 1 : 0;
           if (newValue <= 0) {
             clearInterval(timer);
@@ -159,9 +164,11 @@ const GameReadyModal = ({ isOpen, onClose, canvasId, color, remainingTime }: Gam
                     ></div>
                     <div className='absolute inset-3 flex animate-pulse items-center justify-center rounded-full border border-green-400/60 bg-gradient-to-br from-green-900/80 to-black/70 shadow-2xl backdrop-blur-xl'>
                       <span className='animate-pulse font-mono text-3xl font-bold tracking-wider text-green-300'>
-                        {remainingTime !== undefined && remainingTime > 0 ? `${remainingTime}` : 
-                         timeUntilStart !== null && timeUntilStart > 0 ? `${timeUntilStart}` : 
-                         '시작!'}
+                        {remainingTime !== undefined && remainingTime > 0
+                          ? `${remainingTime}`
+                          : timeUntilStart !== null && timeUntilStart > 0
+                            ? `${timeUntilStart}`
+                            : '--'}
                       </span>
                     </div>
                     <div className='absolute inset-0 animate-ping rounded-full bg-green-500/15'></div>
