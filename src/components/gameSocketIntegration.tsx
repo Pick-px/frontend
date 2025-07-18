@@ -10,6 +10,7 @@ interface GameSocketProps {
     username: string;
   }) => void;
   onDeadNotice?: (data: { message: string }) => void;
+  onGameErrorNotice?: (data: { message: string }) => void;
   onGameResult?: (data: {
     results: Array<{
       username: string;
@@ -34,6 +35,7 @@ export const useGameSocketIntegration = ({
   canvas_id,
   onDeadPixels,
   onDeadNotice,
+  onGameErrorNotice,
   onGameResult,
   onCanvasCloseAlarm,
 }: GameSocketProps) => {
@@ -54,6 +56,7 @@ export const useGameSocketIntegration = ({
     canvas_id,
     onDeadPixels,
     onDeadNotice,
+    onGameErrorNotice,
     onGameResult,
     onCanvasCloseAlarm
   );

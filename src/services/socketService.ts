@@ -234,6 +234,20 @@ class SocketService {
     }
   }
 
+  // 사망자가 색칠을 시도할 때 에러 이벤트 수신
+  onGameErrorNotice(callback: (data: { message: string }) => void) {
+    if (this.socket) {
+      this.socket.on('game_error', callback);
+    }
+  }
+
+  // 사망자가 색칠을 시도할 때 에러 이벤트 제거
+  offGameErrorNotice(callback: (data: { message: string }) => void) {
+    if (this.socket) {
+      this.socket.off('game_error', callback);
+    }
+  }
+
   // 게임 결과 이벤트 수신
   onGameResult(
     callback: (data: {
