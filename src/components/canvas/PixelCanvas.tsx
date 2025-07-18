@@ -239,9 +239,15 @@ function PixelCanvas({
   }, []);
 
   const drawAll = useCallback(() => {
+    // const startTime = performance.now(); // 측정 시작
+
     drawBaseLayer();
     drawImageLayer();
     drawPreviewLayer();
+
+    // const endTime = performance.now(); // 측정 종료
+    // const renderTime = endTime - startTime;
+    // console.log(`Canvas render time: ${renderTime.toFixed(2)} ms`); // 콘솔에 출력
   }, [drawBaseLayer, drawImageLayer, drawPreviewLayer]);
 
   // ### DRAW FUNCTIONS END ###
