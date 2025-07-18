@@ -56,7 +56,7 @@ interface UseCanvasInteractionProps {
   DRAG_THRESHOLD: number;
 
   handleConfirm: () => void;
-  
+
   // Game mode
   isGameMode?: boolean;
 }
@@ -277,7 +277,7 @@ export const useCanvasInteraction = ({
               y: pixelY,
               color: 'transparent',
             };
-            
+
             // 게임 모드일 경우 팔레트를 표시하지 않고 노란색 테두리만 표시
             if (isGameMode) {
               // 확정 버튼을 클릭할 때까지 대기
@@ -285,7 +285,7 @@ export const useCanvasInteraction = ({
             } else {
               setShowPalette(true);
             }
-            
+
             centerOnPixel(sx, sy);
           }
         }
@@ -506,7 +506,7 @@ export const useCanvasInteraction = ({
       const ys = (offsetY - viewPosRef.current.y) / scaleRef.current;
       const delta = -e.deltaY;
       const newScale =
-        delta > 0 ? scaleRef.current * 1.2 : scaleRef.current / 1.2;
+        delta > 0 ? scaleRef.current * 1.1 : scaleRef.current / 1.1;
 
       if (newScale >= MIN_SCALE && newScale <= MAX_SCALE) {
         scaleRef.current = newScale;
