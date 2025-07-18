@@ -20,6 +20,8 @@ type AuthResult = {
   user: {
     userId: string;
     nickname?: string;
+    email?: string;
+    role?: string;
   };
 };
 
@@ -27,6 +29,7 @@ type DecodedToken = {
   sub: {
     userId: string;
     nickName: string;
+    role?: string;
   };
   jti: string;
   exp: number;
@@ -68,6 +71,7 @@ export const authService = {
       const user = {
         userId: decodedToken.sub.userId,
         nickname: decodedToken.sub.nickName,
+        role: decodedToken.sub.role,
       };
       console.log('응답결과:', user);
       // 응답에서 AT와 사용자 정보를 추출하여 반환
@@ -89,9 +93,17 @@ export const authService = {
       const response = await apiClient.post('/auth/refresh');
       const authHeader = response.headers['authorization'];
       const newAccessToken = authHeader?.split(' ')[1];
-      console.log(newAccessToken);
-      // setAuth(newAccessToken, response.data.user);
-      return response.data;
+      
+      // 토큰에서 사용자 정보 추출
+      const decodedToken = jwtDecode<DecodedToken>(newAccessToken);
+      const user = {
+        userId: decodedToken.sub.userId,
+        nickname: decodedToken.sub.nickName,
+        role: decodedToken.sub.role,
+      };
+      
+      console.log('Refresh token user:', user);
+      return { accessToken: newAccessToken, user };
     } catch (error) {
       console.error('Failed to refresh token', error);
       // clearAuth();
@@ -130,6 +142,7 @@ export const guestLogin = async (nickname: string) => {
     const user = {
       userId: decodedToken.sub.userId,
       nickname: decodedToken.sub.nickName,
+      role: decodedToken.sub.role,
     };
 
     useAuthStore.getState().setAuth(accessToken, user);

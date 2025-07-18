@@ -29,6 +29,8 @@ type DecodedToken = {
   sub: {
     userId: string;
     nickName: string;
+    email?: string;
+    role?: string;
   };
   jti: string;
   exp: number;
@@ -105,6 +107,8 @@ function App() {
           const user = {
             userId: decodedToken.sub.userId,
             nickname: decodedToken.sub.nickName,
+            email: decodedToken.sub.email,
+            role: decodedToken.sub.role,
           };
           console.log(user);
           setAuth(newAccessToken, user);
