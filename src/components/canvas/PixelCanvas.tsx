@@ -704,6 +704,7 @@ function PixelCanvas({
     const handleGroupImageReceived = (event: Event) => {
       const { url, x, y, width, height } = (event as CustomEvent).detail;
       const img = new Image();
+      resetAndCenter();
       img.crossOrigin = 'anonymous';
       img.onload = () => {
         setIsImageFixed(true);
@@ -724,7 +725,6 @@ function PixelCanvas({
           ];
           setImageSize({ width: numWidth, height: numHeight });
           setImagePosition({ x: numX, y: numY });
-          centerOnWorldPixel(numX + numWidth / 2, numY + numHeight / 2);
           drawAll();
         }
       };
@@ -737,7 +737,7 @@ function PixelCanvas({
         'group-image-received',
         handleGroupImageReceived
       );
-  }, [centerOnWorldPixel, drawAll, setIsImageFixed, setShowImageControls]);
+  }, [drawAll, resetAndCenter, setIsImageFixed, setShowImageControls]);
 
   useEffect(() => {
     let animationFrameId: number;
