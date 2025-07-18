@@ -1345,9 +1345,6 @@ function GameCanvas({
             results={gameResults}
             currentUsername={user?.nickname}
           />
-
-          {/* 테스트용 소켓 이벤트 발생기 */}
-          {process.env.NODE_ENV !== 'production' && <TestSocketEmitter />}
         </>
       )}
     </div>
