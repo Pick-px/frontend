@@ -465,7 +465,7 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = () => {
                               {album.top_own_user_name}
                             </span>
                             <span className='text-white'>
-                              ({album.top_own_user_count}회)
+                              ({album.top_own_user_count}개)
                             </span>
                             <span className='absolute -inset-[1px] -z-10 rounded-md bg-yellow-400/10 blur-[2px]'></span>
                           </span>
