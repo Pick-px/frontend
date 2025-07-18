@@ -1,22 +1,51 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface DeathModalProps {
   isOpen: boolean;
 }
 
 const DeathModal: React.FC<DeathModalProps> = ({ isOpen }) => {
+  const [isTransparent, setIsTransparent] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      // 3초 후에 투명 모드로 전환
+      const timer = setTimeout(() => {
+        setIsTransparent(true);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    } else {
+      setIsTransparent(false);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80">
-      <div className="w-full max-w-md rounded-xl bg-gradient-to-b from-red-900/90 to-black/90 p-8 shadow-2xl border-2 border-red-500 text-center">
-        <div className="text-8xl mb-4">☠️</div>
-        <h2 className="text-4xl font-bold mb-6 text-red-400 animate-pulse">
+    <div
+      className={`fixed inset-0 z-[9999] flex items-center justify-center ${isTransparent ? 'bg-black/70' : 'bg-black/40'} transition-all duration-700`}
+    >
+      <div
+        className={`w-full max-w-md rounded-xl ${isTransparent ? 'border-red-500/30 bg-gradient-to-b from-red-900/30 to-black/30' : 'border-red-500 bg-gradient-to-b from-red-900/90 to-black/90'} border-2 p-8 text-center shadow-2xl transition-all duration-700`}
+      >
+        <div className='mb-4 text-8xl'>☠️</div>
+        <h2
+          className={`mb-6 text-4xl font-bold ${isTransparent ? 'text-red-400/30' : 'animate-pulse text-red-400'} transition-all duration-700`}
+        >
           당신은 탈락했습니다!
         </h2>
-        <p className="text-xl mb-8 text-white">모든 생명을 잃었습니다.</p>
-        <p className="text-lg mb-2 text-gray-300">
-          전장이 마무리될 때까지 잠시만 기다려주세요.
+        <p
+          className={`mb-8 text-xl ${isTransparent ? 'text-white/30' : 'text-white'} transition-all duration-700`}
+        >
+          모든 생명을 잃었습니다.
+        </p>
+        <p
+          className={`mb-2 text-lg ${isTransparent ? 'text-gray-300/30' : 'text-gray-300'} transition-all duration-700`}
+        >
+          {isTransparent
+            ? '관전 모드로 전환되었습니다.'
+            : '전장이 마무리될 때까지 잠시만 기다려주세요.'}
         </p>
       </div>
     </div>
