@@ -1107,10 +1107,6 @@ function GameCanvas({
     isGameMode: true, // 게임 모드 활성화
   });
 
-  if (hasError) {
-    return <NotFoundPage />;
-  }
-
   // 게임 나가기 핸들러
   const handleExit = useCallback(() => {
     setShowExitModal(true);
@@ -1131,6 +1127,9 @@ function GameCanvas({
     setShowExitModal(false);
   }, []);
 
+  if (hasError) {
+    return <NotFoundPage />;
+  }
   return (
     <div
       ref={rootRef}
