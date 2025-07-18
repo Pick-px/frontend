@@ -351,6 +351,28 @@ function GameCanvas({
     [playExplosion, stopGameMusic]
   );
 
+  const onGameErrorNotice = useCallback(
+    (data: { message: string }) => {
+      playExplosion();
+      stopGameMusic();
+      // React로 모달 열기
+      setShowDeathModal(true);
+      const messageDiv = document.createElement('div');
+      messageDiv.className =
+        'fixed top-4 left-1/2 z-[9999] -translate-x-1/2 transform rounded-lg bg-red-500 px-4 py-2 text-white shadow-lg';
+      messageDiv.textContent = data.message;
+      document.body.appendChild(messageDiv);
+
+      // 1초 후 메시지 제거
+      setTimeout(() => {
+        if (document.body.contains(messageDiv)) {
+          document.body.removeChild(messageDiv);
+        }
+      }, 1000);
+    },
+    [playExplosion, stopGameMusic]
+  );
+
   // 폭발 효과 생성 함수
   const createExplosionEffect = useCallback((x: number, y: number) => {
     // 폭발 효과를 더 화려하게 개선
@@ -510,6 +532,7 @@ function GameCanvas({
     canvas_id,
     onDeadPixels,
     onDeadNotice,
+    onGameErrorNotice,
     onGameResult,
     onCanvasCloseAlarm: useCallback(
       (data: {
@@ -1084,10 +1107,6 @@ function GameCanvas({
     isGameMode: true, // 게임 모드 활성화
   });
 
-  if (hasError) {
-    return <NotFoundPage />;
-  }
-
   // 게임 나가기 핸들러
   const handleExit = useCallback(() => {
     setShowExitModal(true);
@@ -1108,6 +1127,9 @@ function GameCanvas({
     setShowExitModal(false);
   }, []);
 
+  if (hasError) {
+    return <NotFoundPage />;
+  }
   return (
     <div
       ref={rootRef}
