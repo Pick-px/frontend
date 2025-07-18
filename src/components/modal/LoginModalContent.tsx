@@ -8,20 +8,19 @@ type LoginModalContentProps = {
 };
 
 export default function LoginModalContent({ onClose }: LoginModalContentProps) {
-  // 로그인 폼 자체의 상태를 스스로 관리합니다.
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [randomName, setRandomname] = useState(generateRandomNickname());
+  const [nickname, setNickname] = useState(generateRandomNickname());
+  const isLoginDisabled = nickname.trim().length === 0;
 
   const handleLogin = () => {
-    guestLogin(randomName);
+    if (isLoginDisabled) return;
+    guestLogin(nickname.trim());
     onClose?.();
   };
 
   const handleOAuthLogin = (provider: 'google' | 'naver' | 'kakao') => {
     sessionStorage.setItem(
       'redirectPath',
-      window.location.pathname + window.location.search
+      window.location.pathname + window.location.search,
     );
     authService.redirectToProvider(provider);
   };
@@ -37,10 +36,11 @@ export default function LoginModalContent({ onClose }: LoginModalContentProps) {
       <div className='mt-6 mb-4 flex flex-col gap-4 px-8'>
         <input
           type='text'
-          placeholder={randomName}
-          className='bg-gray-900 p-2 text-white placeholder-gray-500 focus:outline-none'
-          value={randomName}
-          onChange={(e) => setUsername(e.target.value)}
+          placeholder='닉네임을 입력하세요 (8자 이하)'
+          className='bg-gray-900 p-2 text-center text-white placeholder-gray-500 focus:outline-none'
+          value={nickname}
+          onChange={(e) => setNickname(e.target.value.replace(/\s/g, ''))}
+          maxLength={8}
         />
       </div>
 
@@ -49,7 +49,10 @@ export default function LoginModalContent({ onClose }: LoginModalContentProps) {
         <div className='w-[200px]'>
           <button
             onClick={handleLogin}
-            className='w-full bg-blue-600 py-2 font-bold text-white shadow-[4px_4px_0px_#1e40af] transition-all hover:bg-blue-500 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_#1e40af]'
+            disabled={isLoginDisabled}
+            className={`w-full bg-blue-600 py-2 font-bold text-white shadow-[4px_4px_0px_#1e40af] transition-all hover:bg-blue-500 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_#1e40af] ${
+              isLoginDisabled ? 'cursor-not-allowed opacity-50' : ''
+            }`}
           >
             Guest Login
           </button>
