@@ -18,6 +18,7 @@ export const useGameSocket = (
     username: string;
   }) => void,
   onDeadNotice?: (data: { message: string }) => void,
+  onGameErrorNotice?: (data: { message: string }) => void,
   onGameResult?: (data: {
     results: Array<{
       username: string;
@@ -40,6 +41,7 @@ export const useGameSocket = (
   const pixelCallbackRef = useRef(onPixelReceived);
   const deadPixelsCallbackRef = useRef(onDeadPixels);
   const deadNoticeCallbackRef = useRef(onDeadNotice);
+  const gameErrorNoticeCallbackRef = useRef(onGameErrorNotice);
   const gameResultCallbackRef = useRef(onGameResult);
   const canvasCloseAlarmCallbackRef = useRef(onCanvasCloseAlarm);
 
@@ -47,6 +49,7 @@ export const useGameSocket = (
   pixelCallbackRef.current = onPixelReceived;
   deadPixelsCallbackRef.current = onDeadPixels;
   deadNoticeCallbackRef.current = onDeadNotice;
+  gameErrorNoticeCallbackRef.current = onGameErrorNotice;
   gameResultCallbackRef.current = onGameResult;
   canvasCloseAlarmCallbackRef.current = onCanvasCloseAlarm;
 
@@ -70,14 +73,21 @@ export const useGameSocket = (
         deadPixelsCallbackRef.current?.(data);
       });
     }
-    
+
     // 사망 알림 이벤트 리스너
     if (deadNoticeCallbackRef.current) {
       socketService.onDeadNotice((data) => {
         deadNoticeCallbackRef.current?.(data);
       });
     }
-    
+
+    // 사망자 색칠 시도 오류 이벤트 리스너
+    if (gameErrorNoticeCallbackRef.current) {
+      socketService.onGameErrorNotice((data) => {
+        gameErrorNoticeCallbackRef.current?.(data);
+      });
+    }
+
     // 게임 결과 이벤트 리스너
     if (gameResultCallbackRef.current) {
       socketService.onGameResult((data) => {
@@ -118,6 +128,9 @@ export const useGameSocket = (
       if (deadNoticeCallbackRef.current) {
         socketService.offDeadNotice(deadNoticeCallbackRef.current);
       }
+      if (gameErrorNoticeCallbackRef.current) {
+        socketService.offGameErrorNotice(gameErrorNoticeCallbackRef.current);
+      }
       if (gameResultCallbackRef.current) {
         socketService.offGameResult(gameResultCallbackRef.current);
       }
@@ -130,7 +143,13 @@ export const useGameSocket = (
       // 소켓 연결 해제
       socketService.disconnect();
     };
-  }, [canvas_id, accessToken, user, useCanvasStore.getState().canvas_id, onCanvasCloseAlarm]);
+  }, [
+    canvas_id,
+    accessToken,
+    user,
+    useCanvasStore.getState().canvas_id,
+    onCanvasCloseAlarm,
+  ]);
 
   const sendGameResult = (data: {
     x: number;
