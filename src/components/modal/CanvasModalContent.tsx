@@ -578,6 +578,7 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
                         <span className='rounded bg-white/10 px-2 py-1 text-center text-xs text-gray-300 group-hover:bg-gray-800/60 group-hover:text-gray-200'>
                           {canvas.size_x} × {canvas.size_y}
                         </span>
+                        {/* staus field */}
                         {canvas.status && (
                           <span className='rounded bg-green-500/20 px-2 py-1 text-center text-xs text-green-400 group-hover:bg-green-600/30 group-hover:text-green-300'>
                             {canvas.status}
