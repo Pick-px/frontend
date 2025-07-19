@@ -93,6 +93,18 @@ export const canvasService = {
     }
   },
 
+  // 시작전 게임 캔버스 목록 조회 (이동 시 사용)
+  async getGameCanvases(): Promise<Canvas[]> {
+    try {
+      const response = await apiClient.get<Canvas[]>(`/game/list`);
+      console.log(response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching canvas:', error);
+      throw new Error('게임 캔버스 정보를 불러오는데 실패했습니다.');
+    }
+  },
+
   // 특정 캔버스 조회 (이동 시 사용)
   async getCanvas(canvasId: number): Promise<Canvas> {
     try {

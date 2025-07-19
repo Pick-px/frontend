@@ -11,6 +11,10 @@ type ModalState = {
   openCanvasModal: () => void;
   closeCanvasModal: () => void;
 
+  isGameModalOpen: boolean;
+  openGameModal: () => void;
+  closeGameModal: () => void;
+
   isAlbumModalOpen: boolean;
   openAlbumModal: () => void;
   closeAlbumModal: () => void;
@@ -44,6 +48,7 @@ export const useModalStore = create<ModalState>((set) => ({
       isLoginModalOpen: true,
       isCanvasModalOpen: false,
       isAlbumModalOpen: false,
+      isGameModalOpen: false,
       isMyPageModalOpen: false,
       isGroupModalOpen: false,
       isChatOpen: false,
@@ -58,6 +63,7 @@ export const useModalStore = create<ModalState>((set) => ({
       isLoginModalOpen: false,
       isCanvasModalOpen: true,
       isAlbumModalOpen: false,
+      isGameModalOpen: false,
       isMyPageModalOpen: false,
       isGroupModalOpen: false,
       isChatOpen: false,
@@ -66,11 +72,27 @@ export const useModalStore = create<ModalState>((set) => ({
     }),
   closeCanvasModal: () => set({ isCanvasModalOpen: false }),
 
+  isGameModalOpen: false,
+  openGameModal: () =>
+    set({
+      isLoginModalOpen: false,
+      isCanvasModalOpen: false,
+      isGameModalOpen: true,
+      isAlbumModalOpen: false,
+      isMyPageModalOpen: false,
+      isGroupModalOpen: false,
+      isChatOpen: false,
+      isHelpModalOpen: false,
+      isCanvasEndedModalOpen: false, // 추가
+    }),
+  closeGameModal: () => set({ isGameModalOpen: false }),
+
   isAlbumModalOpen: false,
   openAlbumModal: () =>
     set({
       isLoginModalOpen: false,
       isCanvasModalOpen: false,
+      isGameModalOpen: false,
       isAlbumModalOpen: true,
       isMyPageModalOpen: false,
       isGroupModalOpen: false,
@@ -85,6 +107,7 @@ export const useModalStore = create<ModalState>((set) => ({
     set({
       isLoginModalOpen: false,
       isCanvasModalOpen: false,
+      isGameModalOpen: false,
       isAlbumModalOpen: false,
       isMyPageModalOpen: true,
       isGroupModalOpen: false,
@@ -99,6 +122,7 @@ export const useModalStore = create<ModalState>((set) => ({
     set({
       isLoginModalOpen: false,
       isCanvasModalOpen: false,
+      isGameModalOpen: false,
       isAlbumModalOpen: false,
       isMyPageModalOpen: false,
       isGroupModalOpen: true,
@@ -114,6 +138,7 @@ export const useModalStore = create<ModalState>((set) => ({
     set({
       isLoginModalOpen: false,
       isCanvasModalOpen: false,
+      isGameModalOpen: false,
       isAlbumModalOpen: false,
       isMyPageModalOpen: false,
       isGroupModalOpen: false,
@@ -129,6 +154,7 @@ export const useModalStore = create<ModalState>((set) => ({
     set({
       isLoginModalOpen: false,
       isCanvasModalOpen: false,
+      isGameModalOpen: false,
       isAlbumModalOpen: false,
       isMyPageModalOpen: false,
       isGroupModalOpen: false,
@@ -144,12 +170,13 @@ export const useModalStore = create<ModalState>((set) => ({
     set({
       isLoginModalOpen: false,
       isCanvasModalOpen: false,
+      isGameModalOpen: false,
       isAlbumModalOpen: false,
       isMyPageModalOpen: false,
       isGroupModalOpen: false,
       isChatOpen: false,
       isHelpModalOpen: false,
-      isCanvasEndedModalOpen: true
+      isCanvasEndedModalOpen: true, // 추가
     }),
   closeCanvasEndedModal: () => set({ isCanvasEndedModalOpen: false }),
 }));

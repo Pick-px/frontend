@@ -24,6 +24,7 @@ import HelpModalContent from './components/modal/HelpModalContent';
 import CanvasEndedModal from './components/modal/CanvasEndedModal'; // CanvasEndedModal import 추가
 import NotificationToast from './components/toast/NotificationToast'; // NotificationToast import 추가
 import { useToastStore } from './store/toastStore'; // useToastStore import 추가
+import GameModalContent from './components/modal/GameModalContent';
 
 type DecodedToken = {
   sub: {
@@ -54,6 +55,8 @@ function App() {
     closeMyPageModal,
     isGroupModalOpen,
     closeGroupModal,
+    isGameModalOpen,
+    closeGameModal,
     isCanvasModalOpen,
     closeCanvasModal,
     isAlbumModalOpen,
@@ -164,6 +167,9 @@ function App() {
       </Modal>
       <Modal isOpen={isHelpModalOpen} onClose={handleCloseHelpModal}>
         <HelpModalContent />
+      </Modal>
+      <Modal isOpen={isGameModalOpen} onClose={closeGameModal}>
+        <GameModalContent onClose={closeGameModal} />
       </Modal>
       {isCanvasEndedModalOpen && <CanvasEndedModal />}
       {/* NotificationToast 컴포넌트 추가 */}
