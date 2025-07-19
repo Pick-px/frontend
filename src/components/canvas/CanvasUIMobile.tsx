@@ -66,6 +66,7 @@ export default function CanvasUIMobile({
     openMyPageModal,
     openGroupModal,
     openHelpModal,
+    openGameModal,
   } = useModalStore();
 
   // 드롭다움 열림, 닫힘 상태
@@ -335,6 +336,31 @@ export default function CanvasUIMobile({
                 {isLoggedIn ? '마이페이지' : '로그인'}
               </span>
             </div>
+            {/* 그룹 버튼 */}
+            <div className='group relative'>
+              <button
+                onClick={isLoggedIn ? openGroupModal : openLoginModal}
+                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
+              >
+                <svg
+                  className='h-6 w-6'
+                  xmlns='http://www.w3.org/2000/svg'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  strokeWidth={1.5}
+                  stroke='currentColor'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    d='M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m-7.5-2.962a3.75 3.75 0 015.962 0L12 15.75M12 15.75l-2.47-4.772a3.75 3.75 0 015.962 0L12 15.75zM21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+                  />
+                </svg>
+              </button>
+              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
+                그룹
+              </span>
+            </div>
             {/* 캔버스 버튼 */}
             <div className='group relative'>
               <button
@@ -358,6 +384,32 @@ export default function CanvasUIMobile({
               </button>
               <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
                 캔버스
+              </span>
+            </div>
+            {/* 게임 버튼 */}
+            <div className='group relative'>
+              <button
+                onClick={isLoggedIn ? openGameModal : openLoginModal}
+                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
+              >
+                <svg
+                  className='h-6 w-6'
+                  xmlns='http://www.w3.org/2000/svg'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  strokeWidth={1.5}
+                  stroke='currentColor'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    d='M6 12h4m-2-2v4m6-2h.01M13 12h.01M18 12h.01'
+                  />
+                  <rect x="4" y="8" width="16" height="8" rx="2" strokeWidth={1.5} />
+                </svg>
+              </button>
+              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
+                게임
               </span>
             </div>
             {/* 앨범 버튼 */}
@@ -385,33 +437,6 @@ export default function CanvasUIMobile({
                 앨범
               </span>
             </div>
-
-            {/* 그룹 버튼 */}
-            <div className='group relative'>
-              <button
-                onClick={isLoggedIn ? openGroupModal : openLoginModal}
-                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
-              >
-                <svg
-                  className='h-6 w-6'
-                  xmlns='http://www.w3.org/2000/svg'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  strokeWidth={1.5}
-                  stroke='currentColor'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    d='M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m-7.5-2.962a3.75 3.75 0 015.962 0L12 15.75M12 15.75l-2.47-4.772a3.75 3.75 0 015.962 0L12 15.75zM21 12a9 9 0 11-18 0 9 9 0 0118 0z'
-                  />
-                </svg>
-              </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
-                그룹
-              </span>
-            </div>
-
             {/* BGM 버튼 */}
             <div className='group relative'>
               <button
