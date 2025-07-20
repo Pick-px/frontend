@@ -119,14 +119,14 @@ export default function MyPageModalContent() {
                         )}
                         {canvas.canvasId !== 1 ? (
                           <p className='text-xs text-gray-400'>
-                            시도 : {canvas.try_count} / 점유 : {
-                              canvas.own_count !== null ? 
-                              canvas.own_count : 
-                              <span className='flex items-center inline'>
+                            시도 : {canvas.try_count} / 점유 :{' '}
+                            {canvas.own_count !== null ? (
+                              canvas.own_count
+                            ) : (
+                              <span className='flex inline items-center'>
                                 집계중
-                                <span className='ml-1 inline-block h-3 w-3 animate-spin rounded-full border-2 border-solid border-gray-400 border-r-transparent'></span>
                               </span>
-                            }
+                            )}
                           </p>
                         ) : (
                           <p className='text-xs text-gray-400'>
