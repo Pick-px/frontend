@@ -55,11 +55,12 @@ class SocketService {
     }
   }
   // 픽셀 업데이트 수신
-  onPixelUpdate(callback: (pixelData: PixelData) => void) {
+  OnPixelUpdate(callback: (data: { pixels: Array<PixelData> }) => void) {
     if (this.socket) {
       this.socket.on('pixel_update', callback);
     }
   }
+
   // 쿨다운 정보 수신
   onCooldownInfo(
     callback: (data: { cooldown: boolean; remaining: number }) => void
@@ -198,7 +199,7 @@ class SocketService {
   // 게임 픽셀 업데이트 수신
   onGamePixelUpdate(callback: (pixelData: PixelData) => void) {
     if (this.socket) {
-      this.socket.on('pixel_update', (data) => {
+      this.socket.on('game_pixel_update', (data) => {
         console.log(
           'SocketService: Received pixel_update for game canvas',
           data

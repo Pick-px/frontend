@@ -18,8 +18,10 @@ interface CooldownData {
 
 //canvas_id : zustand 동기화 수정 예정
 export const useSocket = (
-  onPixelReceived: (pixel: PixelData) => void,
   canvas_id: string | undefined,
+  onPixelReceived?: (data: {
+    pixels: Array<{ x: number; y: number; color: string }>;
+  }) => void,
   onCooldownReceived?: (cooldown: CooldownData) => void
 ) => {
   const { accessToken, user } = useAuthStore();
@@ -45,10 +47,12 @@ export const useSocket = (
     socketService.connect(canvas_id);
     setIsConnected(true);
 
-    // 픽셀 업데이트 이벤트 리스너
-    socketService.onPixelUpdate((pixel) => {
-      pixelCallbackRef.current(pixel);
-    });
+    // 픽셀 더미 업데이트
+    if (pixelCallbackRef.current) {
+      socketService.OnPixelUpdate((data) => {
+        pixelCallbackRef.current?.(data);
+      });
+    }
 
     // 쿨다운 정보 이벤트 리스너
     if (cooldownCallbackRef.current) {
