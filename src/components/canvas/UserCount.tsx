@@ -36,9 +36,9 @@ export default function UserCount() {
   }, [canvas_id, handleUserCountChange]); // handleUserCountChange가 변경될 때만 재실행
 
   return (
-    <div className='text pointer-events-none fixed right-[1px] bottom-[1px] z-[9999] rounded-[8px] p-[10px] text-sm text-white'>
+    <div className='text fixed right-[1px] bottom-[1px] z-[9999] rounded-[8px] p-[10px] text-sm text-white'>
       <div className='flex items-center gap-2'>
-        <div className='flex items-center gap-1'>
+        <div className='group relative flex items-center gap-1'>
           <svg
             className='h-4 w-4'
             fill='none'
@@ -59,9 +59,13 @@ export default function UserCount() {
               userCount
             )}
           </span>
+          {/* 툴팁 - 가로로 표시 */}
+          <div className='absolute bottom-full left-1/2 mb-2 hidden -translate-x-1/2 translate-y-1 rounded bg-black/80 px-2 py-1 text-xs whitespace-nowrap opacity-0 transition-all group-hover:block group-hover:translate-y-0 group-hover:opacity-100'>
+            전체 접속자 수
+          </div>
         </div>
 
-        <div className='flex items-center gap-1'>
+        <div className='group relative flex items-center gap-1'>
           <svg
             className='h-4 w-4'
             fill='none'
@@ -82,6 +86,10 @@ export default function UserCount() {
               canvasCount
             )}
           </span>
+          {/* 툴팁 - 가로로 표시 */}
+          <div className='absolute bottom-full left-1/2 mb-2 hidden -translate-x-1/2 translate-x-[-80%] translate-y-1 rounded bg-black/80 px-2 py-1 text-xs whitespace-nowrap opacity-0 transition-all group-hover:block group-hover:translate-y-0 group-hover:opacity-100'>
+            현재 캔버스 접속자 수
+          </div>
         </div>
       </div>
     </div>
