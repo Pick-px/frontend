@@ -165,7 +165,7 @@ function App() {
       <Modal isOpen={isAlbumModalOpen} onClose={closeAlbumModal}>
         <AlbumModalContent onClose={closeAlbumModal} />
       </Modal>
-      <Modal isOpen={isHelpModalOpen} onClose={handleCloseHelpModal}>
+      <Modal isOpen={isHelpModalOpen} onClose={handleCloseHelpModal} fullWidth={true}>
         <HelpModalContent />
       </Modal>
       <Modal isOpen={isGameModalOpen} onClose={closeGameModal}>
