@@ -24,11 +24,14 @@ import HelpModalContent from './components/modal/HelpModalContent';
 import CanvasEndedModal from './components/modal/CanvasEndedModal'; // CanvasEndedModal import 추가
 import NotificationToast from './components/toast/NotificationToast'; // NotificationToast import 추가
 import { useToastStore } from './store/toastStore'; // useToastStore import 추가
+import GameModalContent from './components/modal/GameModalContent';
 
 type DecodedToken = {
   sub: {
     userId: string;
     nickName: string;
+    email?: string;
+    role?: string;
   };
   jti: string;
   exp: number;
@@ -52,6 +55,8 @@ function App() {
     closeMyPageModal,
     isGroupModalOpen,
     closeGroupModal,
+    isGameModalOpen,
+    closeGameModal,
     isCanvasModalOpen,
     closeCanvasModal,
     isAlbumModalOpen,
@@ -105,6 +110,8 @@ function App() {
           const user = {
             userId: decodedToken.sub.userId,
             nickname: decodedToken.sub.nickName,
+            email: decodedToken.sub.email,
+            role: decodedToken.sub.role,
           };
           console.log(user);
           setAuth(newAccessToken, user);
@@ -158,8 +165,11 @@ function App() {
       <Modal isOpen={isAlbumModalOpen} onClose={closeAlbumModal}>
         <AlbumModalContent onClose={closeAlbumModal} />
       </Modal>
-      <Modal isOpen={isHelpModalOpen} onClose={handleCloseHelpModal}>
+      <Modal isOpen={isHelpModalOpen} onClose={handleCloseHelpModal} fullWidth={true}>
         <HelpModalContent />
+      </Modal>
+      <Modal isOpen={isGameModalOpen} onClose={closeGameModal}>
+        <GameModalContent onClose={closeGameModal} />
       </Modal>
       {isCanvasEndedModalOpen && <CanvasEndedModal />}
       {/* NotificationToast 컴포넌트 추가 */}

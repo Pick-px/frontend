@@ -2,6 +2,7 @@
 html,
 body {
   overflow: hidden; /* 스크롤바를 숨기고 스크롤 동작을 비활성화 */
+
   overscroll-behavior: none; /* 오버스크롤 효과도 비활성화 */
   touch-action: none; /* 혹시 모를 경우를 대비해 전역적으로 추가 */
   width: 100%;

@@ -7,6 +7,7 @@ type User = {
   userId: string;
   nickname?: string;
   email?: string;
+  role?: string;
 };
 
 type AuthState = {
@@ -25,7 +26,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({
       isLoggedIn: true,
       accessToken: token,
-      user: userData,
+      user: userData, // userData now includes the role field
     }),
   clearAuth: () =>
     set({

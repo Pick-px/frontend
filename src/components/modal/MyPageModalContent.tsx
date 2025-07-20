@@ -4,14 +4,16 @@ import React, { useEffect, useState } from 'react';
 import { useAuthStore } from '../../store/authStrore';
 import { authService } from '../../services/authService';
 import { useModalStore } from '../../store/modalStore';
+import { useNavigate } from 'react-router-dom';
 import {
   myPageService,
   type UserInfoResponse,
 } from '../../services/myPageService';
 
 export default function MyPageModalContent() {
-  const { isLoggedIn, clearAuth } = useAuthStore();
+  const { isLoggedIn, clearAuth, user } = useAuthStore();
   const { closeMyPageModal, openLoginModal } = useModalStore();
+  const navigate = useNavigate();
   const [userInfo, setUserInfo] = useState<UserInfoResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -117,14 +119,14 @@ export default function MyPageModalContent() {
                         )}
                         {canvas.canvasId !== 1 ? (
                           <p className='text-xs text-gray-400'>
-                            시도 : {canvas.try_count} / 점유 : {
-                              canvas.own_count !== null ? 
-                              canvas.own_count : 
-                              <span className='flex items-center inline'>
+                            시도 : {canvas.try_count} / 점유 :{' '}
+                            {canvas.own_count !== null ? (
+                              canvas.own_count
+                            ) : (
+                              <span className='flex inline items-center'>
                                 집계중
-                                <span className='ml-1 inline-block h-3 w-3 animate-spin rounded-full border-2 border-solid border-gray-400 border-r-transparent'></span>
                               </span>
-                            }
+                            )}
                           </p>
                         ) : (
                           <p className='text-xs text-gray-400'>
@@ -144,7 +146,18 @@ export default function MyPageModalContent() {
           </div>
 
           {/* Footer */}
-          <div className='flex-shrink-0 border-t border-white/10 p-4'>
+          <div className='flex-shrink-0 space-y-2 border-t border-white/10 p-4'>
+            {(user?.role === 'admin' || user?.role === 'ADMIN') && (
+              <button
+                onClick={() => {
+                  closeMyPageModal();
+                  navigate('/admin/dashboard', { replace: true });
+                }}
+                className='w-full rounded-md bg-purple-700 py-2 text-white transition-colors hover:bg-purple-600'
+              >
+                관리자 페이지
+              </button>
+            )}
             <button
               onClick={handleLogout}
               className='w-full rounded-md bg-gray-700 py-2 text-white transition-colors hover:bg-gray-600'

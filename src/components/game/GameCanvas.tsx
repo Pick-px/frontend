@@ -74,6 +74,7 @@ function GameCanvas({
     try_count: number;
     dead: boolean;
   }> | null>(null); // 게임 결과
+
   const [userColor, setUserColor] = useState<string>('#FF5733'); // 사용자 색상 (서버에서 받아올 예정)
   const [playExplosion] = useSound('/explosion.mp3', {
     volume: 0.2,
@@ -93,6 +94,17 @@ function GameCanvas({
     volume: 0.25,
     loop: true,
   });
+  const [isGameMusicMuted, setIsGameMusicMuted] = useState(false);
+
+  const toggleGameMusic = useCallback(() => {
+    if (!isGameMusicMuted) {
+      stopGameMusic();
+      setIsGameMusicMuted(true);
+    } else {
+      playGameMusic();
+      setIsGameMusicMuted(false);
+    }
+  }, [isGameMusicMuted, stopGameMusic, playGameMusic]);
   const [playClick] = useSound('/click.mp3', { volume: 0.7 });
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -1151,24 +1163,51 @@ function GameCanvas({
       {isGameStarted && (
         <>
           {/* 나가기 버튼 및 생명 표시 */}
-          <div
-            className={`absolute z-50 flex items-center gap-3 ${
-              isMobile ? 'bottom-4 left-4 flex-col' : 'top-4 left-4'
-            }`}
-          >
-            <button
-              onClick={handleExit}
-              className='rounded-lg bg-red-600 px-4 py-2 font-bold text-white shadow-lg transition-all hover:bg-red-700 active:scale-95'
-            >
-              나가기
-            </button>
-            <LifeIndicator
-              lives={lives}
-              maxLives={2}
-              isLifeDecreasing={isLifeDecreasing}
-            />
-          </div>
+          {/* PC 버전: 나가기 버튼 및 생명 표시 */}
+          {!isMobile && (
+            <div className='absolute top-4 left-4 z-50 flex items-center gap-3'>
+              <button
+                onClick={handleExit}
+                className='rounded-lg bg-red-600 px-4 py-2 font-bold text-white shadow-lg transition-all hover:bg-red-700 active:scale-95'
+              >
+                나가기
+              </button>
+              <LifeIndicator
+                lives={lives}
+                maxLives={2}
+                isLifeDecreasing={isLifeDecreasing}
+              />
+            </div>
+          )}
+
+          {/* 모바일 버전: 나가기 버튼, 생명 표시 */}
+          {isMobile && (
+            <div className='absolute bottom-4 left-4 z-50 flex flex-col items-center gap-3'>
+              <button
+                onClick={handleExit}
+                className='rounded-lg bg-red-600 px-4 py-2 font-bold text-white shadow-lg transition-all hover:bg-red-700 active:scale-95'
+              >
+                나가기
+              </button>
+              <LifeIndicator
+                lives={lives}
+                maxLives={2}
+                isLifeDecreasing={isLifeDecreasing}
+              />
+            </div>
+          )}
           <GameTimer currentTime={gameTime} totalTime={totalGameDuration} />
+          {/* PC 버전: BGM 버튼 (좌측 하단) */}
+          {!isMobile && (
+            <div className='absolute bottom-4 left-4 z-50'>
+              <button
+                onClick={toggleGameMusic}
+                className='rounded-lg bg-blue-600 px-4 py-2 font-bold text-white shadow-lg transition-all hover:bg-blue-700 active:scale-95'
+              >
+                {isGameMusicMuted ? 'BGM 켜기' : 'BGM 끄기'}
+              </button>
+            </div>
+          )}
           <style>{`
         @keyframes gradientBG {
           0% {

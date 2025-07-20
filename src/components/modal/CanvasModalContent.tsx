@@ -63,9 +63,7 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
   const publicCanvases = canvases.filter(
     (canvas: Canvas) => canvas.type === 'public'
   );
-  const gameCanvases = canvases.filter((canvas: Canvas) =>
-    canvas.type.startsWith('game_')
-  );
+
   const eventCanvases = canvases.filter((canvas: Canvas) =>
     canvas.type.startsWith('event_')
   );
@@ -580,6 +578,7 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
                         <span className='rounded bg-white/10 px-2 py-1 text-center text-xs text-gray-300 group-hover:bg-gray-800/60 group-hover:text-gray-200'>
                           {canvas.size_x} × {canvas.size_y}
                         </span>
+                        {/* staus field */}
                         {canvas.status && (
                           <span className='rounded bg-green-500/20 px-2 py-1 text-center text-xs text-green-400 group-hover:bg-green-600/30 group-hover:text-green-300'>
                             {canvas.status}
@@ -592,139 +591,6 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
                     </div>
                   </div>
                 ))}
-              </div>
-            )}
-          </div>
-
-          <div className='mb-6'>
-            <div className='mb-3 flex items-center justify-between'>
-              <h3 className='text-sm font-medium text-gray-300'>게임 캔버스</h3>
-              {gameCanvases.length > 2 && (
-                <div className='flex gap-2'>
-                  <button
-                    onClick={() => scrollCarousel('left', 'event')}
-                    className='rounded-full bg-white/10 p-1 text-gray-400 transition-colors hover:bg-white/20 hover:text-gray-300'
-                  >
-                    <svg
-                      className='h-4 w-4'
-                      fill='none'
-                      stroke='currentColor'
-                      viewBox='0 0 24 24'
-                    >
-                      <path
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                        strokeWidth={2}
-                        d='M15 19l-7-7 7-7'
-                      />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => scrollCarousel('right', 'event')}
-                    className='rounded-full bg-white/10 p-1 text-gray-400 transition-colors hover:bg-white/20 hover:text-gray-300'
-                  >
-                    <svg
-                      className='h-4 w-4'
-                      fill='none'
-                      stroke='currentColor'
-                      viewBox='0 0 24 24'
-                    >
-                      <path
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                        strokeWidth={2}
-                        d='M9 5l7 7-7 7'
-                      />
-                    </svg>
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {gameCanvases.length === 0 ? (
-              <div className='py-8 text-center'>
-                <svg
-                  className='mx-auto mb-4 h-16 w-16 text-gray-500'
-                  fill='none'
-                  stroke='currentColor'
-                  viewBox='0 0 24 24'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'
-                  />
-                </svg>
-                <p className='text-gray-400'>예정된 게임 캔버스가 없습니다.</p>
-              </div>
-            ) : (
-              <div
-                ref={eventScrollRef}
-                className='scrollbar-hide flex cursor-grab gap-3 overflow-x-auto active:cursor-grabbing'
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                onMouseDown={(e) => handleMouseDown(e, 'event')}
-                onMouseMove={(e) => handleMouseMove(e, 'event')}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
-              >
-                {gameCanvases
-                  .map((canvas) => {
-                    const timeInfo = canvas.ended_at
-                      ? getTimeRemaining(canvas.ended_at, canvas.started_at)
-                      : null;
-                    return { canvas, timeInfo };
-                  })
-                  .filter(({ timeInfo }) => timeInfo?.isUpcoming)
-                  .sort((a, b) => {
-                    if (a.timeInfo?.targetDate && b.timeInfo?.targetDate) {
-                      return (
-                        a.timeInfo.targetDate.getTime() -
-                        b.timeInfo.targetDate.getTime()
-                      );
-                    }
-                    return 0;
-                  })
-                  .map(({ canvas, timeInfo }) => {
-                    return (
-                      <div
-                        key={canvas.canvasId}
-                        onClick={(e) => handleCanvasSelect(e, canvas.canvasId)}
-                        className='group canvas-rainbow-border block min-w-[200px] cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-gray-900/20'
-                      >
-                        <div className='canvas-content flex flex-col p-3'>
-                          <h3 className='mb-1 truncate font-medium text-white group-hover:text-gray-200'>
-                            {canvas.title}{' '}
-                            {canvas.canvasId === Number(canvas_id) && '📍'}
-                          </h3>
-                          <p
-                            className={`mb-2 text-xs group-hover:text-gray-300 ${
-                              timeInfo?.isUrgent
-                                ? 'text-yellow-400'
-                                : 'text-gray-400'
-                            }`}
-                          >
-                            {timeInfo
-                              ? timeInfo.text
-                              : formatDate(canvas.created_at)}
-                          </p>
-                          <div className='flex flex-col gap-1'>
-                            <span className='rounded bg-white/10 px-2 py-1 text-center text-xs text-gray-300 group-hover:bg-gray-800/60 group-hover:text-gray-200'>
-                              {canvas.size_x} × {canvas.size_y}
-                            </span>
-                            {canvas.status && (
-                              <span className='rounded bg-green-500/20 px-2 py-1 text-center text-xs text-green-400 group-hover:bg-green-600/30 group-hover:text-green-300'>
-                                {canvas.status}
-                              </span>
-                            )}
-                            <span className='rounded bg-red-500/20 px-2 py-1 text-center text-xs text-red-400 group-hover:bg-red-600/30 group-hover:text-red-300'>
-                              {canvas.type}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
               </div>
             )}
           </div>

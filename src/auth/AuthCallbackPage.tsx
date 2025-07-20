@@ -45,6 +45,9 @@ export default function AuthCallbackPage() {
         console.log(authResult);
 
         if (authResult?.accessToken && authResult?.user) {
+          // 사용자 정보에 role 설정
+          setAuth(authResult.accessToken, authResult.user);
+          
           // ✨ 1. 객체를 JSON 문자열로 변환합니다.
           const authResultString = JSON.stringify(authResult);
 

@@ -5,9 +5,10 @@ type ModalProps = {
   isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
+  fullWidth?: boolean;
 };
 
-export default function Modal({ isOpen, onClose, children }: ModalProps) {
+export default function Modal({ isOpen, onClose, children, fullWidth = false }: ModalProps) {
   if (!isOpen) return null;
 
   return ReactDOM.createPortal(
@@ -16,7 +17,7 @@ export default function Modal({ isOpen, onClose, children }: ModalProps) {
       onClick={onClose}
     >
       <div
-        className='relative w-full max-w-md rounded-xl border border-white/30 text-white shadow-2xl backdrop-blur-md'
+        className={`relative w-full ${fullWidth ? 'max-w-3xl' : 'max-w-md'} rounded-xl border border-white/30 text-white shadow-2xl backdrop-blur-md`}
         onClick={(e) => e.stopPropagation()}
         style={{
           transitionProperty: 'height, min-height, max-height, transform',
