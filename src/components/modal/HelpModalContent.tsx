@@ -459,7 +459,7 @@ export default function HelpModalContent({ onClose }: HelpModalContentProps) {
         </p>
         <div className='mt-1 flex justify-center'>
           <a
-            href='https://www.youtube.com/watch?v=QdUDfx3wgMU'
+            href='https://www.youtube.com/watch?v=9MYnUduKhLQ'
             target='_blank'
             rel='noopener noreferrer'
             className='flex items-center gap-2 rounded-md bg-red-600/20 px-3 py-2 text-sm text-red-400 transition-colors hover:bg-red-600/30'

@@ -817,7 +817,7 @@ function PixelCanvas({
       style={{
         backgroundColor: VIEWPORT_BACKGROUND_COLOR,
         boxShadow: cooldown
-          ? 'inset 0 0 50px rgba(239, 68, 68, 0.3), 0 0 100px rgba(239, 68, 68, 0.2)'
+          ? 'inset 0 0 50px rgba(239, 68, 68, 0.7), 0 0 100px rgba(239, 68, 68, 0.6)'
           : 'none',
       }}
     >
@@ -835,9 +835,9 @@ function PixelCanvas({
       )}
       {cooldown && (
         <>
-          <div className='pointer-events-none absolute inset-0 border-4 border-red-500/30' />
-          <div className='pointer-events-none absolute inset-2 border-2 border-red-400/20' />
-          <div className='pointer-events-none absolute inset-4 border border-red-300/10' />
+          <div className='pointer-events-none absolute inset-0 border-4 border-red-600/70' />
+          <div className='pointer-events-none absolute inset-2 border-2 border-red-500/50' />
+          <div className='pointer-events-none absolute inset-4 border border-red-400/30' />
         </>
       )}
       <div

@@ -148,30 +148,16 @@ export default function CanvasUIMobile({
             onMouseLeave={() => setIsPressed(false)}
             className={`flex h-8 w-8 items-center justify-center rounded-full transition-all duration-300 ${
               cooldown
-                ? 'cursor-not-allowed border border-red-500/30 bg-red-500/20 text-red-400'
+                ? 'cursor-not-allowed border-4 border-red-600 bg-red-500/40 text-red-300 shadow-lg shadow-red-500/50'
                 : 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-lg hover:scale-105 hover:from-emerald-400 hover:to-cyan-400 hover:shadow-emerald-400/30'
             } ${isPressed ? 'scale-95' : 'scale-100'}`}
           >
             {cooldown ? (
-              <svg
-                className='h-6 w-6 animate-spin'
-                fill='none'
-                viewBox='0 0 24 24'
-              >
-                <circle
-                  className='opacity-25'
-                  cx='12'
-                  cy='12'
-                  r='10'
-                  stroke='currentColor'
-                  strokeWidth='4'
-                ></circle>
-                <path
-                  className='opacity-75'
-                  fill='currentColor'
-                  d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
-                ></path>
-              </svg>
+              <div className="flex items-center justify-center w-full h-full">
+                <span className="font-mono text-lg font-bold tracking-wider text-red-300 animate-pulse">
+                  {timeLeft}
+                </span>
+              </div>
             ) : (
               <svg
                 className='h-6 w-6'
@@ -512,38 +498,7 @@ export default function CanvasUIMobile({
         {hoverPos ? `(${hoverPos.x}, ${hoverPos.y})` : 'OutSide'}
       </div>
 
-      {/* 쿨타임 창 : 쿨타임 중에만 표시*/}
-      {cooldown && (
-        <div className='pointer-events-none fixed bottom-[20px] left-1/2 z-[9999] -translate-x-1/2 transform'>
-          <div className='relative'>
-            {/* 외부 링 */}
-            <div
-              className='h-16 w-16 animate-spin rounded-full border-4 border-red-500/60'
-              style={{ animationDuration: '2s' }}
-            ></div>
-            {/* 중간 링 */}
-            <div
-              className='absolute inset-1 animate-spin rounded-full border-2 border-orange-400/50'
-              style={{
-                animationDuration: '1.5s',
-                animationDirection: 'reverse',
-              }}
-            ></div>
-            {/* 내부 원 */}
-            <div className='absolute inset-3 flex animate-pulse items-center justify-center rounded-full border border-red-400/60 bg-gradient-to-br from-red-900/80 to-black/70 shadow-2xl backdrop-blur-xl'>
-              <span className='animate-pulse font-mono text-xl font-bold tracking-wider text-red-300'>
-                {timeLeft}
-              </span>
-            </div>
-            {/* 글로우 효과 */}
-            <div className='absolute inset-0 animate-ping rounded-full bg-red-500/15'></div>
-            <div
-              className='absolute inset-0 animate-ping rounded-full bg-orange-400/10'
-              style={{ animationDelay: '1s' }}
-            ></div>
-          </div>
-        </div>
-      )}
+      {/* 쿨타임 창 제거 - 확정 버튼으로 이동 */}
     </>
   );
 }
