@@ -58,7 +58,7 @@ export const useCanvasUiStore = create<CanvasUiState>((set, get) => ({
           ? newTimeLeft(state.timeLeft)
           : newTimeLeft,
     })),
-  showPalette: false,
+  showPalette: true,
   setShowPalette: (showPalette) => set({ showPalette }),
   showImageControls: false,
   setShowImageControls: (showImageControls) => set({ showImageControls }),
