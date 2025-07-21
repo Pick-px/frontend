@@ -153,8 +153,8 @@ export default function CanvasUIMobile({
             } ${isPressed ? 'scale-95' : 'scale-100'}`}
           >
             {cooldown ? (
-              <div className="flex items-center justify-center w-full h-full">
-                <span className="font-mono text-lg font-bold tracking-wider text-red-300 animate-pulse">
+              <div className='flex h-full w-full items-center justify-center'>
+                <span className='animate-pulse font-mono text-lg font-bold tracking-wider text-red-300'>
                   {timeLeft}
                 </span>
               </div>
@@ -339,7 +339,7 @@ export default function CanvasUIMobile({
                   <path
                     strokeLinecap='round'
                     strokeLinejoin='round'
-                    d='M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m-7.5-2.962a3.75 3.75 0 015.962 0L12 15.75M12 15.75l-2.47-4.772a3.75 3.75 0 015.962 0L12 15.75zM21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+                    d='M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z'
                   />
                 </svg>
               </button>
@@ -391,7 +391,14 @@ export default function CanvasUIMobile({
                     strokeLinejoin='round'
                     d='M6 12h4m-2-2v4m6-2h.01M13 12h.01M18 12h.01'
                   />
-                  <rect x="4" y="8" width="16" height="8" rx="2" strokeWidth={1.5} />
+                  <rect
+                    x='4'
+                    y='8'
+                    width='16'
+                    height='8'
+                    rx='2'
+                    strokeWidth={1.5}
+                  />
                 </svg>
               </button>
               <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
