@@ -107,40 +107,9 @@ export default function CanvasUIMobile({
     <>
       <ToastContainer />
       {/* 컬러 피커 */}
-      <div className='pointer-events-auto fixed top-2 right-2 flex gap-2'>
-        {canvasType === CanvasType.EVENT_COLORLIMIT ? (
-          <div className='flex flex-col gap-2'>
-            {['#000000', '#808080', '#c0c0c0', '#ffffff'].map((c) => (
-              <button
-                key={c}
-                onClick={() => {
-                  setColor(c);
-                  onSelectColor(c);
-                }}
-                style={{ backgroundColor: c }}
-                className={`h-8 w-8 cursor-pointer rounded-full transition-all duration-300 ${
-                  color === c
-                    ? 'scale-110 shadow-lg ring-2 shadow-cyan-400/60 ring-cyan-300 ring-offset-2 ring-offset-slate-800'
-                    : 'border border-white/30 hover:border-cyan-300/50 hover:shadow-md hover:shadow-white/20'
-                }`}
-              />
-            ))}
-          </div>
-        ) : (
-          <input
-            type='color'
-            value={color}
-            onChange={(e) => {
-              const newColor = e.target.value;
-              setColor(newColor);
-              onSelectColor(newColor);
-            }}
-            className='h-8 w-8 cursor-pointer rounded-full p-0'
-            title='색상 선택'
-          />
-        )}
-
-        <div className='pointer-events-auto fixed top-2 right-11 flex h-8 w-8 gap-2 rounded-full'>
+      <div className='pointer-events-auto fixed top-2 right-2 flex gap-4'>
+        <div className='pointer-events-auto fixed top-2 right-11 mx-3 flex flex-col items-center'>
+          <span className='mb-1 text-xs text-gray-200'>확정</span>
           <button
             disabled={cooldown}
             onMouseDown={() => !cooldown && setIsPressed(true)}
@@ -185,105 +154,140 @@ export default function CanvasUIMobile({
             )}
           </button>
         </div>
+        {canvasType === CanvasType.EVENT_COLORLIMIT ? (
+          <div className='flex flex-col gap-2'>
+            {['#000000', '#808080', '#c0c0c0', '#ffffff'].map((c) => (
+              <button
+                key={c}
+                onClick={() => {
+                  setColor(c);
+                  onSelectColor(c);
+                }}
+                style={{ backgroundColor: c }}
+                className={`h-8 w-8 cursor-pointer rounded-full transition-all duration-300 ${
+                  color === c
+                    ? 'scale-110 shadow-lg ring-2 shadow-cyan-400/60 ring-cyan-300 ring-offset-2 ring-offset-slate-800'
+                    : 'border border-white/30 hover:border-cyan-300/50 hover:shadow-md hover:shadow-white/20'
+                }`}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className='flex flex-col items-center'>
+            <span className='mb-1 text-xs text-gray-200'>색상 선택</span>
+            <input
+              type='color'
+              value={color}
+              onChange={(e) => {
+                const newColor = e.target.value;
+                setColor(newColor);
+                onSelectColor(newColor);
+              }}
+              className='h-8 w-8 cursor-pointer rounded-full border-2 border-blue-400 p-0 shadow-md'
+              title='색상 선택'
+            />
+          </div>
+        )}
+      </div>
 
-        <div className='pointer-events-auto fixed bottom-4 left-14 z-[9999] flex gap-2'>
-          {onImageAttach && (
-            <div className='flex flex-col gap-1'>
-              <div className='flex items-center gap-2'>
-                <label
-                  className='flex h-[40px] w-[40px] cursor-pointer items-center justify-center rounded-full bg-gray-700 text-white transition-colors duration-200 hover:bg-gray-600'
-                  title='이미지 첨부 (JPG, PNG, GIF, WebP)'
+      {/* 이미지 첨부/투명도/삭제 UI - 하단 고정 */}
+      <div className='pointer-events-auto fixed bottom-4 left-14 z-[9999] flex gap-2'>
+        {onImageAttach && (
+          <div className='flex flex-col gap-1'>
+            <div className='flex items-center gap-2'>
+              <label
+                className='flex h-[40px] w-[40px] cursor-pointer items-center justify-center rounded-full bg-gray-700 text-white transition-colors duration-200 hover:bg-gray-600'
+                title='이미지 첨부 (JPG, PNG, GIF, WebP)'
+              >
+                <svg
+                  className='h-5 w-5'
+                  fill='none'
+                  stroke='currentColor'
+                  viewBox='0 0 24 24'
                 >
-                  <svg
-                    className='h-5 w-5'
-                    fill='none'
-                    stroke='currentColor'
-                    viewBox='0 0 24 24'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'
-                    />
-                  </svg>
-                  <input
-                    type='file'
-                    accept='image/jpeg,image/jpg,image/png,image/gif,image/webp'
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        setShowPalette(false);
-                        onImageAttach(file);
-                      }
-                      e.target.value = '';
-                    }}
-                    className='hidden'
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'
                   />
-                </label>
+                </svg>
+                <input
+                  type='file'
+                  accept='image/jpeg,image/jpg,image/png,image/gif,image/webp'
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setShowPalette(false);
+                      onImageAttach(file);
+                    }
+                    e.target.value = '';
+                  }}
+                  className='hidden'
+                />
+              </label>
 
-                {hasImage && (
-                  <div className='flex items-center gap-2 rounded-md bg-gray-800/80 px-3 py-1'>
-                    {setImageTransparency && (
-                      <div className='flex items-center gap-2'>
-                        <span className='text-xs whitespace-nowrap text-white'>
-                          투명도
-                        </span>
-                        <input
-                          type='range'
-                          min='0.1'
-                          max='1'
-                          step='0.1'
-                          value={imageTransparency}
-                          onChange={(e) =>
-                            setImageTransparency(parseFloat(e.target.value))
-                          }
-                          onTouchStart={(e) => e.stopPropagation()}
-                          onTouchMove={(e) => e.stopPropagation()}
-                          onTouchEnd={(e) => e.stopPropagation()}
-                          className='h-4 w-[60px] cursor-pointer touch-manipulation appearance-none rounded-lg bg-gray-600'
-                          style={{
-                            WebkitAppearance: 'none',
-                            appearance: 'none',
-                            background: 'transparent',
-                            cursor: 'pointer',
-                            touchAction: 'manipulation',
-                          }}
-                          title='이미지 투명도 조절'
-                        />
-                        <span className='w-8 text-xs text-gray-300'>
-                          {Math.round(imageTransparency * 100)}%
-                        </span>
-                      </div>
-                    )}
+              {hasImage && (
+                <div className='flex items-center gap-2 rounded-md bg-gray-800/80 px-3 py-1'>
+                  {setImageTransparency && (
+                    <div className='flex items-center gap-2'>
+                      <span className='text-xs whitespace-nowrap text-white'>
+                        투명도
+                      </span>
+                      <input
+                        type='range'
+                        min='0.1'
+                        max='1'
+                        step='0.1'
+                        value={imageTransparency}
+                        onChange={(e) =>
+                          setImageTransparency(parseFloat(e.target.value))
+                        }
+                        onTouchStart={(e) => e.stopPropagation()}
+                        onTouchMove={(e) => e.stopPropagation()}
+                        onTouchEnd={(e) => e.stopPropagation()}
+                        className='h-4 w-[60px] cursor-pointer touch-manipulation appearance-none rounded-lg bg-gray-600'
+                        style={{
+                          WebkitAppearance: 'none',
+                          appearance: 'none',
+                          background: 'transparent',
+                          cursor: 'pointer',
+                          touchAction: 'manipulation',
+                        }}
+                        title='이미지 투명도 조절'
+                      />
+                      <span className='w-8 text-xs text-gray-300'>
+                        {Math.round(imageTransparency * 100)}%
+                      </span>
+                    </div>
+                  )}
 
-                    {onImageDelete && (
-                      <button
-                        onClick={onImageDelete}
-                        className='flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-full bg-red-600 text-white transition-colors duration-200 hover:bg-red-500'
-                        title='이미지 삭제'
+                  {onImageDelete && (
+                    <button
+                      onClick={onImageDelete}
+                      className='flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-full bg-red-600 text-white transition-colors duration-200 hover:bg-red-500'
+                      title='이미지 삭제'
+                    >
+                      <svg
+                        className='h-4 w-4'
+                        fill='none'
+                        stroke='currentColor'
+                        viewBox='0 0 24 24'
                       >
-                        <svg
-                          className='h-4 w-4'
-                          fill='none'
-                          stroke='currentColor'
-                          viewBox='0 0 24 24'
-                        >
-                          <path
-                            strokeLinecap='round'
-                            strokeLinejoin='round'
-                            strokeWidth={2}
-                            d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
-                          />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
+                        <path
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          strokeWidth={2}
+                          d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
+                        />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* 사이드바 토글 버튼 */}
@@ -293,7 +297,7 @@ export default function CanvasUIMobile({
           console.log('토글 버튼 클릭됨, 현재 상태:', isSidebarOpen);
           setIsSidebarOpen(!isSidebarOpen);
         }}
-        className='pointer-events-auto fixed top-[10px] left-[10px] z-[10000] flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-xl transition-all duration-300 hover:scale-110 hover:from-blue-600 hover:to-purple-700 active:scale-95'
+        className='pointer-events-auto fixed top-[22px] left-[10px] z-[10000] flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-xl transition-all duration-300 hover:scale-110 hover:from-blue-600 hover:to-purple-700 active:scale-95'
         title={isSidebarOpen ? '메뉴 닫기' : '메뉴 열기'}
       >
         <div className='relative'>
@@ -347,7 +351,7 @@ export default function CanvasUIMobile({
           <div className='flex h-full flex-col p-4'>
             {/* 사이드바 헤더 */}
             <div className='mb-6 flex items-center justify-between border-b border-gray-600 pb-4'>
-              <h2 className='text-lg font-bold text-white'>메뉴</h2>
+              <h2 className='text-lg font-bold text-white'>{''}</h2>
             </div>
 
             {/* 메뉴 아이템들 */}
@@ -501,7 +505,6 @@ export default function CanvasUIMobile({
               {/* BGM */}
               <button
                 onClick={() => {
-                  setIsSidebarOpen(false);
                   toggleBgm();
                 }}
                 className='flex items-center gap-3 rounded-lg px-4 py-3 text-left text-white transition-colors hover:bg-gray-700'

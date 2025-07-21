@@ -444,7 +444,11 @@ function Chat() {
             openChat(); // Synchronize with modal store
           }
         }}
+        onTouchStart={(e) => e.stopPropagation()}
+        onTouchMove={(e) => e.stopPropagation()}
+        onTouchEnd={(e) => e.stopPropagation()}
         className='pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full bg-blue-500 text-white shadow-xl transition-transform hover:bg-blue-600 active:scale-90'
+        style={{ touchAction: 'manipulation' }}
       >
         {isOpen ? (
           // 닫기 아이콘 (X)
