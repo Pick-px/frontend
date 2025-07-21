@@ -69,21 +69,31 @@ export default function CanvasUIMobile({
     openGameModal,
   } = useModalStore();
 
-  // 드롭다움 열림, 닫힘 상태
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  // 사이드바 열림, 닫힘 상태
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const toggleButtonRef = useRef<HTMLButtonElement>(null);
 
   // useEffect(() => {
   //   showInstructionsToast();
   // }, []);
 
   useEffect(() => {
-    if (!isMenuOpen) return;
+    if (!isSidebarOpen) return;
 
     function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsMenuOpen(false); // 메뉴를 닫습니다.
+      const target = event.target as Node;
+
+      // 토글 버튼이나 사이드바 내부 클릭은 무시
+      if (
+        toggleButtonRef.current?.contains(target) ||
+        sidebarRef.current?.contains(target)
+      ) {
+        return;
       }
+
+      // 외부 클릭 시 사이드바 닫기
+      setIsSidebarOpen(false);
     }
 
     document.addEventListener('mousedown', handleClickOutside);
@@ -91,7 +101,7 @@ export default function CanvasUIMobile({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isMenuOpen]);
+  }, [isSidebarOpen]);
 
   return (
     <>
@@ -228,7 +238,17 @@ export default function CanvasUIMobile({
                           onChange={(e) =>
                             setImageTransparency(parseFloat(e.target.value))
                           }
-                          className='h-2 w-[60px] cursor-pointer appearance-none rounded-lg bg-gray-600'
+                          onTouchStart={(e) => e.stopPropagation()}
+                          onTouchMove={(e) => e.stopPropagation()}
+                          onTouchEnd={(e) => e.stopPropagation()}
+                          className='h-4 w-[60px] cursor-pointer touch-manipulation appearance-none rounded-lg bg-gray-600'
+                          style={{
+                            WebkitAppearance: 'none',
+                            appearance: 'none',
+                            background: 'transparent',
+                            cursor: 'pointer',
+                            touchAction: 'manipulation',
+                          }}
                           title='이미지 투명도 조절'
                         />
                         <span className='w-8 text-xs text-gray-300'>
@@ -266,17 +286,22 @@ export default function CanvasUIMobile({
         </div>
       </div>
 
-      <div
-        ref={menuRef}
-        className='pointer-events-auto fixed top-[10px] left-[10px]'
+      {/* 사이드바 토글 버튼 */}
+      <button
+        ref={toggleButtonRef}
+        onClick={() => {
+          console.log('토글 버튼 클릭됨, 현재 상태:', isSidebarOpen);
+          setIsSidebarOpen(!isSidebarOpen);
+        }}
+        className='pointer-events-auto fixed top-[10px] left-[10px] z-[10000] flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-xl transition-all duration-300 hover:scale-110 hover:from-blue-600 hover:to-purple-700 active:scale-95'
+        title={isSidebarOpen ? '메뉴 닫기' : '메뉴 열기'}
       >
-        {/* 항상 보이는 메뉴 토글 버튼 (햄버거 아이콘) */}
-        <button
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
-        >
+        <div className='relative'>
+          {/* 햄버거 아이콘 (사이드바가 닫혀있을 때) */}
           <svg
-            className='h-6 w-6'
+            className={`h-7 w-7 transition-all duration-300 ${
+              isSidebarOpen ? 'rotate-90 opacity-0' : 'rotate-0 opacity-100'
+            }`}
             fill='none'
             viewBox='0 0 24 24'
             stroke='currentColor'
@@ -284,111 +309,157 @@ export default function CanvasUIMobile({
             <path
               strokeLinecap='round'
               strokeLinejoin='round'
-              strokeWidth={2}
+              strokeWidth={2.5}
               d='M4 6h16M4 12h16M4 18h16'
             />
           </svg>
-        </button>
 
-        {/* isMenuOpen이 true일 때만 드롭다운 메뉴가 보입니다. */}
-        {isMenuOpen && (
-          <div className='absolute top-full mt-2 flex w-auto flex-col gap-2'>
-            {/* 로그인/마이페이지 버튼 */}
-            <div className='group relative'>
+          {/* X 아이콘 (사이드바가 열려있을 때) */}
+          <svg
+            className={`absolute inset-0 h-7 w-7 transition-all duration-300 ${
+              isSidebarOpen ? 'rotate-0 opacity-100' : '-rotate-90 opacity-0'
+            }`}
+            fill='none'
+            viewBox='0 0 24 24'
+            stroke='currentColor'
+          >
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeWidth={2.5}
+              d='M6 18L18 6M6 6l12 12'
+            />
+          </svg>
+
+          {/* 작은 알림 점 (사이드바가 닫혀있을 때만 표시) */}
+          {!isSidebarOpen && (
+            <div className='absolute -top-1 -right-1 h-3 w-3 animate-pulse rounded-full bg-red-500'></div>
+          )}
+        </div>
+      </button>
+
+      {/* 사이드바 */}
+      {isSidebarOpen && (
+        <div
+          ref={sidebarRef}
+          className='pointer-events-auto fixed top-0 left-0 z-[9999] h-full w-64 bg-gray-800/95 shadow-xl backdrop-blur-sm'
+        >
+          <div className='flex h-full flex-col p-4'>
+            {/* 사이드바 헤더 */}
+            <div className='mb-6 flex items-center justify-between border-b border-gray-600 pb-4'>
+              <h2 className='text-lg font-bold text-white'>메뉴</h2>
+            </div>
+
+            {/* 메뉴 아이템들 */}
+            <div className='flex flex-1 flex-col gap-2'>
+              {/* 로그인/마이페이지 */}
               <button
-                onClick={isLoggedIn ? openMyPageModal : openLoginModal}
-                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
+                onClick={() => {
+                  setIsSidebarOpen(false);
+                  if (isLoggedIn) {
+                    openMyPageModal();
+                  } else {
+                    openLoginModal();
+                  }
+                }}
+                className='flex items-center gap-3 rounded-lg px-4 py-3 text-left text-white transition-colors hover:bg-gray-700'
               >
                 <svg
-                  className='h-6 w-6'
-                  xmlns='http://www.w3.org/2000/svg'
+                  className='h-5 w-5'
                   fill='none'
                   viewBox='0 0 24 24'
-                  strokeWidth={1.5}
                   stroke='currentColor'
                 >
                   <path
                     strokeLinecap='round'
                     strokeLinejoin='round'
-                    d={
-                      isLoggedIn
-                        ? 'M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z'
-                        : 'M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9'
-                    }
+                    strokeWidth={2}
+                    d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'
                   />
                 </svg>
+                <span className='font-medium'>
+                  {isLoggedIn ? '마이페이지' : '로그인'}
+                </span>
               </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
-                {isLoggedIn ? '마이페이지' : '로그인'}
-              </span>
-            </div>
-            {/* 그룹 버튼 */}
-            <div className='group relative'>
+
+              {/* 그룹 */}
               <button
-                onClick={isLoggedIn ? openGroupModal : openLoginModal}
-                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
+                onClick={() => {
+                  setIsSidebarOpen(false);
+                  if (isLoggedIn) {
+                    openGroupModal();
+                  } else {
+                    openLoginModal();
+                  }
+                }}
+                className='flex items-center gap-3 rounded-lg px-4 py-3 text-left text-white transition-colors hover:bg-gray-700'
               >
                 <svg
-                  className='h-6 w-6'
-                  xmlns='http://www.w3.org/2000/svg'
+                  className='h-5 w-5'
                   fill='none'
                   viewBox='0 0 24 24'
-                  strokeWidth={1.5}
                   stroke='currentColor'
                 >
                   <path
                     strokeLinecap='round'
                     strokeLinejoin='round'
-                    d='M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z'
+                    strokeWidth={2}
+                    d='M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z'
                   />
                 </svg>
+                <span className='font-medium'>그룹</span>
               </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
-                그룹
-              </span>
-            </div>
-            {/* 캔버스 버튼 */}
-            <div className='group relative'>
+
+              {/* 캔버스 */}
               <button
-                onClick={isLoggedIn ? openCanvasModal : openLoginModal}
-                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
+                onClick={() => {
+                  setIsSidebarOpen(false);
+                  if (isLoggedIn) {
+                    openCanvasModal();
+                  } else {
+                    openLoginModal();
+                  }
+                }}
+                className='flex items-center gap-3 rounded-lg px-4 py-3 text-left text-white transition-colors hover:bg-gray-700'
               >
                 <svg
-                  className='h-6 w-6'
-                  xmlns='http://www.w3.org/2000/svg'
+                  className='h-5 w-5'
                   fill='none'
                   viewBox='0 0 24 24'
-                  strokeWidth={1.5}
                   stroke='currentColor'
                 >
                   <path
                     strokeLinecap='round'
                     strokeLinejoin='round'
-                    d='M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125'
+                    strokeWidth={2}
+                    d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'
                   />
                 </svg>
+                <span className='font-medium'>캔버스 이동</span>
               </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
-                캔버스
-              </span>
-            </div>
-            {/* 게임 버튼 */}
-            <div className='group relative'>
+
+              {/* 게임 */}
               <button
-                onClick={isLoggedIn ? openGameModal : openLoginModal}
-                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
+                onClick={() => {
+                  setIsSidebarOpen(false);
+                  if (isLoggedIn) {
+                    openGameModal();
+                  } else {
+                    openLoginModal();
+                  }
+                }}
+                className='flex items-center gap-3 rounded-lg px-4 py-3 text-left text-white transition-colors hover:bg-gray-700'
               >
                 <svg
-                  className='h-6 w-6'
-                  xmlns='http://www.w3.org/2000/svg'
+                  className='h-5 w-5'
                   fill='none'
                   viewBox='0 0 24 24'
-                  strokeWidth={1.5}
                   stroke='currentColor'
                 >
                   <path
                     strokeLinecap='round'
                     strokeLinejoin='round'
+                    strokeWidth={2}
                     d='M6 12h4m-2-2v4m6-2h.01M13 12h.01M18 12h.01'
                   />
                   <rect
@@ -400,90 +471,94 @@ export default function CanvasUIMobile({
                     strokeWidth={1.5}
                   />
                 </svg>
+                <span className='font-medium'>게임</span>
               </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
-                게임
-              </span>
-            </div>
-            {/* 앨범 버튼 */}
-            <div className='group relative'>
+
+              {/* 앨범 */}
               <button
-                onClick={openAlbumModal}
-                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
+                onClick={() => {
+                  setIsSidebarOpen(false);
+                  openAlbumModal();
+                }}
+                className='flex items-center gap-3 rounded-lg px-4 py-3 text-left text-white transition-colors hover:bg-gray-700'
               >
                 <svg
-                  className='h-6 w-6'
-                  xmlns='http://www.w3.org/2000/svg'
+                  className='h-5 w-5'
                   fill='none'
                   viewBox='0 0 24 24'
-                  strokeWidth={1.5}
                   stroke='currentColor'
                 >
                   <path
                     strokeLinecap='round'
                     strokeLinejoin='round'
-                    d='M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z'
+                    strokeWidth={2}
+                    d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'
                   />
                 </svg>
+                <span className='font-medium'>앨범</span>
               </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
-                앨범
-              </span>
-            </div>
-            {/* BGM 버튼 */}
-            <div className='group relative'>
+
+              {/* BGM */}
               <button
-                onClick={toggleBgm}
-                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
+                onClick={() => {
+                  setIsSidebarOpen(false);
+                  toggleBgm();
+                }}
+                className='flex items-center gap-3 rounded-lg px-4 py-3 text-left text-white transition-colors hover:bg-gray-700'
               >
                 {isBgmPlaying ? (
                   <svg
-                    className='h-6 w-6'
-                    xmlns='http://www.w3.org/2000/svg'
+                    className='h-5 w-5'
                     fill='none'
                     viewBox='0 0 24 24'
-                    strokeWidth={1.5}
                     stroke='currentColor'
                   >
                     <path
                       strokeLinecap='round'
                       strokeLinejoin='round'
-                      d='M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z'
+                      strokeWidth={2}
+                      d='M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z'
+                    />
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2'
                     />
                   </svg>
                 ) : (
                   <svg
-                    className='h-6 w-6'
-                    xmlns='http://www.w3.org/2000/svg'
+                    className='h-5 w-5'
                     fill='none'
                     viewBox='0 0 24 24'
-                    strokeWidth={1.5}
                     stroke='currentColor'
                   >
                     <path
                       strokeLinecap='round'
                       strokeLinejoin='round'
-                      d='M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z'
+                      strokeWidth={2}
+                      d='M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z'
                     />
                   </svg>
                 )}
+                <span className='font-medium'>
+                  {isBgmPlaying ? 'BGM 끄기' : 'BGM 켜기'}
+                </span>
               </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
-                {isBgmPlaying ? 'BGM 끄기' : 'BGM 켜기'}
-              </span>
-            </div>
-            {/* 도움말 버튼 */}
-            <div>
+
+              {/* 도움말 */}
               <button
-                onClick={openHelpModal}
-                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
-                title='게임 가이드'
+                onClick={() => {
+                  setIsSidebarOpen(false);
+                  openHelpModal();
+                }}
+                className='flex items-center gap-3 rounded-lg px-4 py-3 text-left text-white transition-colors hover:bg-gray-700'
               >
                 <svg
                   className='h-5 w-5'
                   fill='none'
-                  stroke='currentColor'
                   viewBox='0 0 24 24'
+                  stroke='currentColor'
                 >
                   <path
                     strokeLinecap='round'
@@ -492,14 +567,13 @@ export default function CanvasUIMobile({
                     d='M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
                   />
                 </svg>
+                <span className='font-medium'>도움말</span>
               </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
-                도움말
-              </span>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
       {/* 좌표 표시창 */}
       <div className='pointer-events-none fixed right-4 bottom-5 z-[9999] rounded-[8px] bg-[rgba(0,0,0,0.8)] p-[10px] text-white'>
         {hoverPos ? `(${hoverPos.x}, ${hoverPos.y})` : 'OutSide'}

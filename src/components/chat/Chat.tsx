@@ -149,6 +149,37 @@ function Chat() {
     }
   }, [isGroupModalOpen, isLoggedIn, isOpen, closeChat]);
 
+  // 채팅창 외부 클릭 시 닫기 (모바일용)
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // 모바일 디바이스인지 확인
+    const isMobile =
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      );
+
+    if (!isMobile) return; // PC에서는 이벤트 리스너를 추가하지 않음
+
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Element;
+      const chatContainer = document.querySelector('.chat-container');
+
+      // 채팅창 내부 클릭이 아닌 경우에만 닫기
+      if (chatContainer && !chatContainer.contains(target)) {
+        setIsOpen(false);
+        closeChat();
+      }
+    };
+
+    // 모바일에서만 touchstart 이벤트 추가
+    document.addEventListener('touchstart', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isOpen, closeChat]);
+
   // 컴포넌트 최상단
   useEffect(() => {
     if (isSyncEnabled && currentGroupId) {
@@ -194,7 +225,7 @@ function Chat() {
     >
       {/* 채팅창 UI */}
       <div
-        className={`mb-2 flex w-80 flex-col rounded-xl border border-white/30 bg-black/30 shadow-2xl backdrop-blur-md transition-all duration-300 ease-in-out ${isOpen ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'}`}
+        className={`chat-container mb-2 flex w-80 flex-col rounded-xl border border-white/30 bg-black/30 shadow-2xl backdrop-blur-md transition-all duration-300 ease-in-out ${isOpen ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'}`}
         style={{
           touchAction: 'manipulation',
           height: '500px',
