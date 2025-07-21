@@ -1117,6 +1117,7 @@ function GameCanvas({
     DRAG_THRESHOLD,
     handleConfirm,
     isGameMode: true, // 게임 모드 활성화
+    showQuestionModal, // 문제 모달 상태 전달
   });
 
   // 게임 나가기 핸들러
