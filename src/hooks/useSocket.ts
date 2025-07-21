@@ -78,7 +78,7 @@ export const useSocket = (
         showToast(
           `게임 시작 30초 전: ${data.title}`,
           String(data.canvas_id),
-          25000
+          27000
         ); // 25초 후 자동 사라짐
       }
     );
