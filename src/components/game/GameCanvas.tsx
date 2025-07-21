@@ -67,6 +67,7 @@ function GameCanvas({
   const [showExitModal, setShowExitModal] = useState(false); // 나가기 모달 상태
   const [isGameEnded, setIsGameEnded] = useState(false); // 게임 종료 상태
   const [isWaitingForResults, setIsWaitingForResults] = useState(false); // 결과 대기 상태
+  const [hasReceivedGameResult, setHasReceivedGameResult] = useState(false); // 게임 결과 수신 여부
   const [gameResults, setGameResults] = useState<Array<{
     username: string;
     rank: number;
@@ -530,6 +531,9 @@ function GameCanvas({
       // 배경음악 중지
       stopGameMusic();
 
+      // 결과 수신 여부 표시
+      setHasReceivedGameResult(true);
+
       // 결과 저장 및 결과 모달 표시
       setGameResults(data.results);
       setIsWaitingForResults(false);
@@ -554,6 +558,7 @@ function GameCanvas({
         server_time: string;
         remain_time: number;
       }) => {
+        // 게임 결과를 이미 받았다면 시간만 업데이트
         setGameTime(data.remain_time);
       },
       []
@@ -1027,14 +1032,17 @@ function GameCanvas({
       return () => clearInterval(timer);
     } else if (gameTime <= 1) {
       // 게임 시간이 종료되면 결과 화면 표시
-      stopGameMusic();
-      playAdventureMusic();
-      setIsWaitingForResults(true);
+      // 게임 결과를 이미 받았다면 종료 처리를 하지 않음
+      if (!hasReceivedGameResult) {
+        stopGameMusic();
+        playAdventureMusic();
+        setIsWaitingForResults(true);
 
-      // 사망 모달이 표시되어 있다면 닫기
-      setShowDeathModal(false);
+        // 사망 모달이 표시되어 있다면 닫기
+        setShowDeathModal(false);
+      }
     }
-  }, [isGameStarted, gameTime, stopGameMusic, user?.nickname]);
+  }, [isGameStarted, gameTime, stopGameMusic, user?.nickname, hasReceivedGameResult]);
 
   useEffect(() => {
     if (initialCanvasId && initialCanvasId !== canvas_id) {
