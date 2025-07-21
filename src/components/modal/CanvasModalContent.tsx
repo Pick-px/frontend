@@ -416,6 +416,40 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
     setIsDragging(false);
   };
 
+  // 터치 이벤트 핸들러 추가
+  const handleTouchStart = (e: React.TouchEvent, type: 'active' | 'event') => {
+    const scrollRef = type === 'active' ? activeScrollRef : eventScrollRef;
+    if (scrollRef.current && e.touches.length === 1) {
+      setIsDragging(true);
+      setStartX(e.touches[0].pageX - scrollRef.current.offsetLeft);
+      setScrollStart(scrollRef.current.scrollLeft);
+      // 터치 시작 시 기본 스크롤 방지
+      e.preventDefault();
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent, type: 'active' | 'event') => {
+    if (!isDragging || e.touches.length !== 1) return;
+    // 드래그 중일 때 기본 스크롤과 선택 방지
+    e.preventDefault();
+
+    const scrollRef = type === 'active' ? activeScrollRef : eventScrollRef;
+    const setScrollLeft =
+      type === 'active' ? setActiveScrollLeft : setEventScrollLeft;
+
+    if (scrollRef.current) {
+      const x = e.touches[0].pageX - scrollRef.current.offsetLeft;
+      const walk = (x - startX) * 1.5; // 드래그 감도 조정
+      const newScrollLeft = scrollStart - walk;
+      scrollRef.current.scrollLeft = newScrollLeft;
+      setScrollLeft(newScrollLeft);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
+
   if (loading) {
     return (
       <div className='flex flex-col'>
@@ -554,11 +588,19 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
               <div
                 ref={activeScrollRef}
                 className='scrollbar-hide flex cursor-grab gap-3 overflow-x-auto active:cursor-grabbing'
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                style={{
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none',
+                  WebkitOverflowScrolling: 'touch', // iOS 스크롤 최적화
+                  touchAction: 'pan-x', // 수평 스크롤만 허용
+                }}
                 onMouseDown={(e) => handleMouseDown(e, 'active')}
                 onMouseMove={(e) => handleMouseMove(e, 'active')}
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
+                onTouchStart={(e) => handleTouchStart(e, 'active')}
+                onTouchMove={(e) => handleTouchMove(e, 'active')}
+                onTouchEnd={handleTouchEnd}
               >
                 {publicCanvases.map((canvas) => (
                   <div
@@ -645,11 +687,19 @@ const CanvasModalContent = ({ onClose }: CanvasModalContentProps) => {
             <div
               ref={eventScrollRef}
               className='scrollbar-hide flex cursor-grab gap-3 overflow-x-auto active:cursor-grabbing'
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              style={{
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+                WebkitOverflowScrolling: 'touch', // iOS 스크롤 최적화
+                touchAction: 'pan-x', // 수평 스크롤만 허용
+              }}
               onMouseDown={(e) => handleMouseDown(e, 'event')}
               onMouseMove={(e) => handleMouseMove(e, 'event')}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
+              onTouchStart={(e) => handleTouchStart(e, 'event')}
+              onTouchMove={(e) => handleTouchMove(e, 'event')}
+              onTouchEnd={handleTouchEnd}
             >
               {eventCanvases
                 .filter(
