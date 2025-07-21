@@ -194,7 +194,16 @@ function Chat() {
     >
       {/* 채팅창 UI */}
       <div
-        className={`mb-2 flex h-[500px] w-80 flex-col rounded-xl border border-white/30 bg-black/30 shadow-2xl backdrop-blur-md transition-all duration-300 ease-in-out ${isOpen ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'}`}
+        className={`mb-2 flex w-80 flex-col rounded-xl border border-white/30 bg-black/30 shadow-2xl backdrop-blur-md transition-all duration-300 ease-in-out ${isOpen ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'}`}
+        style={{
+          touchAction: 'manipulation',
+          height: '500px',
+          maxHeight: '500px',
+          position: 'relative',
+          zIndex: 50,
+        }}
+        onTouchStart={(e) => e.stopPropagation()}
+        onTouchMove={(e) => e.stopPropagation()}
       >
         <div className='flex h-full flex-col'>
           {/* 헤더: 동적 제목 표시 */}
