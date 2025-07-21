@@ -59,6 +59,7 @@ interface UseCanvasInteractionProps {
 
   // Game mode
   isGameMode?: boolean;
+  showQuestionModal?: boolean;
 }
 
 export const useCanvasInteraction = ({
@@ -94,6 +95,7 @@ export const useCanvasInteraction = ({
   DRAG_THRESHOLD,
   handleConfirm,
   isGameMode = false,
+  showQuestionModal = false,
 }: UseCanvasInteractionProps) => {
   // Refs managed within the hook
   const isPanningRef = useRef<boolean>(false);
@@ -461,7 +463,7 @@ export const useCanvasInteraction = ({
           moved = true;
           break;
         case 'Enter':
-          if (!isChatOpen && !cooldown && isLoggedIn) {
+          if (!isChatOpen && !cooldown && isLoggedIn && !showQuestionModal) {
             handleConfirm();
           }
           break;
@@ -485,7 +487,7 @@ export const useCanvasInteraction = ({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [draw, handleConfirm, canvasSize, isChatOpen]);
+  }, [draw, handleConfirm, canvasSize, isChatOpen, showQuestionModal]);
 
   useEffect(() => {
     const interactionCanvas = interactionCanvasRef.current;

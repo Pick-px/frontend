@@ -69,21 +69,31 @@ export default function CanvasUIMobile({
     openGameModal,
   } = useModalStore();
 
-  // 드롭다움 열림, 닫힘 상태
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  // 사이드바 열림, 닫힘 상태
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const toggleButtonRef = useRef<HTMLButtonElement>(null);
 
   // useEffect(() => {
   //   showInstructionsToast();
   // }, []);
 
   useEffect(() => {
-    if (!isMenuOpen) return;
+    if (!isSidebarOpen) return;
 
     function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsMenuOpen(false); // 메뉴를 닫습니다.
+      const target = event.target as Node;
+
+      // 토글 버튼이나 사이드바 내부 클릭은 무시
+      if (
+        toggleButtonRef.current?.contains(target) ||
+        sidebarRef.current?.contains(target)
+      ) {
+        return;
       }
+
+      // 외부 클릭 시 사이드바 닫기
+      setIsSidebarOpen(false);
     }
 
     document.addEventListener('mousedown', handleClickOutside);
@@ -91,13 +101,59 @@ export default function CanvasUIMobile({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isMenuOpen]);
+  }, [isSidebarOpen]);
 
   return (
     <>
       <ToastContainer />
       {/* 컬러 피커 */}
-      <div className='pointer-events-auto fixed top-2 right-2 flex gap-2'>
+      <div className='pointer-events-auto fixed top-2 right-2 flex gap-4'>
+        <div className='pointer-events-auto fixed top-2 right-11 mx-3 flex flex-col items-center'>
+          <span className='mb-1 text-xs text-gray-200'>확정</span>
+          <button
+            disabled={cooldown}
+            onMouseDown={() => !cooldown && setIsPressed(true)}
+            onMouseUp={() => {
+              setIsPressed(false);
+              if (cooldown) return;
+              if (isLoggedIn) {
+                setShowConfirmEffect(true);
+                setTimeout(() => setShowConfirmEffect(false), 2000);
+                onConfirm();
+              } else {
+                openLoginModal();
+              }
+            }}
+            onMouseLeave={() => setIsPressed(false)}
+            className={`flex h-8 w-8 items-center justify-center rounded-full transition-all duration-300 ${
+              cooldown
+                ? 'cursor-not-allowed border-4 border-red-600 bg-red-500/40 text-red-300 shadow-lg shadow-red-500/50'
+                : 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-lg hover:scale-105 hover:from-emerald-400 hover:to-cyan-400 hover:shadow-emerald-400/30'
+            } ${isPressed ? 'scale-95' : 'scale-100'}`}
+          >
+            {cooldown ? (
+              <div className='flex h-full w-full items-center justify-center'>
+                <span className='animate-pulse font-mono text-lg font-bold tracking-wider text-red-300'>
+                  {timeLeft}
+                </span>
+              </div>
+            ) : (
+              <svg
+                className='h-6 w-6'
+                fill='none'
+                stroke='currentColor'
+                viewBox='0 0 24 24'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M5 13L9 17L19 7'
+                />
+              </svg>
+            )}
+          </button>
+        </div>
         {canvasType === CanvasType.EVENT_COLORLIMIT ? (
           <div className='flex flex-col gap-2'>
             {['#000000', '#808080', '#c0c0c0', '#ffffff'].map((c) => (
@@ -117,374 +173,31 @@ export default function CanvasUIMobile({
             ))}
           </div>
         ) : (
-          <input
-            type='color'
-            value={color}
-            onChange={(e) => {
-              const newColor = e.target.value;
-              setColor(newColor);
-              onSelectColor(newColor);
-            }}
-            className='h-8 w-8 cursor-pointer rounded-full p-0'
-            title='색상 선택'
-          />
+          <div className='flex flex-col items-center'>
+            <span className='mb-1 text-xs text-gray-200'>색상 선택</span>
+            <input
+              type='color'
+              value={color}
+              onChange={(e) => {
+                const newColor = e.target.value;
+                setColor(newColor);
+                onSelectColor(newColor);
+              }}
+              className='h-8 w-8 cursor-pointer rounded-full border-2 border-blue-400 p-0 shadow-md'
+              title='색상 선택'
+            />
+          </div>
         )}
-
-        <div className='pointer-events-auto fixed top-2 right-11 flex h-8 w-8 gap-2 rounded-full'>
-          <button
-            disabled={cooldown}
-            onMouseDown={() => !cooldown && setIsPressed(true)}
-            onMouseUp={() => {
-              setIsPressed(false);
-              if (cooldown) return;
-              if (isLoggedIn) {
-                setShowConfirmEffect(true);
-                setTimeout(() => setShowConfirmEffect(false), 2000);
-                onConfirm();
-              } else {
-                openLoginModal();
-              }
-            }}
-            onMouseLeave={() => setIsPressed(false)}
-            className={`flex h-8 w-8 items-center justify-center rounded-full transition-all duration-300 ${
-              cooldown
-                ? 'cursor-not-allowed border border-red-500/30 bg-red-500/20 text-red-400'
-                : 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-lg hover:scale-105 hover:from-emerald-400 hover:to-cyan-400 hover:shadow-emerald-400/30'
-            } ${isPressed ? 'scale-95' : 'scale-100'}`}
-          >
-            {cooldown ? (
-              <svg
-                className='h-6 w-6 animate-spin'
-                fill='none'
-                viewBox='0 0 24 24'
-              >
-                <circle
-                  className='opacity-25'
-                  cx='12'
-                  cy='12'
-                  r='10'
-                  stroke='currentColor'
-                  strokeWidth='4'
-                ></circle>
-                <path
-                  className='opacity-75'
-                  fill='currentColor'
-                  d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
-                ></path>
-              </svg>
-            ) : (
-              <svg
-                className='h-6 w-6'
-                fill='none'
-                stroke='currentColor'
-                viewBox='0 0 24 24'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M5 13L9 17L19 7'
-                />
-              </svg>
-            )}
-          </button>
-        </div>
-
-        <div className='pointer-events-auto fixed bottom-4 left-14 z-[9999] flex gap-2'>
-          {onImageAttach && (
-            <div className='flex flex-col gap-1'>
-              <div className='flex items-center gap-2'>
-                <label
-                  className='flex h-[40px] w-[40px] cursor-pointer items-center justify-center rounded-full bg-gray-700 text-white transition-colors duration-200 hover:bg-gray-600'
-                  title='이미지 첨부 (JPG, PNG, GIF, WebP)'
-                >
-                  <svg
-                    className='h-5 w-5'
-                    fill='none'
-                    stroke='currentColor'
-                    viewBox='0 0 24 24'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'
-                    />
-                  </svg>
-                  <input
-                    type='file'
-                    accept='image/jpeg,image/jpg,image/png,image/gif,image/webp'
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        setShowPalette(false);
-                        onImageAttach(file);
-                      }
-                      e.target.value = '';
-                    }}
-                    className='hidden'
-                  />
-                </label>
-
-                {hasImage && (
-                  <div className='flex items-center gap-2 rounded-md bg-gray-800/80 px-3 py-1'>
-                    {setImageTransparency && (
-                      <div className='flex items-center gap-2'>
-                        <span className='text-xs whitespace-nowrap text-white'>
-                          투명도
-                        </span>
-                        <input
-                          type='range'
-                          min='0.1'
-                          max='1'
-                          step='0.1'
-                          value={imageTransparency}
-                          onChange={(e) =>
-                            setImageTransparency(parseFloat(e.target.value))
-                          }
-                          className='h-2 w-[60px] cursor-pointer appearance-none rounded-lg bg-gray-600'
-                          title='이미지 투명도 조절'
-                        />
-                        <span className='w-8 text-xs text-gray-300'>
-                          {Math.round(imageTransparency * 100)}%
-                        </span>
-                      </div>
-                    )}
-
-                    {onImageDelete && (
-                      <button
-                        onClick={onImageDelete}
-                        className='flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-full bg-red-600 text-white transition-colors duration-200 hover:bg-red-500'
-                        title='이미지 삭제'
-                      >
-                        <svg
-                          className='h-4 w-4'
-                          fill='none'
-                          stroke='currentColor'
-                          viewBox='0 0 24 24'
-                        >
-                          <path
-                            strokeLinecap='round'
-                            strokeLinejoin='round'
-                            strokeWidth={2}
-                            d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
-                          />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
       </div>
 
-      <div
-        ref={menuRef}
-        className='pointer-events-auto fixed top-[10px] left-[10px]'
-      >
-        {/* 항상 보이는 메뉴 토글 버튼 (햄버거 아이콘) */}
-        <button
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
-        >
-          <svg
-            className='h-6 w-6'
-            fill='none'
-            viewBox='0 0 24 24'
-            stroke='currentColor'
-          >
-            <path
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              strokeWidth={2}
-              d='M4 6h16M4 12h16M4 18h16'
-            />
-          </svg>
-        </button>
-
-        {/* isMenuOpen이 true일 때만 드롭다운 메뉴가 보입니다. */}
-        {isMenuOpen && (
-          <div className='absolute top-full mt-2 flex w-auto flex-col gap-2'>
-            {/* 로그인/마이페이지 버튼 */}
-            <div className='group relative'>
-              <button
-                onClick={isLoggedIn ? openMyPageModal : openLoginModal}
-                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
-              >
-                <svg
-                  className='h-6 w-6'
-                  xmlns='http://www.w3.org/2000/svg'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  strokeWidth={1.5}
-                  stroke='currentColor'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    d={
-                      isLoggedIn
-                        ? 'M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z'
-                        : 'M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9'
-                    }
-                  />
-                </svg>
-              </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
-                {isLoggedIn ? '마이페이지' : '로그인'}
-              </span>
-            </div>
-            {/* 그룹 버튼 */}
-            <div className='group relative'>
-              <button
-                onClick={isLoggedIn ? openGroupModal : openLoginModal}
-                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
-              >
-                <svg
-                  className='h-6 w-6'
-                  xmlns='http://www.w3.org/2000/svg'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  strokeWidth={1.5}
-                  stroke='currentColor'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    d='M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m-7.5-2.962a3.75 3.75 0 015.962 0L12 15.75M12 15.75l-2.47-4.772a3.75 3.75 0 015.962 0L12 15.75zM21 12a9 9 0 11-18 0 9 9 0 0118 0z'
-                  />
-                </svg>
-              </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
-                그룹
-              </span>
-            </div>
-            {/* 캔버스 버튼 */}
-            <div className='group relative'>
-              <button
-                onClick={isLoggedIn ? openCanvasModal : openLoginModal}
-                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
-              >
-                <svg
-                  className='h-6 w-6'
-                  xmlns='http://www.w3.org/2000/svg'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  strokeWidth={1.5}
-                  stroke='currentColor'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    d='M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125'
-                  />
-                </svg>
-              </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
-                캔버스
-              </span>
-            </div>
-            {/* 게임 버튼 */}
-            <div className='group relative'>
-              <button
-                onClick={isLoggedIn ? openGameModal : openLoginModal}
-                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
-              >
-                <svg
-                  className='h-6 w-6'
-                  xmlns='http://www.w3.org/2000/svg'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  strokeWidth={1.5}
-                  stroke='currentColor'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    d='M6 12h4m-2-2v4m6-2h.01M13 12h.01M18 12h.01'
-                  />
-                  <rect x="4" y="8" width="16" height="8" rx="2" strokeWidth={1.5} />
-                </svg>
-              </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
-                게임
-              </span>
-            </div>
-            {/* 앨범 버튼 */}
-            <div className='group relative'>
-              <button
-                onClick={openAlbumModal}
-                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
-              >
-                <svg
-                  className='h-6 w-6'
-                  xmlns='http://www.w3.org/2000/svg'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  strokeWidth={1.5}
-                  stroke='currentColor'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    d='M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z'
-                  />
-                </svg>
-              </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
-                앨범
-              </span>
-            </div>
-            {/* BGM 버튼 */}
-            <div className='group relative'>
-              <button
-                onClick={toggleBgm}
-                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
-              >
-                {isBgmPlaying ? (
-                  <svg
-                    className='h-6 w-6'
-                    xmlns='http://www.w3.org/2000/svg'
-                    fill='none'
-                    viewBox='0 0 24 24'
-                    strokeWidth={1.5}
-                    stroke='currentColor'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      d='M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z'
-                    />
-                  </svg>
-                ) : (
-                  <svg
-                    className='h-6 w-6'
-                    xmlns='http://www.w3.org/2000/svg'
-                    fill='none'
-                    viewBox='0 0 24 24'
-                    strokeWidth={1.5}
-                    stroke='currentColor'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      d='M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z'
-                    />
-                  </svg>
-                )}
-              </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
-                {isBgmPlaying ? 'BGM 끄기' : 'BGM 켜기'}
-              </span>
-            </div>
-            {/* 도움말 버튼 */}
-            <div>
-              <button
-                onClick={openHelpModal}
-                className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white shadow-lg transition-transform hover:bg-gray-600 active:scale-95'
-                title='게임 가이드'
+      {/* 이미지 첨부/투명도/삭제 UI - 하단 고정 */}
+      <div className='pointer-events-auto fixed bottom-4 left-14 flex gap-2'>
+        {onImageAttach && (
+          <div className='flex flex-col gap-1'>
+            <div className='flex items-center gap-2'>
+              <label
+                className='flex h-[40px] w-[40px] cursor-pointer items-center justify-center rounded-full bg-gray-700 text-white transition-colors duration-200 hover:bg-gray-600'
+                title='이미지 첨부 (JPG, PNG, GIF, WebP)'
               >
                 <svg
                   className='h-5 w-5'
@@ -496,54 +209,380 @@ export default function CanvasUIMobile({
                     strokeLinecap='round'
                     strokeLinejoin='round'
                     strokeWidth={2}
-                    d='M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+                    d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'
                   />
                 </svg>
-              </button>
-              <span className='absolute top-1/2 left-full ml-3 -translate-y-1/2 scale-0 rounded bg-gray-900 p-2 text-xs whitespace-nowrap text-white transition-all group-hover:scale-100'>
-                도움말
-              </span>
+                <input
+                  type='file'
+                  accept='image/jpeg,image/jpg,image/png,image/gif,image/webp'
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setShowPalette(false);
+                      onImageAttach(file);
+                    }
+                    e.target.value = '';
+                  }}
+                  className='hidden'
+                />
+              </label>
+
+              {hasImage && (
+                <div className='flex items-center gap-2 rounded-md bg-gray-800/80 px-3 py-1'>
+                  {setImageTransparency && (
+                    <div className='flex items-center gap-2'>
+                      <span className='text-xs whitespace-nowrap text-white'>
+                        투명도
+                      </span>
+                      <input
+                        type='range'
+                        min='0.1'
+                        max='1'
+                        step='0.1'
+                        value={imageTransparency}
+                        onChange={(e) =>
+                          setImageTransparency(parseFloat(e.target.value))
+                        }
+                        onTouchStart={(e) => e.stopPropagation()}
+                        onTouchMove={(e) => e.stopPropagation()}
+                        onTouchEnd={(e) => e.stopPropagation()}
+                        className='h-4 w-[60px] cursor-pointer touch-manipulation appearance-none rounded-lg bg-gray-600'
+                        style={{
+                          WebkitAppearance: 'none',
+                          appearance: 'none',
+                          background: 'transparent',
+                          cursor: 'pointer',
+                          touchAction: 'manipulation',
+                        }}
+                        title='이미지 투명도 조절'
+                      />
+                      <span className='w-8 text-xs text-gray-300'>
+                        {Math.round(imageTransparency * 100)}%
+                      </span>
+                    </div>
+                  )}
+
+                  {onImageDelete && (
+                    <button
+                      onClick={onImageDelete}
+                      className='flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-full bg-red-600 text-white transition-colors duration-200 hover:bg-red-500'
+                      title='이미지 삭제'
+                    >
+                      <svg
+                        className='h-4 w-4'
+                        fill='none'
+                        stroke='currentColor'
+                        viewBox='0 0 24 24'
+                      >
+                        <path
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          strokeWidth={2}
+                          d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
+                        />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}
       </div>
+
+      {/* 사이드바 토글 버튼 */}
+      <button
+        ref={toggleButtonRef}
+        onClick={() => {
+          console.log('토글 버튼 클릭됨, 현재 상태:', isSidebarOpen);
+          setIsSidebarOpen(!isSidebarOpen);
+        }}
+        className='pointer-events-auto fixed top-[22px] left-[10px] z-[10000] flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-xl transition-all duration-300 hover:scale-110 hover:from-blue-600 hover:to-purple-700 active:scale-95'
+        title={isSidebarOpen ? '메뉴 닫기' : '메뉴 열기'}
+      >
+        <div className='relative'>
+          {/* 햄버거 아이콘 (사이드바가 닫혀있을 때) */}
+          <svg
+            className={`h-7 w-7 transition-all duration-300 ${
+              isSidebarOpen ? 'rotate-90 opacity-0' : 'rotate-0 opacity-100'
+            }`}
+            fill='none'
+            viewBox='0 0 24 24'
+            stroke='currentColor'
+          >
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeWidth={2.5}
+              d='M4 6h16M4 12h16M4 18h16'
+            />
+          </svg>
+
+          {/* X 아이콘 (사이드바가 열려있을 때) */}
+          <svg
+            className={`absolute inset-0 h-7 w-7 transition-all duration-300 ${
+              isSidebarOpen ? 'rotate-0 opacity-100' : '-rotate-90 opacity-0'
+            }`}
+            fill='none'
+            viewBox='0 0 24 24'
+            stroke='currentColor'
+          >
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeWidth={2.5}
+              d='M6 18L18 6M6 6l12 12'
+            />
+          </svg>
+
+          {/* 작은 알림 점 (사이드바가 닫혀있을 때만 표시) */}
+          {!isSidebarOpen && (
+            <div className='absolute -top-1 -right-1 h-3 w-3 animate-pulse rounded-full bg-red-500'></div>
+          )}
+        </div>
+      </button>
+
+      {/* 사이드바 */}
+      {isSidebarOpen && (
+        <div
+          ref={sidebarRef}
+          className='pointer-events-auto fixed top-0 left-0 z-[9999] h-full w-64 bg-gray-800/95 shadow-xl backdrop-blur-sm'
+        >
+          <div className='flex h-full flex-col p-4'>
+            {/* 사이드바 헤더 */}
+            <div className='mb-6 flex items-center justify-between border-b border-gray-600 pb-4'>
+              <h2 className='text-lg font-bold text-white'>{''}</h2>
+            </div>
+
+            {/* 메뉴 아이템들 */}
+            <div className='flex flex-1 flex-col gap-2'>
+              {/* 로그인/마이페이지 */}
+              <button
+                onClick={() => {
+                  setIsSidebarOpen(false);
+                  if (isLoggedIn) {
+                    openMyPageModal();
+                  } else {
+                    openLoginModal();
+                  }
+                }}
+                className='flex items-center gap-3 rounded-lg px-4 py-3 text-left text-white transition-colors hover:bg-gray-700'
+              >
+                <svg
+                  className='h-5 w-5'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  stroke='currentColor'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'
+                  />
+                </svg>
+                <span className='font-medium'>
+                  {isLoggedIn ? '마이페이지' : '로그인'}
+                </span>
+              </button>
+
+              {/* 그룹 */}
+              <button
+                onClick={() => {
+                  setIsSidebarOpen(false);
+                  if (isLoggedIn) {
+                    openGroupModal();
+                  } else {
+                    openLoginModal();
+                  }
+                }}
+                className='flex items-center gap-3 rounded-lg px-4 py-3 text-left text-white transition-colors hover:bg-gray-700'
+              >
+                <svg
+                  className='h-5 w-5'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  stroke='currentColor'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z'
+                  />
+                </svg>
+                <span className='font-medium'>그룹</span>
+              </button>
+
+              {/* 캔버스 */}
+              <button
+                onClick={() => {
+                  setIsSidebarOpen(false);
+                  if (isLoggedIn) {
+                    openCanvasModal();
+                  } else {
+                    openLoginModal();
+                  }
+                }}
+                className='flex items-center gap-3 rounded-lg px-4 py-3 text-left text-white transition-colors hover:bg-gray-700'
+              >
+                <svg
+                  className='h-5 w-5'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  stroke='currentColor'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'
+                  />
+                </svg>
+                <span className='font-medium'>캔버스</span>
+              </button>
+
+              {/* 게임 */}
+              <button
+                onClick={() => {
+                  setIsSidebarOpen(false);
+                  if (isLoggedIn) {
+                    openGameModal();
+                  } else {
+                    openLoginModal();
+                  }
+                }}
+                className='flex items-center gap-3 rounded-lg px-4 py-3 text-left text-white transition-colors hover:bg-gray-700'
+              >
+                <svg
+                  className='h-5 w-5'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  stroke='currentColor'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M6 12h4m-2-2v4m6-2h.01M13 12h.01M18 12h.01'
+                  />
+                  <rect
+                    x='4'
+                    y='8'
+                    width='16'
+                    height='8'
+                    rx='2'
+                    strokeWidth={1.5}
+                  />
+                </svg>
+                <span className='font-medium'>게임 모드</span>
+              </button>
+
+              {/* 갤러리 */}
+              <button
+                onClick={() => {
+                  setIsSidebarOpen(false);
+                  openAlbumModal();
+                }}
+                className='flex items-center gap-3 rounded-lg px-4 py-3 text-left text-white transition-colors hover:bg-gray-700'
+              >
+                <svg
+                  className='h-5 w-5'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  stroke='currentColor'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'
+                  />
+                </svg>
+                <span className='font-medium'>갤러리</span>
+              </button>
+
+              {/* BGM */}
+              <button
+                onClick={() => {
+                  toggleBgm();
+                }}
+                className='flex items-center gap-3 rounded-lg px-4 py-3 text-left text-white transition-colors hover:bg-gray-700'
+              >
+                {isBgmPlaying ? (
+                  <svg
+                    className='h-5 w-5'
+                    fill='none'
+                    viewBox='0 0 24 24'
+                    stroke='currentColor'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z'
+                    />
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2'
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    className='h-5 w-5'
+                    fill='none'
+                    viewBox='0 0 24 24'
+                    stroke='currentColor'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z'
+                    />
+                  </svg>
+                )}
+                <span className='font-medium'>
+                  {isBgmPlaying ? 'BGM 끄기' : 'BGM 켜기'}
+                </span>
+              </button>
+
+              {/* 도움말 */}
+              <button
+                onClick={() => {
+                  setIsSidebarOpen(false);
+                  openHelpModal();
+                }}
+                className='flex items-center gap-3 rounded-lg px-4 py-3 text-left text-white transition-colors hover:bg-gray-700'
+              >
+                <svg
+                  className='h-5 w-5'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  stroke='currentColor'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+                  />
+                </svg>
+                <span className='font-medium'>도움말</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 좌표 표시창 */}
       <div className='pointer-events-none fixed right-4 bottom-5 z-[9999] rounded-[8px] bg-[rgba(0,0,0,0.8)] p-[10px] text-white'>
         {hoverPos ? `(${hoverPos.x}, ${hoverPos.y})` : 'OutSide'}
       </div>
 
-      {/* 쿨타임 창 : 쿨타임 중에만 표시*/}
-      {cooldown && (
-        <div className='pointer-events-none fixed bottom-[20px] left-1/2 z-[9999] -translate-x-1/2 transform'>
-          <div className='relative'>
-            {/* 외부 링 */}
-            <div
-              className='h-16 w-16 animate-spin rounded-full border-4 border-red-500/60'
-              style={{ animationDuration: '2s' }}
-            ></div>
-            {/* 중간 링 */}
-            <div
-              className='absolute inset-1 animate-spin rounded-full border-2 border-orange-400/50'
-              style={{
-                animationDuration: '1.5s',
-                animationDirection: 'reverse',
-              }}
-            ></div>
-            {/* 내부 원 */}
-            <div className='absolute inset-3 flex animate-pulse items-center justify-center rounded-full border border-red-400/60 bg-gradient-to-br from-red-900/80 to-black/70 shadow-2xl backdrop-blur-xl'>
-              <span className='animate-pulse font-mono text-xl font-bold tracking-wider text-red-300'>
-                {timeLeft}
-              </span>
-            </div>
-            {/* 글로우 효과 */}
-            <div className='absolute inset-0 animate-ping rounded-full bg-red-500/15'></div>
-            <div
-              className='absolute inset-0 animate-ping rounded-full bg-orange-400/10'
-              style={{ animationDelay: '1s' }}
-            ></div>
-          </div>
-        </div>
-      )}
+      {/* 쿨타임 창 제거 - 확정 버튼으로 이동 */}
     </>
   );
 }

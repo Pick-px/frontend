@@ -38,6 +38,12 @@ type ModalState = {
   isCanvasEndedModalOpen: boolean;
   openCanvasEndedModal: () => void;
   closeCanvasEndedModal: () => void;
+  
+  isGameAlertOpen: boolean;
+  gameAlertMessage: string;
+  gameAlertCanvasId: string;
+  openGameAlert: (message: string, canvasId: string) => void;
+  closeGameAlert: () => void;
 };
 
 export const useModalStore = create<ModalState>((set) => ({
@@ -53,7 +59,8 @@ export const useModalStore = create<ModalState>((set) => ({
       isGroupModalOpen: false,
       isChatOpen: false,
       isHelpModalOpen: false,
-      isCanvasEndedModalOpen: false, // 추가
+      isCanvasEndedModalOpen: false,
+      isGameAlertOpen: false,
     }),
   closeLoginModal: () => set({ isLoginModalOpen: false }),
 
@@ -179,4 +186,16 @@ export const useModalStore = create<ModalState>((set) => ({
       isCanvasEndedModalOpen: true, // 추가
     }),
   closeCanvasEndedModal: () => set({ isCanvasEndedModalOpen: false }),
+  
+  // 게임 알림 모달 상태
+  isGameAlertOpen: false,
+  gameAlertMessage: '',
+  gameAlertCanvasId: '',
+  openGameAlert: (message: string, canvasId: string) =>
+    set({
+      isGameAlertOpen: true,
+      gameAlertMessage: message,
+      gameAlertCanvasId: canvasId,
+    }),
+  closeGameAlert: () => set({ isGameAlertOpen: false }),
 }));

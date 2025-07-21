@@ -70,6 +70,8 @@ const GameModalContent = ({ onClose }: GameModalContentProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollStart, setScrollStart] = useState(0);
+  const [dragDistance, setDragDistance] = useState(0); // 드래그 거리 추가
+  const DRAG_THRESHOLD = 10; // 드래그로 간주할 최소 거리 (픽셀)
   const { openGameModal } = useModalStore();
   const { canvas_id } = useCanvasStore();
 
@@ -279,7 +281,7 @@ const GameModalContent = ({ onClose }: GameModalContentProps) => {
   };
 
   const handleCanvasSelect = (e: React.MouseEvent, canvasId: number) => {
-    if (isDragging) {
+    if (isDragging && dragDistance > DRAG_THRESHOLD) {
       e.preventDefault();
       return;
     }
@@ -340,6 +342,7 @@ const GameModalContent = ({ onClose }: GameModalContentProps) => {
       setIsDragging(true);
       setStartX(e.pageX - scrollRef.current.offsetLeft);
       setScrollStart(scrollRef.current.scrollLeft);
+      setDragDistance(0); // 드래그 거리 초기화
     }
   };
 
@@ -357,10 +360,51 @@ const GameModalContent = ({ onClose }: GameModalContentProps) => {
       const newScrollLeft = scrollStart - walk;
       scrollRef.current.scrollLeft = newScrollLeft;
       setScrollLeft(newScrollLeft);
+
+      // 드래그 거리 업데이트
+      setDragDistance(Math.abs(walk));
     }
   };
 
   const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // 터치 이벤트 핸들러 추가
+  const handleTouchStart = (e: React.TouchEvent, type: 'active' | 'event') => {
+    const scrollRef = type === 'active' ? activeScrollRef : eventScrollRef;
+    if (scrollRef.current && e.touches.length === 1) {
+      setIsDragging(true);
+      setStartX(e.touches[0].pageX - scrollRef.current.offsetLeft);
+      setScrollStart(scrollRef.current.scrollLeft);
+      setDragDistance(0); // 드래그 거리 초기화
+      // 터치 시작 시 기본 스크롤 방지
+      e.preventDefault();
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent, type: 'active' | 'event') => {
+    if (!isDragging || e.touches.length !== 1) return;
+    // 드래그 중일 때 기본 스크롤과 선택 방지
+    e.preventDefault();
+
+    const scrollRef = type === 'active' ? activeScrollRef : eventScrollRef;
+    const setScrollLeft =
+      type === 'active' ? setActiveScrollLeft : setEventScrollLeft;
+
+    if (scrollRef.current) {
+      const x = e.touches[0].pageX - scrollRef.current.offsetLeft;
+      const walk = (x - startX) * 1.5; // 드래그 감도 조정
+      const newScrollLeft = scrollStart - walk;
+      scrollRef.current.scrollLeft = newScrollLeft;
+      setScrollLeft(newScrollLeft);
+
+      // 드래그 거리 업데이트
+      setDragDistance(Math.abs(walk));
+    }
+  };
+
+  const handleTouchEnd = () => {
     setIsDragging(false);
   };
 
@@ -500,11 +544,19 @@ const GameModalContent = ({ onClose }: GameModalContentProps) => {
               <div
                 ref={eventScrollRef}
                 className='scrollbar-hide flex cursor-grab gap-3 overflow-x-auto active:cursor-grabbing'
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                style={{
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none',
+                  WebkitOverflowScrolling: 'touch', // iOS 스크롤 최적화
+                  touchAction: 'pan-x', // 수평 스크롤만 허용
+                }}
                 onMouseDown={(e) => handleMouseDown(e, 'event')}
                 onMouseMove={(e) => handleMouseMove(e, 'event')}
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
+                onTouchStart={(e) => handleTouchStart(e, 'event')}
+                onTouchMove={(e) => handleTouchMove(e, 'event')}
+                onTouchEnd={handleTouchEnd}
               >
                 {canvases
                   .map((canvas) => {

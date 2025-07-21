@@ -11,6 +11,7 @@ import NotFoundPage from '../../pages/NotFoundPage';
 import { useCanvasInteraction } from '../../hooks/useCanvasInteraction';
 import useSound from 'use-sound';
 import { useModalStore } from '../../store/modalStore';
+import { useAuthStore } from '../../store/authStrore';
 import ImageEditorUI from '../../utils/ImageEditorUI';
 import * as DrawingUtils from '../../utils/canvasDrawing';
 import {
@@ -33,6 +34,8 @@ function PixelCanvas({
   onLoadingChange,
 }: PixelCanvasProps) {
   const { canvas_id, setCanvasId } = useCanvasStore();
+  const { isLoggedIn } = useAuthStore();
+  const { openLoginModal } = useModalStore();
 
   const generateGrayscalePalette = (numColors: number) => {
     const palette = [];
@@ -630,6 +633,11 @@ function PixelCanvas({
   });
 
   useEffect(() => {
+    // Check if user is logged in when accessing canvas
+    if (!isLoggedIn) {
+      openLoginModal();
+    }
+    
     fetchCanvasDataUtil({
       id: initialCanvasId,
       setIsLoading,
@@ -644,6 +652,8 @@ function PixelCanvas({
       setEndedAt,
     });
   }, [
+    isLoggedIn,
+    openLoginModal,
     initialCanvasId,
     setCanvasId,
     setCanvasSize,
@@ -817,7 +827,7 @@ function PixelCanvas({
       style={{
         backgroundColor: VIEWPORT_BACKGROUND_COLOR,
         boxShadow: cooldown
-          ? 'inset 0 0 50px rgba(239, 68, 68, 0.3), 0 0 100px rgba(239, 68, 68, 0.2)'
+          ? 'inset 0 0 50px rgba(239, 68, 68, 0.7), 0 0 100px rgba(239, 68, 68, 0.6)'
           : 'none',
       }}
     >
@@ -835,9 +845,9 @@ function PixelCanvas({
       )}
       {cooldown && (
         <>
-          <div className='pointer-events-none absolute inset-0 border-4 border-red-500/30' />
-          <div className='pointer-events-none absolute inset-2 border-2 border-red-400/20' />
-          <div className='pointer-events-none absolute inset-4 border border-red-300/10' />
+          <div className='pointer-events-none absolute inset-0 border-4 border-red-600/70' />
+          <div className='pointer-events-none absolute inset-2 border-2 border-red-500/50' />
+          <div className='pointer-events-none absolute inset-4 border border-red-400/30' />
         </>
       )}
       <div

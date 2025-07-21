@@ -25,6 +25,7 @@ import CanvasEndedModal from './components/modal/CanvasEndedModal'; // CanvasEnd
 import NotificationToast from './components/toast/NotificationToast'; // NotificationToast import 추가
 import { useToastStore } from './store/toastStore'; // useToastStore import 추가
 import GameModalContent from './components/modal/GameModalContent';
+import GameAlertModal from './components/modal/GameAlertModal';
 
 type DecodedToken = {
   sub: {
@@ -172,6 +173,7 @@ function App() {
         <GameModalContent onClose={closeGameModal} />
       </Modal>
       {isCanvasEndedModalOpen && <CanvasEndedModal />}
+      <GameAlertModal />
       {/* NotificationToast 컴포넌트 추가 */}
       <NotificationToast />
       {/* 로딩 완료 후 채팅 컴포넌트 표시 */}

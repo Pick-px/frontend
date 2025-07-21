@@ -67,6 +67,7 @@ function GameCanvas({
   const [showExitModal, setShowExitModal] = useState(false); // 나가기 모달 상태
   const [isGameEnded, setIsGameEnded] = useState(false); // 게임 종료 상태
   const [isWaitingForResults, setIsWaitingForResults] = useState(false); // 결과 대기 상태
+  const [hasReceivedGameResult, setHasReceivedGameResult] = useState(false); // 게임 결과 수신 여부
   const [gameResults, setGameResults] = useState<Array<{
     username: string;
     rank: number;
@@ -530,6 +531,9 @@ function GameCanvas({
       // 배경음악 중지
       stopGameMusic();
 
+      // 결과 수신 여부 표시
+      setHasReceivedGameResult(true);
+
       // 결과 저장 및 결과 모달 표시
       setGameResults(data.results);
       setIsWaitingForResults(false);
@@ -554,6 +558,7 @@ function GameCanvas({
         server_time: string;
         remain_time: number;
       }) => {
+        // 게임 결과를 이미 받았다면 시간만 업데이트
         setGameTime(data.remain_time);
       },
       []
@@ -1027,14 +1032,23 @@ function GameCanvas({
       return () => clearInterval(timer);
     } else if (gameTime <= 1) {
       // 게임 시간이 종료되면 결과 화면 표시
-      stopGameMusic();
-      playAdventureMusic();
-      setIsWaitingForResults(true);
+      // 게임 결과를 이미 받았다면 종료 처리를 하지 않음
+      if (!hasReceivedGameResult) {
+        stopGameMusic();
+        playAdventureMusic();
+        setIsWaitingForResults(true);
 
-      // 사망 모달이 표시되어 있다면 닫기
-      setShowDeathModal(false);
+        // 사망 모달이 표시되어 있다면 닫기
+        setShowDeathModal(false);
+      }
     }
-  }, [isGameStarted, gameTime, stopGameMusic, user?.nickname]);
+  }, [
+    isGameStarted,
+    gameTime,
+    stopGameMusic,
+    user?.nickname,
+    hasReceivedGameResult,
+  ]);
 
   useEffect(() => {
     if (initialCanvasId && initialCanvasId !== canvas_id) {
@@ -1117,6 +1131,7 @@ function GameCanvas({
     DRAG_THRESHOLD,
     handleConfirm,
     isGameMode: true, // 게임 모드 활성화
+    showQuestionModal, // 문제 모달 상태 전달
   });
 
   // 게임 나가기 핸들러
@@ -1180,15 +1195,9 @@ function GameCanvas({
             </div>
           )}
 
-          {/* 모바일 버전: 나가기 버튼, 생명 표시 */}
+          {/* 모바일 버전: 생명 표시 (타이머 바로 밑) */}
           {isMobile && (
-            <div className='absolute bottom-4 left-4 z-50 flex flex-col items-center gap-3'>
-              <button
-                onClick={handleExit}
-                className='rounded-lg bg-red-600 px-4 py-2 font-bold text-white shadow-lg transition-all hover:bg-red-700 active:scale-95'
-              >
-                나가기
-              </button>
+            <div className='absolute top-16 left-1/2 z-50 -translate-x-1/2'>
               <LifeIndicator
                 lives={lives}
                 maxLives={2}
@@ -1315,7 +1324,9 @@ function GameCanvas({
               <button
                 onClick={handleConfirm}
                 disabled={cooldown}
-                className={`transform rounded-lg px-6 py-3 text-base font-medium text-white shadow-lg transition-all ${
+                className={`transform rounded-lg font-medium text-white shadow-lg transition-all ${
+                  isMobile ? 'px-4 py-2 text-sm' : 'px-6 py-3 text-base'
+                } ${
                   cooldown
                     ? 'cursor-not-allowed border border-red-500/30 bg-red-500/20 text-red-400'
                     : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:scale-105 hover:from-green-600 hover:to-emerald-600 active:scale-95'
@@ -1324,7 +1335,9 @@ function GameCanvas({
                 {cooldown ? (
                   <div className='flex items-center gap-2'>
                     <svg
-                      className='h-5 w-5 animate-spin'
+                      className={`animate-spin ${
+                        isMobile ? 'h-4 w-4' : 'h-5 w-5'
+                      }`}
                       fill='none'
                       viewBox='0 0 24 24'
                     >
@@ -1342,7 +1355,13 @@ function GameCanvas({
                         d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
                       ></path>
                     </svg>
-                    <span className='font-medium'>{timeLeft}초 대기</span>
+                    <span
+                      className={`font-medium ${
+                        isMobile ? 'text-xs' : 'text-sm'
+                      }`}
+                    >
+                      {timeLeft}초 대기
+                    </span>
                   </div>
                 ) : (
                   '확정'

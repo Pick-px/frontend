@@ -212,7 +212,7 @@ const AlbumModalContent: React.FC<AlbumModalContentProps> = () => {
     return (
       <div className='flex flex-col'>
         <div className='flex-shrink-0 border-b border-white/20 p-4'>
-          <h2 className='text-lg font-semibold text-white'>앨범 갤러리</h2>
+          <h2 className='text-lg font-semibold text-white'>갤러리</h2>
           <p className='mt-1 text-sm text-gray-300'>
             완성된 캔버스 작품들을 확인해보세요.
           </p>

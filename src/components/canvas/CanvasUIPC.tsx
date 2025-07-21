@@ -94,7 +94,7 @@ export default function CanvasUIPC({
     <>
       <ToastContainer />
       {/* 이미지 업로드 */}
-      <div className='pointer-events-auto fixed bottom-4 left-14 z-[100] flex gap-2'>
+      <div className='pointer-events-auto fixed bottom-4 left-14 flex gap-2'>
         {onImageAttach && (
           <div className='flex flex-col gap-1'>
             <div className='flex items-center gap-2'>
@@ -206,11 +206,11 @@ export default function CanvasUIPC({
 
         {/* isMenuOpen이 true일 때만 드롭다운 메뉴가 보입니다. */}
         {isMenuOpen && (
-          <div className='absolute top-full mt-3 flex w-auto flex-col gap-3'>
+          <div className='absolute top-full mt-3 flex min-w-[80px] flex-col gap-3'>
             {/* 로그인/마이페이지 버튼 */}
             <button
               onClick={isLoggedIn ? openMyPageModal : openLoginModal}
-              className='font-press-start relative inline-block w-full bg-yellow-500 px-4 py-2 text-left text-[10px] text-white no-underline shadow-[inset_-2px_-2px_0px_0px_#92400E] before:absolute before:-top-[4px] before:left-0 before:box-content before:h-full before:w-full before:border-t-[4px] before:border-b-[4px] before:border-gray-700 before:content-[""] after:absolute after:top-0 after:-left-[4px] after:box-content after:h-full after:w-full after:border-r-[4px] after:border-l-[4px] after:border-gray-700 after:content-[""] hover:bg-yellow-600 hover:shadow-[inset_-3px_-3px_0px_0px_#713F12] active:shadow-[inset_2px_2px_0px_0px_#713F12]'
+              className='font-press-start relative inline-block w-full bg-yellow-500 px-4 py-2 text-center text-[10px] text-white no-underline shadow-[inset_-2px_-2px_0px_0px_#92400E] before:absolute before:-top-[4px] before:left-0 before:box-content before:h-full before:w-full before:border-t-[4px] before:border-b-[4px] before:border-gray-700 before:content-[""] after:absolute after:top-0 after:-left-[4px] after:box-content after:h-full after:w-full after:border-r-[4px] after:border-l-[4px] after:border-gray-700 after:content-[""] hover:bg-yellow-600 hover:shadow-[inset_-3px_-3px_0px_0px_#713F12] active:shadow-[inset_2px_2px_0px_0px_#713F12]'
             >
               <span style={{ fontFamily: '"Press Start 2P", cursive' }}>
                 {isLoggedIn ? 'MyPage' : 'Login'}
@@ -219,7 +219,7 @@ export default function CanvasUIPC({
             {/* 그룹 버튼 */}
             <button
               onClick={isLoggedIn ? openGroupModal : openLoginModal}
-              className='font-press-start relative inline-block w-full bg-[#92CD41] px-4 py-2 text-left text-[10px] text-white no-underline shadow-[inset_-2px_-2px_0px_0px_#45841B] before:absolute before:-top-[4px] before:left-0 before:box-content before:h-full before:w-full before:border-t-[4px] before:border-b-[4px] before:border-gray-700 before:content-[""] after:absolute after:top-0 after:-left-[4px] after:box-content after:h-full after:w-full after:border-r-[4px] after:border-l-[4px] after:border-gray-700 after:content-[""] hover:bg-[#7CB342] hover:shadow-[inset_-3px_-3px_0px_0px_#366915] active:shadow-[inset_2px_2px_0px_0px_#366915]'
+              className='font-press-start relative inline-block w-full bg-[#92CD41] px-4 py-2 text-center text-[10px] text-white no-underline shadow-[inset_-2px_-2px_0px_0px_#45841B] before:absolute before:-top-[4px] before:left-0 before:box-content before:h-full before:w-full before:border-t-[4px] before:border-b-[4px] before:border-gray-700 before:content-[""] after:absolute after:top-0 after:-left-[4px] after:box-content after:h-full after:w-full after:border-r-[4px] after:border-l-[4px] after:border-gray-700 after:content-[""] hover:bg-[#7CB342] hover:shadow-[inset_-3px_-3px_0px_0px_#366915] active:shadow-[inset_2px_2px_0px_0px_#366915]'
             >
               <span style={{ fontFamily: '"Press Start 2P", cursive' }}>
                 Group
@@ -228,7 +228,7 @@ export default function CanvasUIPC({
             {/* 캔버스 버튼 */}
             <button
               onClick={isLoggedIn ? openCanvasModal : openLoginModal}
-              className='font-press-start relative inline-block w-full bg-[#92CD41] px-4 py-2 text-left text-[10px] text-white no-underline shadow-[inset_-2px_-2px_0px_0px_#45841B] before:absolute before:-top-[4px] before:left-0 before:box-content before:h-full before:w-full before:border-t-[4px] before:border-b-[4px] before:border-gray-700 before:content-[""] after:absolute after:top-0 after:-left-[4px] after:box-content after:h-full after:w-full after:border-r-[4px] after:border-l-[4px] after:border-gray-700 after:content-[""] hover:bg-[#7CB342] hover:shadow-[inset_-3px_-3px_0px_0px_#366915] active:shadow-[inset_2px_2px_0px_0px_#366915]'
+              className='font-press-start relative inline-block w-full bg-[#92CD41] px-4 py-2 text-center text-[10px] text-white no-underline shadow-[inset_-2px_-2px_0px_0px_#45841B] before:absolute before:-top-[4px] before:left-0 before:box-content before:h-full before:w-full before:border-t-[4px] before:border-b-[4px] before:border-gray-700 before:content-[""] after:absolute after:top-0 after:-left-[4px] after:box-content after:h-full after:w-full after:border-r-[4px] after:border-l-[4px] after:border-gray-700 after:content-[""] hover:bg-[#7CB342] hover:shadow-[inset_-3px_-3px_0px_0px_#366915] active:shadow-[inset_2px_2px_0px_0px_#366915]'
             >
               <span style={{ fontFamily: '"Press Start 2P", cursive' }}>
                 Canvas
@@ -237,7 +237,7 @@ export default function CanvasUIPC({
             {/* 게임 버튼 */}
             <button
               onClick={isLoggedIn ? openGameModal : openLoginModal}
-              className='font-press-start relative inline-block w-full bg-[#92CD41] px-4 py-2 text-left text-[10px] text-white no-underline shadow-[inset_-2px_-2px_0px_0px_#45841B] before:absolute before:-top-[4px] before:left-0 before:box-content before:h-full before:w-full before:border-t-[4px] before:border-b-[4px] before:border-gray-700 before:content-[""] after:absolute after:top-0 after:-left-[4px] after:box-content after:h-full after:w-full after:border-r-[4px] after:border-l-[4px] after:border-gray-700 after:content-[""] hover:bg-[#7CB342] hover:shadow-[inset_-3px_-3px_0px_0px_#366915] active:shadow-[inset_2px_2px_0px_0px_#366915]'
+              className='font-press-start relative inline-block w-full bg-[#92CD41] px-4 py-2 text-center text-[10px] text-white no-underline shadow-[inset_-2px_-2px_0px_0px_#45841B] before:absolute before:-top-[4px] before:left-0 before:box-content before:h-full before:w-full before:border-t-[4px] before:border-b-[4px] before:border-gray-700 before:content-[""] after:absolute after:top-0 after:-left-[4px] after:box-content after:h-full after:w-full after:border-r-[4px] after:border-l-[4px] after:border-gray-700 after:content-[""] hover:bg-[#7CB342] hover:shadow-[inset_-3px_-3px_0px_0px_#366915] active:shadow-[inset_2px_2px_0px_0px_#366915]'
             >
               <span style={{ fontFamily: '"Press Start 2P", cursive' }}>
                 Game
@@ -246,16 +246,16 @@ export default function CanvasUIPC({
             {/* 갤러리 버튼 */}
             <button
               onClick={openAlbumModal}
-              className='font-press-start relative inline-block w-full bg-[#92CD41] px-4 py-2 text-left text-[10px] text-white no-underline shadow-[inset_-2px_-2px_0px_0px_#45841B] before:absolute before:-top-[4px] before:left-0 before:box-content before:h-full before:w-full before:border-t-[4px] before:border-b-[4px] before:border-gray-700 before:content-[""] after:absolute after:top-0 after:-left-[4px] after:box-content after:h-full after:w-full after:border-r-[4px] after:border-l-[4px] after:border-gray-700 after:content-[""] hover:bg-[#7CB342] hover:shadow-[inset_-3px_-3px_0px_0px_#366915] active:shadow-[inset_2px_2px_0px_0px_#366915]'
+              className='font-press-start relative inline-block w-full bg-[#92CD41] px-4 py-2 text-center text-[10px] text-white no-underline shadow-[inset_-2px_-2px_0px_0px_#45841B] before:absolute before:-top-[4px] before:left-0 before:box-content before:h-full before:w-full before:border-t-[4px] before:border-b-[4px] before:border-gray-700 before:content-[""] after:absolute after:top-0 after:-left-[4px] after:box-content after:h-full after:w-full after:border-r-[4px] after:border-l-[4px] after:border-gray-700 after:content-[""] hover:bg-[#7CB342] hover:shadow-[inset_-3px_-3px_0px_0px_#366915] active:shadow-[inset_2px_2px_0px_0px_#366915]'
             >
               <span style={{ fontFamily: '"Press Start 2P", cursive' }}>
-                Album
+                Gallery
               </span>
             </button>
             {/* BGM 버튼 */}
             <button
               onClick={toggleBgm}
-              className='font-press-start relative inline-block w-full bg-[#92CD41] px-4 py-2 text-left text-[10px] text-white no-underline shadow-[inset_-2px_-2px_0px_0px_#45841B] before:absolute before:-top-[4px] before:left-0 before:box-content before:h-full before:w-full before:border-t-[4px] before:border-b-[4px] before:border-gray-700 before:content-[""] after:absolute after:top-0 after:-left-[4px] after:box-content after:h-full after:w-full after:border-r-[4px] after:border-l-[4px] after:border-gray-700 after:content-[""] hover:bg-[#7CB342] hover:shadow-[inset_-3px_-3px_0px_0px_#366915] active:shadow-[inset_2px_2px_0px_0px_#366915]'
+              className='font-press-start relative inline-block w-full bg-[#92CD41] px-4 py-2 text-center text-[8px] text-white no-underline shadow-[inset_-2px_-2px_0px_0px_#45841B] before:absolute before:-top-[4px] before:left-0 before:box-content before:h-full before:w-full before:border-t-[4px] before:border-b-[4px] before:border-gray-700 before:content-[""] after:absolute after:top-0 after:-left-[4px] after:box-content after:h-full after:w-full after:border-r-[4px] after:border-l-[4px] after:border-gray-700 after:content-[""] hover:bg-[#7CB342] hover:shadow-[inset_-3px_-3px_0px_0px_#366915] active:shadow-[inset_2px_2px_0px_0px_#366915]'
             >
               <span style={{ fontFamily: '"Press Start 2P", cursive' }}>
                 {isBgmPlaying ? 'BGM Off' : 'BGM On'}
@@ -345,30 +345,16 @@ export default function CanvasUIPC({
           onMouseLeave={() => setIsPressed(false)}
           className={`flex h-12 w-full items-center justify-center rounded-full transition-all duration-300 ${
             cooldown
-              ? 'cursor-not-allowed border border-red-500/30 bg-red-500/20 text-red-400'
+              ? 'cursor-not-allowed border-4 border-red-600 bg-red-500/40 text-red-300 shadow-lg shadow-red-500/50'
               : 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-lg hover:scale-105 hover:from-emerald-400 hover:to-cyan-400 hover:shadow-emerald-400/30'
           } ${isPressed ? 'scale-95' : 'scale-100'}`}
         >
           {cooldown ? (
-            <svg
-              className='h-6 w-6 animate-spin'
-              fill='none'
-              viewBox='0 0 24 24'
-            >
-              <circle
-                className='opacity-25'
-                cx='12'
-                cy='12'
-                r='10'
-                stroke='currentColor'
-                strokeWidth='4'
-              ></circle>
-              <path
-                className='opacity-75'
-                fill='currentColor'
-                d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
-              ></path>
-            </svg>
+            <div className='flex items-center justify-center'>
+              <span className='animate-pulse font-mono text-xl font-bold tracking-wider text-red-300'>
+                {timeLeft}
+              </span>
+            </div>
           ) : (
             <svg
               className='h-6 w-6'
@@ -389,38 +375,7 @@ export default function CanvasUIPC({
       {/* 접속자수 표시 */}
       <UserCount />
 
-      {/* 쿨타임 창 : 쿨타임 중에만 표시*/}
-      {cooldown && (
-        <div className='pointer-events-none fixed bottom-[20px] left-1/2 z-[9999] -translate-x-1/2 transform'>
-          <div className='relative'>
-            {/* 외부 링 */}
-            <div
-              className='h-16 w-16 animate-spin rounded-full border-4 border-red-500/60'
-              style={{ animationDuration: '2s' }}
-            ></div>
-            {/* 중간 링 */}
-            <div
-              className='absolute inset-1 animate-spin rounded-full border-2 border-orange-400/50'
-              style={{
-                animationDuration: '1.5s',
-                animationDirection: 'reverse',
-              }}
-            ></div>
-            {/* 내부 원 */}
-            <div className='absolute inset-3 flex animate-pulse items-center justify-center rounded-full border border-red-400/60 bg-gradient-to-br from-red-900/80 to-black/70 shadow-2xl backdrop-blur-xl'>
-              <span className='animate-pulse font-mono text-xl font-bold tracking-wider text-red-300'>
-                {timeLeft}
-              </span>
-            </div>
-            {/* 글로우 효과 */}
-            <div className='absolute inset-0 animate-ping rounded-full bg-red-500/15'></div>
-            <div
-              className='absolute inset-0 animate-ping rounded-full bg-orange-400/10'
-              style={{ animationDelay: '1s' }}
-            ></div>
-          </div>
-        </div>
-      )}
+      {/* 쿨타임 창 제거 - 확정 버튼으로 이동 */}
     </>
   );
 }
