@@ -11,6 +11,7 @@ import NotFoundPage from '../../pages/NotFoundPage';
 import { useCanvasInteraction } from '../../hooks/useCanvasInteraction';
 import useSound from 'use-sound';
 import { useModalStore } from '../../store/modalStore';
+import { useAuthStore } from '../../store/authStrore';
 import ImageEditorUI from '../../utils/ImageEditorUI';
 import * as DrawingUtils from '../../utils/canvasDrawing';
 import {
@@ -33,6 +34,8 @@ function PixelCanvas({
   onLoadingChange,
 }: PixelCanvasProps) {
   const { canvas_id, setCanvasId } = useCanvasStore();
+  const { isLoggedIn } = useAuthStore();
+  const { openLoginModal } = useModalStore();
 
   const generateGrayscalePalette = (numColors: number) => {
     const palette = [];
@@ -630,6 +633,11 @@ function PixelCanvas({
   });
 
   useEffect(() => {
+    // Check if user is logged in when accessing canvas
+    if (!isLoggedIn) {
+      openLoginModal();
+    }
+    
     fetchCanvasDataUtil({
       id: initialCanvasId,
       setIsLoading,
@@ -644,6 +652,8 @@ function PixelCanvas({
       setEndedAt,
     });
   }, [
+    isLoggedIn,
+    openLoginModal,
     initialCanvasId,
     setCanvasId,
     setCanvasSize,
