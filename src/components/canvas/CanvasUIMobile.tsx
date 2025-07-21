@@ -191,7 +191,7 @@ export default function CanvasUIMobile({
       </div>
 
       {/* 이미지 첨부/투명도/삭제 UI - 하단 고정 */}
-      <div className='pointer-events-auto fixed bottom-4 left-14 z-[9999] flex gap-2'>
+      <div className='pointer-events-auto fixed bottom-4 left-14 flex gap-2'>
         {onImageAttach && (
           <div className='flex flex-col gap-1'>
             <div className='flex items-center gap-2'>
@@ -439,7 +439,7 @@ export default function CanvasUIMobile({
                     d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'
                   />
                 </svg>
-                <span className='font-medium'>캔버스 이동</span>
+                <span className='font-medium'>캔버스</span>
               </button>
 
               {/* 게임 */}
@@ -475,7 +475,7 @@ export default function CanvasUIMobile({
                     strokeWidth={1.5}
                   />
                 </svg>
-                <span className='font-medium'>게임</span>
+                <span className='font-medium'>게임 모드</span>
               </button>
 
               {/* 앨범 */}
