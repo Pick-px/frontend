@@ -85,7 +85,7 @@ const GameReadyModal = ({
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md'>
       <div
-        className='relative w-[90%] max-w-lg overflow-hidden rounded-xl border-2 border-blue-500 bg-gradient-to-b from-blue-900/90 to-black/95 shadow-2xl shadow-blue-500/30'
+        className='relative max-h-[80vh] w-[90%] max-w-lg overflow-y-auto rounded-xl border-2 border-blue-500 bg-gradient-to-b from-blue-900/90 to-black/95 shadow-2xl shadow-blue-500/30'
         style={{ animation: 'fadeIn 0.5s ease-out' }}
       >
         {/* 상단 장식 효과 */}
@@ -94,11 +94,11 @@ const GameReadyModal = ({
         <div className='absolute top-0 right-0 h-full w-1 bg-gradient-to-b from-blue-500 via-transparent to-blue-500'></div>
 
         {/* 헤더 */}
-        <div className='relative flex items-center justify-between border-b border-blue-500/30 bg-blue-900/50 p-4'>
+        <div className='relative flex items-center justify-between border-b border-blue-500/30 bg-blue-900/50 p-2 sm:p-3'>
           <div className='flex items-center'>
-            <div className='mr-3 h-10 w-10 rounded-full bg-blue-500/20 p-2'>
+            <div className='mr-2 h-8 w-8 rounded-full bg-blue-500/20 p-1.5 sm:mr-3 sm:h-9 sm:w-9 sm:p-2'>
               <svg
-                className='h-6 w-6 text-blue-400'
+                className='h-5 w-5 text-blue-400 sm:h-5 sm:w-5'
                 fill='none'
                 viewBox='0 0 24 24'
                 stroke='currentColor'
@@ -112,19 +112,19 @@ const GameReadyModal = ({
               </svg>
             </div>
             <div>
-              <h2 className='text-2xl font-bold text-white'>
+              <h2 className='text-lg font-bold text-white sm:text-xl'>
                 BATTLE{' '}
                 <span className='animate-pulse text-blue-400'>READY</span>
               </h2>
             </div>
           </div>
-          <div className='rounded-full bg-blue-500/20 px-3 py-1 text-sm font-bold text-blue-300'>
+          <div className='rounded-full bg-blue-500/20 px-2 py-0.5 text-xs font-bold text-blue-300 sm:px-3 sm:py-1 sm:text-sm'>
             준비 중
           </div>
         </div>
 
         {/* 메인 콘텐츠 */}
-        <div className='p-6'>
+        <div className='p-3 sm:p-4'>
           {/* 타이머 및 색상 */}
           <div className='mb-6 flex flex-col items-center'>
             {/* 타이머 */}
@@ -157,7 +157,7 @@ const GameReadyModal = ({
             </div>
 
             {/* 색상 표시 */}
-            <div className='mb-2 text-center text-sm text-gray-300'>
+            <div className='text-m mb-2 text-center text-gray-300'>
               당신의 색상
             </div>
             <div className='relative mb-6'>
@@ -174,7 +174,7 @@ const GameReadyModal = ({
 
           {/* 게임 규칙 */}
           <div className='mb-6 overflow-hidden rounded-lg border border-blue-500/20 bg-blue-900/20 p-4'>
-            <h3 className='text-m mb-3 text-center font-bold text-blue-300'>
+            <h3 className='mb-3 text-center text-xl font-bold text-blue-300'>
               게임 규칙
             </h3>
             <ul className='text-m space-y-2 text-gray-300'>

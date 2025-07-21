@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import socketService from '../services/socketService';
 import { useAuthStore } from '../store/authStrore';
 import { toast } from 'react-toastify';
-import { useToastStore } from '../store/toastStore'; // 추가
+import { useToastStore } from '../store/toastStore';
+import { useModalStore } from '../store/modalStore';
 import { useTimeSyncStore } from '../store/timeSyncStore';
 
 interface PixelData {
@@ -29,6 +30,7 @@ export const useSocket = (
   const cooldownCallbackRef = useRef(onCooldownReceived);
   const [isConnected, setIsConnected] = useState(false);
   const showToast = useToastStore((state) => state.showToast);
+  const openGameAlert = useModalStore((state) => state.openGameAlert);
 
   // 콜백 함수 업데이트
   pixelCallbackRef.current = onPixelReceived;
@@ -75,11 +77,10 @@ export const useSocket = (
           data.remain_time ?? 0, // Ensure remaining_time is a number
           Date.now()
         );
-        showToast(
+        openGameAlert(
           `게임 시작 30초 전: ${data.title}`,
-          String(data.canvas_id),
-          27000
-        ); // 25초 후 자동 사라짐
+          String(data.canvas_id)
+        );
       }
     );
 
@@ -131,7 +132,7 @@ export const useSocket = (
       socketService.disconnect();
       setIsConnected(false);
     };
-  }, [canvas_id, accessToken, showToast]); // showToast 의존성 추가
+  }, [canvas_id, accessToken, showToast, openGameAlert]); // openGameAlert 의존성 추가
 
   const sendPixel = (pixel: PixelData) => {
     if (!canvas_id) return;
