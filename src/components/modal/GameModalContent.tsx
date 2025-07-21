@@ -70,6 +70,8 @@ const GameModalContent = ({ onClose }: GameModalContentProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollStart, setScrollStart] = useState(0);
+  const [dragDistance, setDragDistance] = useState(0); // 드래그 거리 추가
+  const DRAG_THRESHOLD = 10; // 드래그로 간주할 최소 거리 (픽셀)
   const { openGameModal } = useModalStore();
   const { canvas_id } = useCanvasStore();
 
@@ -279,7 +281,7 @@ const GameModalContent = ({ onClose }: GameModalContentProps) => {
   };
 
   const handleCanvasSelect = (e: React.MouseEvent, canvasId: number) => {
-    if (isDragging) {
+    if (isDragging && dragDistance > DRAG_THRESHOLD) {
       e.preventDefault();
       return;
     }
@@ -340,6 +342,7 @@ const GameModalContent = ({ onClose }: GameModalContentProps) => {
       setIsDragging(true);
       setStartX(e.pageX - scrollRef.current.offsetLeft);
       setScrollStart(scrollRef.current.scrollLeft);
+      setDragDistance(0); // 드래그 거리 초기화
     }
   };
 
@@ -357,6 +360,9 @@ const GameModalContent = ({ onClose }: GameModalContentProps) => {
       const newScrollLeft = scrollStart - walk;
       scrollRef.current.scrollLeft = newScrollLeft;
       setScrollLeft(newScrollLeft);
+
+      // 드래그 거리 업데이트
+      setDragDistance(Math.abs(walk));
     }
   };
 
@@ -371,6 +377,7 @@ const GameModalContent = ({ onClose }: GameModalContentProps) => {
       setIsDragging(true);
       setStartX(e.touches[0].pageX - scrollRef.current.offsetLeft);
       setScrollStart(scrollRef.current.scrollLeft);
+      setDragDistance(0); // 드래그 거리 초기화
       // 터치 시작 시 기본 스크롤 방지
       e.preventDefault();
     }
@@ -391,6 +398,9 @@ const GameModalContent = ({ onClose }: GameModalContentProps) => {
       const newScrollLeft = scrollStart - walk;
       scrollRef.current.scrollLeft = newScrollLeft;
       setScrollLeft(newScrollLeft);
+
+      // 드래그 거리 업데이트
+      setDragDistance(Math.abs(walk));
     }
   };
 
