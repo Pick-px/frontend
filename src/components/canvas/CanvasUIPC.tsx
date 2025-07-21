@@ -94,7 +94,7 @@ export default function CanvasUIPC({
     <>
       <ToastContainer />
       {/* 이미지 업로드 */}
-      <div className='pointer-events-auto fixed bottom-4 left-14 z-[100] flex gap-2'>
+      <div className='pointer-events-auto fixed bottom-4 left-14 flex gap-2'>
         {onImageAttach && (
           <div className='flex flex-col gap-1'>
             <div className='flex items-center gap-2'>

@@ -36,11 +36,11 @@ export default function MessageInput({ onSendMessage }: MessageInputProps) {
           placeholder='메시지를 입력하세요...'
           value={text}
           onChange={(e) => setText(e.target.value)}
-          className='flex-1 rounded-lg border border-white/20 bg-white/10 p-2 text-sm text-white placeholder-gray-300 focus:border-blue-500 focus:ring-blue-500 outline-none'
+          className='flex-1 rounded-lg border border-white/20 bg-white/10 p-2 text-sm text-white placeholder-gray-300 outline-none focus:border-blue-500 focus:ring-blue-500'
         />
         <button
           type='submit'
-          className='px-3 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg text-white transition-colors'
+          className='rounded-lg bg-blue-500 px-3 py-2 text-white transition-colors hover:bg-blue-600'
         >
           <svg
             xmlns='http://www.w3.org/2000/svg'
@@ -48,7 +48,7 @@ export default function MessageInput({ onSendMessage }: MessageInputProps) {
             viewBox='0 0 24 24'
             strokeWidth={2}
             stroke='currentColor'
-            className='w-4 h-4'
+            className='h-4 w-4'
           >
             <path
               strokeLinecap='round'
