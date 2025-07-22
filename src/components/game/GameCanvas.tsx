@@ -306,9 +306,9 @@ function GameCanvas({
       <div class="flex items-center gap-2">
         <div class="text-xl">☠️</div>
         <div>
-          <div class="text-lg font-bold text-red-400">${username} 전사!</div>
+          <div class="text-md font-bold text-red-400">${username} 전사!</div>
           <div class="text-xs text-white opacity-80">상대의 색이 사라졌습니다!</div>
-          <div class="text-xs opacity-70">지금이 기회! 빈 공간을 차지하세요!</div>
+          <div class="text-xs opacity-70">빈 공간을 공략하세요!</div>
         </div>
       </div>
     `;
@@ -1197,6 +1197,7 @@ function GameCanvas({
                 lives={lives}
                 maxLives={2}
                 isLifeDecreasing={isLifeDecreasing}
+                userColor={userColor}
               />
             </div>
           )}
@@ -1208,6 +1209,7 @@ function GameCanvas({
                 lives={lives}
                 maxLives={2}
                 isLifeDecreasing={isLifeDecreasing}
+                userColor={userColor}
               />
             </div>
           )}
