@@ -22,7 +22,6 @@ export const myPageService = {
   async fetchUserInfo(): Promise<UserInfoResponse> {
     try {
       const response = await apiClient.get<UserInfoResponse>('/user/info');
-      console.log(response);
       return response.data;
     } catch (error) {
       console.error('Failed to fetch user info:', error);

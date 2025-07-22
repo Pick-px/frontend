@@ -39,18 +39,5 @@ export const useTimeSyncStore = create<TimeSyncState>((set, get) => ({
       serverTimeOffset: newOffset,
       lastSyncTime: Date.now(), // 마지막 동기화 시간 기록
     });
-
-    console.log(`TimeSync: Event Timestamp: ${eventTimestampString}`);
-    console.log(`TimeSync: Remaining Time (server): ${remain_time}s`);
-    console.log(
-      `TimeSync: Server Time at Send (calculated): ${new Date(serverTimeAtSend).toISOString()}`
-    );
-    console.log(
-      `TimeSync: Client Receive Time: ${new Date(clientReceiveTimestamp).toISOString()}`
-    );
-    console.log(`TimeSync: New Offset calculated: ${newOffset}ms`);
-    console.log(
-      `TimeSync: Estimated server time now: ${new Date(get().getSynchronizedServerTime()).toISOString()}`
-    );
   },
 }));

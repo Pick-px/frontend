@@ -71,7 +71,6 @@ export const useSocket = (
         started_at: string;
         remain_time: number;
       }) => {
-        console.log('onCanvasOpenAlarm:', data);
         updateServerTimeOffset(
           data.started_at,
           data.remain_time ?? 0, // Ensure remaining_time is a number
@@ -92,7 +91,6 @@ export const useSocket = (
         server_time: string;
         remain_time: number;
       }) => {
-        console.log('onCanvasCloseAlarm:', data);
         updateServerTimeOffset(
           data.ended_at,
           data.remain_time ?? 0, // Ensure remaining_time is a number

@@ -190,7 +190,6 @@ function Chat() {
 
   // isOpen True 시, canvasId 변경시
   useEffect(() => {
-    console.log(`modal open, ${canvas_id}`);
     if (isOpen && canvas_id) {
       const fetchInitialData = async () => {
         console.log(`start fetch, ${canvas_id}`);

@@ -12,7 +12,6 @@ export const groupServices = {
       const response = await apiClient.get(`/group/list`, {
         params: { canvas_id: canvasId },
       });
-      console.log(response);
       return response.data;
     } catch (error) {
       console.error(`Failed to fetch getGroupList ${canvasId}:`, error);
@@ -29,7 +28,6 @@ export const groupServices = {
       const response = await apiClient.get(`/group/search`, {
         params: { groupName: groupName, canvas_id: canvas_id },
       });
-      console.log(response);
       return response.data;
     } catch (error) {
       console.error(`Failed to fetch searchGroups ${groupName}:`, error);
@@ -49,7 +47,6 @@ export const groupServices = {
         maxParticipants: maxMumber,
         canvasId: canvas_id,
       });
-      console.log(response);
       return response.data;
     } catch (error) {
       console.error(`Failed to fetch create group ${title}:`, error);
@@ -69,7 +66,6 @@ export const groupServices = {
         group_id: groupId,
         canvas_id: canvasId,
       });
-      console.log(response);
       return response.data;
     } catch (error) {
       console.error(`Failed to join group ${groupId}:`, error);
@@ -82,7 +78,6 @@ export const groupServices = {
       const response = await apiClient.delete(`/group/quit`, {
         data: { group_id: groupId },
       });
-      console.log(response);
       return response.data;
     } catch (error) {
       console.error(`Failed to join group ${groupId}:`, error);

@@ -28,13 +28,10 @@ class SocketService {
     );
 
     this.socket.on('connect', () => {
-      console.log('소켓 연결됨');
       this.socket!.emit('join_canvas', { canvas_id });
     });
 
-    this.socket.on('disconnect', () => {
-      console.log('소켓 연결 끊김');
-    });
+    this.socket.on('disconnect', () => {});
 
     this.socket.on('connect_error', (error) => {
       console.error('소켓 연결 실패:', error.message);
