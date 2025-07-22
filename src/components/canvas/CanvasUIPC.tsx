@@ -190,7 +190,7 @@ export default function CanvasUIPC({
         {/* 항상 보이는 메뉴 토글 버튼 (햄버거 아이콘) */}
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className='font-press-start relative inline-block bg-[#E76E55] px-6 py-2 text-xs text-white no-underline shadow-[inset_-2px_-2px_0px_0px_#8C2022] before:absolute before:-top-[4px] before:left-0 before:box-content before:h-full before:w-full before:border-t-[4px] before:border-b-[4px] before:border-gray-700 before:content-[""] after:absolute after:top-0 after:-left-[4px] after:box-content after:h-full after:w-full after:border-r-[4px] after:border-l-[4px] after:border-gray-700 after:content-[""] hover:bg-[#CE372B] hover:shadow-[inset_-3px_-3px_0px_0px_#8C2022] active:shadow-[inset_2px_2px_0px_0px_#8C2022]'
+          className='font-press-start relative inline-block bg-[#E76E55] px-7 py-2 text-xs text-white no-underline shadow-[inset_-2px_-2px_0px_0px_#8C2022] before:absolute before:-top-[4px] before:left-0 before:box-content before:h-full before:w-full before:border-t-[4px] before:border-b-[4px] before:border-gray-700 before:content-[""] after:absolute after:top-0 after:-left-[4px] after:box-content after:h-full after:w-full after:border-r-[4px] after:border-l-[4px] after:border-gray-700 after:content-[""] hover:bg-[#CE372B] hover:shadow-[inset_-3px_-3px_0px_0px_#8C2022] active:shadow-[inset_2px_2px_0px_0px_#8C2022]'
         >
           <span style={{ fontFamily: '"Press Start 2P", cursive' }}>Menu</span>
         </button>
@@ -255,7 +255,7 @@ export default function CanvasUIPC({
             {/* BGM 버튼 */}
             <button
               onClick={toggleBgm}
-              className='font-press-start relative inline-block w-full bg-[#92CD41] px-4 py-2 text-center text-[8px] text-white no-underline shadow-[inset_-2px_-2px_0px_0px_#45841B] before:absolute before:-top-[4px] before:left-0 before:box-content before:h-full before:w-full before:border-t-[4px] before:border-b-[4px] before:border-gray-700 before:content-[""] after:absolute after:top-0 after:-left-[4px] after:box-content after:h-full after:w-full after:border-r-[4px] after:border-l-[4px] after:border-gray-700 after:content-[""] hover:bg-[#7CB342] hover:shadow-[inset_-3px_-3px_0px_0px_#366915] active:shadow-[inset_2px_2px_0px_0px_#366915]'
+              className='font-press-start relative inline-block w-full bg-[#92CD41] px-4 py-2 text-center text-[10px] text-white no-underline shadow-[inset_-2px_-2px_0px_0px_#45841B] before:absolute before:-top-[4px] before:left-0 before:box-content before:h-full before:w-full before:border-t-[4px] before:border-b-[4px] before:border-gray-700 before:content-[""] after:absolute after:top-0 after:-left-[4px] after:box-content after:h-full after:w-full after:border-r-[4px] after:border-l-[4px] after:border-gray-700 after:content-[""] hover:bg-[#7CB342] hover:shadow-[inset_-3px_-3px_0px_0px_#366915] active:shadow-[inset_2px_2px_0px_0px_#366915]'
             >
               <span style={{ fontFamily: '"Press Start 2P", cursive' }}>
                 {isBgmPlaying ? 'BGM Off' : 'BGM On'}

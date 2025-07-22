@@ -948,6 +948,12 @@ function GameCanvas({
 
           // 캔버스 표시
           setShowCanvas(true);
+
+          // 게임 모드에서는 기본적으로 (0, 0) 픽셀 선택
+          setTimeout(() => {
+            fixedPosRef.current = { x: 0, y: 0, color: 'transparent' };
+            draw();
+          }, 200);
         }
       } catch (error) {
         console.error('게임 데이터 가져오기 실패:', error);

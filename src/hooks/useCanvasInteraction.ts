@@ -103,6 +103,11 @@ export const useCanvasInteraction = ({
   const dragStartInfoRef = useRef<{ x: number; y: number } | null>(null);
   const pinchDistanceRef = useRef<number>(0);
   const lastTouchPosRef = useRef<{ x: number; y: number } | null>(null);
+
+  // 더블탭 감지를 위한 ref들
+  const lastTapTimeRef = useRef<number>(0);
+  const lastTapPosRef = useRef<{ x: number; y: number } | null>(null);
+
   const { isChatOpen } = useModalStore();
   const cooldown = useCanvasUiStore((state) => state.cooldown);
   const { isLoggedIn } = useAuthStore();
@@ -280,9 +285,37 @@ export const useCanvasInteraction = ({
               color: 'transparent',
             };
 
-            // 게임 모드일 경우 팔레트를 표시하지 않고 노란색 테두리만 표시
+            // 게임 모드에서 더블탭 감지
             if (isGameMode) {
-              // 확정 버튼을 클릭할 때까지 대기
+              const currentTime = Date.now();
+              const timeDiff = currentTime - lastTapTimeRef.current;
+              const posDiff = lastTapPosRef.current
+                ? Math.sqrt(
+                    Math.pow(sx - lastTapPosRef.current.x, 2) +
+                      Math.pow(sy - lastTapPosRef.current.y, 2)
+                  )
+                : 0;
+
+              // 300ms 이내이고 같은 위치에서의 탭이면 더블탭으로 인식
+              if (timeDiff < 300 && posDiff < 50) {
+                // 더블탭으로 확정 실행
+                if (
+                  !isChatOpen &&
+                  !cooldown &&
+                  isLoggedIn &&
+                  !showQuestionModal
+                ) {
+                  handleConfirm();
+                }
+                // 더블탭 감지 후 초기화
+                lastTapTimeRef.current = 0;
+                lastTapPosRef.current = null;
+              } else {
+                // 첫 번째 탭 정보 저장
+                lastTapTimeRef.current = currentTime;
+                lastTapPosRef.current = { x: sx, y: sy };
+              }
+
               draw();
             } else {
               setShowPalette(true);
@@ -312,6 +345,12 @@ export const useCanvasInteraction = ({
       setIsDraggingImage,
       setIsResizing,
       setResizeHandle,
+      isGameMode,
+      isChatOpen,
+      cooldown,
+      isLoggedIn,
+      showQuestionModal,
+      handleConfirm,
     ]
   );
 
