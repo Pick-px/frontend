@@ -114,7 +114,7 @@ function App() {
             email: decodedToken.sub.email,
             role: decodedToken.sub.role,
           };
-          console.log(user);
+
           setAuth(newAccessToken, user);
         } catch (error) {
           // 실패 시 (유효한 RT 없음) 로그아웃 상태
@@ -166,7 +166,11 @@ function App() {
       <Modal isOpen={isAlbumModalOpen} onClose={closeAlbumModal}>
         <AlbumModalContent onClose={closeAlbumModal} />
       </Modal>
-      <Modal isOpen={isHelpModalOpen} onClose={handleCloseHelpModal} fullWidth={true}>
+      <Modal
+        isOpen={isHelpModalOpen}
+        onClose={handleCloseHelpModal}
+        fullWidth={true}
+      >
         <HelpModalContent />
       </Modal>
       <Modal isOpen={isGameModalOpen} onClose={closeGameModal}>

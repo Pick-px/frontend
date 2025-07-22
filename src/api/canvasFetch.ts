@@ -59,8 +59,6 @@ export const fetchCanvasData = async ({
       throw new Error(json.message || 'API request was not successful');
     }
 
-    console.log(json.data);
-
     const {
       canvas_id: fetchedId,
       pixels,
@@ -82,16 +80,9 @@ export const fetchCanvasData = async ({
         const minutes = Math.floor((timeLeft / (1000 * 60)) % 60);
         const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24);
         const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-
-        console.log(
-          `Time left for canvas ${fetchedId}: ${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds`
-        );
       } else {
-        console.log(`Canvas ${fetchedId} has ended.`);
       }
     }
-
-    // console.log('Fetched pixels:', pixels);
 
     setCanvasId(fetchedId);
     setCanvasSize(fetchedCanvasSize);
