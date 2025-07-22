@@ -22,7 +22,6 @@ export const useChatSocket = (
   useEffect(() => {
     // 유효하지 않은 group_id이면 소켓 연결 안 함
     if (!group_id || group_id === '0' || !user_id) {
-      console.log('소켓 연결 스킵: 유효하지 않은 group_id 또는 user_id');
       return;
     }
 
@@ -37,7 +36,6 @@ export const useChatSocket = (
 
     // 채팅방 참여
     socketService.joinChat({ group_id });
-    console.log(`채팅방 참여: group_id=${group_id}`);
 
     return () => {
       // 클린업 시 이벤트 리스너 제거
@@ -83,7 +81,6 @@ export const useChatSocket = (
   const leaveChat = useCallback(() => {
     if (!group_id) return;
     socketService.leaveChat({ group_id });
-    console.log(`채팅방 나가기: group_id=${group_id}`);
   }, [group_id]);
 
   return { sendMessage, sendImageMessage, leaveChat };

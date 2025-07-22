@@ -83,7 +83,6 @@ const CanvasManagement: React.FC = () => {
     };
 
     try {
-      console.log('생성 요청 canvasData:', canvasData);
       const createdCanvas = await AdminAPI.createCanvas(canvasData);
       toast.success('캔버스가 성공적으로 생성되었습니다.');
       setNewCanvas({
@@ -182,7 +181,7 @@ const CanvasManagement: React.FC = () => {
   }
 
   return (
-    <div className='min-h-screen bg-gray-900 text-white overflow-y-auto'>
+    <div className='min-h-screen overflow-y-auto bg-gray-900 text-white'>
       <div className='container mx-auto px-4 py-8'>
         <div className='mb-8 flex items-center justify-between'>
           <h1 className='text-3xl font-bold'>캔버스 관리</h1>
@@ -288,14 +287,14 @@ const CanvasManagement: React.FC = () => {
         {/* 캔버스 목록 */}
         <div className='rounded-lg bg-gray-800 p-6 shadow'>
           <div className='mb-4 flex items-center justify-between'>
-          <h2 className='text-xl font-semibold'>캔버스 목록</h2>
-          <button
-            onClick={fetchCanvases}
-            className='rounded bg-blue-600 px-3 py-1 text-sm text-white transition duration-300 hover:bg-blue-700'
-          >
-            새로고침
-          </button>
-        </div>
+            <h2 className='text-xl font-semibold'>캔버스 목록</h2>
+            <button
+              onClick={fetchCanvases}
+              className='rounded bg-blue-600 px-3 py-1 text-sm text-white transition duration-300 hover:bg-blue-700'
+            >
+              새로고침
+            </button>
+          </div>
           {canvases.length === 0 ? (
             <p className='text-gray-400'>등록된 캔버스가 없습니다.</p>
           ) : (

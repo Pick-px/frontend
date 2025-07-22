@@ -9,11 +9,10 @@ export const chatService = {
   async getChatInitMessages(canvasId: string) {
     console.log('getChatInitMessages 호출됨:', canvasId);
     try {
-      console.log('API 요청 시작');
       const response = await apiClient.get('/group/init/chat', {
         params: { canvas_id: canvasId },
       });
-      console.log(response);
+
       const { defaultGroupId, groups, messages } = response.data.data;
       // 메시지를 시간순으로 정렬 (오래된 것부터)
       const sortedMessages = messages.sort(

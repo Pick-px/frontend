@@ -67,13 +67,11 @@ export const authService = {
       const accessToken = authHeader?.split(' ')[1];
 
       const decodedToken = jwtDecode<DecodedToken>(accessToken);
-      console.log('--------로그인sub:', decodedToken.sub);
       const user = {
         userId: decodedToken.sub.userId,
         nickname: decodedToken.sub.nickName,
         role: decodedToken.sub.role,
       };
-      console.log('응답결과:', user);
       // 응답에서 AT와 사용자 정보를 추출하여 반환
       return { accessToken, user };
     } catch (error) {
@@ -93,7 +91,7 @@ export const authService = {
       const response = await apiClient.post('/auth/refresh');
       const authHeader = response.headers['authorization'];
       const newAccessToken = authHeader?.split(' ')[1];
-      
+
       // 토큰에서 사용자 정보 추출
       const decodedToken = jwtDecode<DecodedToken>(newAccessToken);
       const user = {
@@ -101,8 +99,7 @@ export const authService = {
         nickname: decodedToken.sub.nickName,
         role: decodedToken.sub.role,
       };
-      
-      console.log('Refresh token user:', user);
+
       return { accessToken: newAccessToken, user };
     } catch (error) {
       console.error('Failed to refresh token', error);
@@ -132,7 +129,6 @@ export const guestLogin = async (nickname: string) => {
     const response = await apiClient.post('/user/signup', {
       userName: nickname,
     });
-    console.log(response);
     const authHeader = response.headers['authorization'];
     const accessToken = authHeader?.split(' ')[1];
 

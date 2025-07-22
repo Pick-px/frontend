@@ -56,7 +56,6 @@ export const canvasService = {
       const response = await apiClient.get('/canvas/pixels', {
         params: { canvas_id: canvasId },
       });
-      console.log(response);
       return response.data;
     } catch (error) {
       console.error(`Failed to fetch pixels for canvas ${canvasId}:`, error);
@@ -97,7 +96,6 @@ export const canvasService = {
   async getGameCanvases(): Promise<Canvas[]> {
     try {
       const response = await apiClient.get<Canvas[]>(`/game/list`);
-      console.log(response.data);
       return response.data;
     } catch (error) {
       console.error('Error fetching canvas:', error);
