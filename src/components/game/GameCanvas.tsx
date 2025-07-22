@@ -1197,6 +1197,7 @@ function GameCanvas({
                 lives={lives}
                 maxLives={2}
                 isLifeDecreasing={isLifeDecreasing}
+                userColor={userColor}
               />
             </div>
           )}
@@ -1208,6 +1209,7 @@ function GameCanvas({
                 lives={lives}
                 maxLives={2}
                 isLifeDecreasing={isLifeDecreasing}
+                userColor={userColor}
               />
             </div>
           )}
