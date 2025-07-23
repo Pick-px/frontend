@@ -80,6 +80,20 @@ const GameReadyModal = ({
     navigate('/');
   };
 
+  // 키보드 이벤트 차단
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // 모든 키보드 이벤트 차단
+      event.preventDefault();
+      event.stopPropagation();
+    };
+
+    document.addEventListener('keydown', handleKeyDown, true);
+    return () => document.removeEventListener('keydown', handleKeyDown, true);
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (

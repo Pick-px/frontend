@@ -287,7 +287,7 @@ function GameCanvas({
       // 다른 플레이어 사망시 작은 알림 표시
       const deathMessage = document.createElement('div');
       deathMessage.className =
-        'fixed z-50 top-4 right-4 bg-gradient-to-b from-red-900/90 to-black/90 text-white px-4 py-2 rounded-lg shadow-lg backdrop-blur-sm border border-red-500 text-sm max-w-[200px]';
+        'fixed z-50 top-4 right-4 bg-gradient-to-b from-red-900/90 to-black/90 text-white px-4 py-2 rounded-lg shadow-lg backdrop-blur-sm border border-red-500 text-sm max-w-[200px] sm:text-xl sm:px-10 sm:py-6 sm:max-w-[600px]';
 
       // 애니메이션 적용
       deathMessage.animate(
@@ -303,12 +303,12 @@ function GameCanvas({
       );
 
       deathMessage.innerHTML = `
-      <div class="flex items-center gap-2">
-        <div class="text-xl">☠️</div>
+      <div class="flex items-center gap-2 sm:gap-8">
+        <div class="text-xl sm:text-5xl">☠️</div>
         <div>
-          <div class="text-md font-bold text-red-400">${username} 전사!</div>
-          <div class="text-xs text-white opacity-80">상대의 색이 사라졌습니다!</div>
-          <div class="text-xs opacity-70">빈 공간을 공략하세요!</div>
+          <div class="text-md font-bold text-red-400 sm:text-2xl">${username} 전사!</div>
+          <div class="text-xs text-white opacity-80 sm:text-lg">상대의 색이 사라졌습니다!</div>
+          <div class="text-xs opacity-70 sm:text-lg">빈 공간을 공략하세요!</div>
         </div>
       </div>
     `;
