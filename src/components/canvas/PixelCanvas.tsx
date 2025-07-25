@@ -845,9 +845,9 @@ function PixelCanvas({
       )}
       {cooldown && (
         <>
-          <div className='pointer-events-none absolute inset-0 border-4 border-red-600/70' />
-          <div className='pointer-events-none absolute inset-2 border-2 border-red-500/50' />
-          <div className='pointer-events-none absolute inset-4 border border-red-400/30' />
+          <div className='pointer-events-none absolute inset-0 z-[9999] border-4 border-red-600/70 animate-pulse' />
+          <div className='pointer-events-none absolute inset-2 z-[9999] border-2 border-red-500/50 animate-pulse' />
+          <div className='pointer-events-none absolute inset-4 z-[9999] border border-red-400/30 animate-pulse' />
         </>
       )}
       <div
