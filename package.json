@@ -26,6 +26,7 @@
     "socket.io-client": "^4.8.1",
     "tailwindcss": "^4.1.11",
     "use-sound": "^5.0.0",
+    "web-vitals": "^5.1.0",
     "zustand": "^5.0.6"
   },
   "devDependencies": {
@@ -49,6 +50,8 @@
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.34.1",
     "vite": "^7.0.0",
-    "vitest": "^3.2.4"
+    "vite-bundle-analyzer": "^1.2.3",
+    "vitest": "^3.2.4",
+    "webpack-bundle-analyzer": "^4.10.2"
   }
 }
